@@ -4,7 +4,7 @@
 // (equations_seconds is the time to build the network's quartet classes). Compared
 // against SNaQ.jl by tools/julia/bench_fit.jl.
 //
-// usage: csnaq_bench_fit <network newick file> <gene trees file> <maxeval> <threads> [repeats]
+// usage: csnaq_bench_fit <network newick file> <gene trees file> <maxeval> <threads> [repeats] [lbfgs|newton]
 // prints: ntaxa nhybrids nquartets nparams score fit_seconds equations_seconds peak_rss_MB
 #include <algorithm>
 #include <fstream>
@@ -32,6 +32,8 @@ int main(int argc, char** argv) {
         int maxeval = std::stoi(argv[3]);
         int nthreads = std::stoi(argv[4]);
         int repeats = argc > 5 ? std::stoi(argv[5]) : 3;
+        const std::string method = argc > 6 ? argv[6] : "lbfgs";
+        if (method != "lbfgs" && method != "newton") throw SnaqError("method must be lbfgs or newton");
 
         ObservedCFs obs(trees, sorted_union_taxa(trees), false);
         std::vector<long long> ranks(static_cast<size_t>(obs.nquartets()));
@@ -62,6 +64,7 @@ int main(int argc, char** argv) {
             double t1 = wall_time();
             FitOptions fo;
             fo.maxeval = maxeval;
+            fo.method = method == "newton" ? FitMethod::newton : FitMethod::lbfgs;
             score = fitclasses(net, cls, 0.0, fo, nthreads);
             double t2 = wall_time();
             best_eq = std::min(best_eq, t1 - t0);

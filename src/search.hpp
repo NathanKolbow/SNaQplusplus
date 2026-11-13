@@ -64,7 +64,7 @@ struct SnaqOptions {
     long long maxeval = 100000000;
     double liktolAbs = 1e-8;
     double liktolRel = 1e-4;
-    int opt_maxeval = -1;  // -1: max(30, number of taxa)
+    int opt_maxeval = -1;  // -1: max(30, number of taxa) with lbfgs, 200 with newton
     std::string logprefix;
     // CSNaQ options (not in SNaQ.jl)
     // Reject a proposed network without fitting it when an upper bound of its
@@ -80,6 +80,10 @@ struct SnaqOptions {
     // (towards Nfail). If false, another proposal is drawn instead, so a run
     // tries Nfail distinct topologies before it stops.
     bool dedupCounts = false;
+    // How branch lengths and γ are optimized: "newton" (projected Newton on
+    // the quartet classes, run to convergence) or "lbfgs" (NLopt's L-BFGS
+    // limited to opt_maxeval evaluations, as SNaQ.jl).
+    std::string optimizer = "newton";
     // CLI-only
     bool lazy = false;
     int threads = 1;

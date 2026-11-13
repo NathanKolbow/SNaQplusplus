@@ -158,8 +158,15 @@ static void logmoves(const std::string& logfile, const MoveStats& st) {
 // search
 // ------------------------------------------------------------------------
 
+static FitMethod fit_method(const SnaqOptions& o) {
+    if (o.optimizer == "newton") return FitMethod::newton;
+    if (o.optimizer == "lbfgs") return FitMethod::lbfgs;
+    throw SnaqError("optimizer must be \"newton\" or \"lbfgs\" (optimizer = " + o.optimizer + ")");
+}
+
 static FitOptions search_fit_options(const SnaqOptions& o, int maxeval) {
     FitOptions f;
+    f.method = fit_method(o);
     f.maxeval = maxeval;
     f.ftolRel = o.ftolRel;
     f.ftolAbs = o.ftolAbs;
@@ -184,7 +191,9 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
     const double rho = o.rho;
     const double propQuartets = o.propQuartets;
     const long long maxequivPLs = o.Nfail;
-    const int opt_maxeval = o.opt_maxeval >= 0 ? o.opt_maxeval : std::max(30, N.numtaxa);
+    // (with the Newton method, -1 lets fits run to convergence: see FitOptions)
+    const int opt_maxeval =
+        o.opt_maxeval >= 0 ? o.opt_maxeval : (fit_method(o) == FitMethod::newton ? -1 : std::max(30, N.numtaxa));
     if (!(o.maxeval > 0)) throw SnaqError("maxeval must be > 0 (maxeval = " + std::to_string(o.maxeval) + ").");
     if (!(maxequivPLs > 0)) throw SnaqError("maxequivPLs must be > 0 (maxequivPLs = " + std::to_string(maxequivPLs) + ").");
     if (!(0 <= rho && rho <= 1)) throw SnaqError("ρ must be in range [0, 1] (ρ = " + julia_float(rho) + ")");
@@ -491,6 +500,8 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
     }
     N.fscore = current_logPL;
 
+    FitOptions finalfit;
+    finalfit.method = fit_method(o);
     if (propQuartetsFinal == 1.0 && propQuartets != 1.0) {
         logmessage(filename, "Re-optimizing branch lengths with ALL quartets.");
         // QUIRK: SNaQ.jl calls fitnumericalparameters!(N, q) here, which uses ρ = 0
@@ -502,7 +513,7 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
         fixnegativeedges(N);
         checkgammas(N);
         QuartetClasses fc = buildclasses(N, QuartetList::allquartets(N.numtaxa), full, fo);
-        N.fscore = fitclasses(N, fc, 0.0, FitOptions{}, nthreads);
+        N.fscore = fitclasses(N, fc, 0.0, finalfit, nthreads);
         logmessage(filename,
                    "END propQuartets<1.0 post-search parameter optimization: found minimizer topology with SNaQ "
                    "score=" + round5(N.fscore));
@@ -518,7 +529,7 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
         fixnegativeedges(N);
         checkgammas(N);
         QuartetClasses fc = buildclasses(N, QuartetList::fromranks(N.numtaxa, final_idxs), fq, fo);
-        N.fscore = fitclasses(N, fc, rho, FitOptions{}, nthreads);
+        N.fscore = fitclasses(N, fc, rho, finalfit, nthreads);
         logmessage(filename,
                    "END propQuartetsFinal<1.0 post-search parameter optimization: found minimizer topology with "
                    "SNaQ score=" + round5(N.fscore));

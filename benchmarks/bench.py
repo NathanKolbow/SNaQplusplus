@@ -290,8 +290,9 @@ def run_snaq_case(args, implementation, case, files, outdir):
 def run_fit_case(args, implementation, case, files):
     repeats = str(args.repeats)
     if implementation == "cpp":
+        # extra arguments go after the repeats (e.g. --extra-args newton: the optimization method)
         cmd = [exe(args.fit_binary), files["truth"], files["genetrees"], str(case["maxeval"]), str(args.threads),
-               repeats]
+               repeats] + shlex.split(args.extra_args or "")
         rc, out, err, wall, peak = run_measured(cmd)
         if rc != 0:
             raise RuntimeError(err.strip() or out.strip())
@@ -589,10 +590,60 @@ def ordered_labels(recs, suite, baseline, chosen, maxseries=4):
     return ([baseline] if baseline in first_seen else []) + keep
 
 
+RESCORED_KEYS = ("hwcd", "score_all_quartets", "score_truth_all_quartets", "nhybrids")
+
+
 def metric(rec, key):
+    """A metric of a record. Accuracy metrics come from `bench.py rescore` when it was run,
+    so that every version is evaluated by the same csnaq_eval."""
     if rec is None or rec["metrics"].get("failed"):
         return None
-    return rec["metrics"].get(key)
+    m = rec["metrics"]
+    if key == "score_gap":
+        a, b = metric(rec, "score_all_quartets"), metric(rec, "score_truth_all_quartets")
+        return None if a is None or b is None else a - b
+    if key in RESCORED_KEYS and key in m.get("rescored", {}):
+        return m["rescored"][key]
+    return m.get(key)
+
+
+def rescore(args):
+    """Recompute the accuracy metrics of every recorded snaq run from its saved .out file."""
+    recs = load_history()
+    eval_bin = exe(args.eval_binary)
+    if not os.path.isfile(eval_bin):
+        sys.exit(f"csnaq_eval not found: {eval_bin} (build the tools first)")
+    commit, dirty = git_info()
+    suites = load_suites()
+    n = 0
+    done = {}
+    for r in recs:
+        if r["kind"] != "snaq" or r["metrics"].get("failed"):
+            continue
+        out = os.path.join(OUTPUTS, r["run_id"], r["case"] + ".out")
+        if not os.path.isfile(out):
+            print(f"  {r['run_id']} {r['case']}: no saved output, skipped")
+            continue
+        files = dataset_files(r["params"]["dataset"])
+        ev = evaluate(eval_bin, out, files["truth"], files["genetrees"], args.threads)
+        if not ev:
+            continue
+        done[(r["run_id"], r["case"])] = {"hwcd": ev.get("hwcd"), "score_all_quartets": ev.get("score_estimated"),
+                                           "score_truth_all_quartets": ev.get("score_truth"),
+                                           "nhybrids": ev.get("nhybrids"),
+                                           "eval_commit": commit + ("+dirty" if dirty else "")}
+        n += 1
+    # read the history again: records may have been appended in the meantime
+    recs = load_history()
+    for r in recs:
+        if (r["run_id"], r["case"]) in done:
+            r["metrics"]["rescored"] = done[(r["run_id"], r["case"])]
+    tmp = HISTORY + ".tmp"
+    with open(tmp, "w") as f:
+        for r in recs:
+            f.write(json.dumps(r, sort_keys=True) + "\n")
+    os.replace(tmp, HISTORY)
+    print(f"rescored {n} record(s) with {os.path.relpath(eval_bin, ROOT) if eval_bin.startswith(ROOT) else eval_bin}")
 
 
 def geomean(xs):
@@ -624,7 +675,8 @@ def report(args):
           "the Julia runtime and loaded packages (see `base_rss_mb` in the history). HWCD is the hardwired "
           "cluster distance between the best network and the true network (0: same topology). The score on "
           "all quartets is the SNaQ score of the best network recomputed by `csnaq_eval` on the observed CFs "
-          "of all quartets, which makes runs that used `propQuartets` < 1 comparable.", ""]
+          "of all quartets, which makes runs that used `propQuartets` < 1 comparable. After `bench.py rescore`, "
+          "HWCD and the scores on all quartets of every version come from the same `csnaq_eval`.", ""]
     figures = []
     for sname in [s for s in suites if any(r["suite"] == s for r in recs)]:
         suite = suites[sname]
@@ -642,7 +694,9 @@ def report(args):
         if suite["kind"] == "snaq":
             specs = [("time", "time_s", "Runtime", "seconds", True),
                      ("memory", "peak_rss_mb", "Peak memory", "MB (peak resident set size)", True),
-                     ("hwcd", "hwcd", "Distance of the best network to the truth", "HWCD (lower is better)", False)]
+                     ("hwcd", "hwcd", "Distance of the best network to the truth", "HWCD (lower is better)", False),
+                     ("score", "score_gap", "Score of the best network on all quartets, minus the true network's",
+                      "SNaQ score difference (higher is better; 0 = as good as the fitted true network)", False)]
         else:
             specs = [("fit", "fit_s", "Parameter optimization time", "seconds", True),
                      ("equations", "equations_s", "Time to build the quartet equations", "seconds", True),
@@ -693,7 +747,7 @@ def report(args):
                     continue
                 cells = []
                 for _, k in cols:
-                    v = rec["metrics"].get(k)
+                    v = metric(rec, k)
                     cells.append("" if v is None else (f"{v:.6g}" if isinstance(v, float) else str(v)))
                 md.append(f"| {c} | {l} | " + " | ".join(cells) + " |")
         md.append("")
@@ -758,6 +812,10 @@ def main():
 
     sub.add_parser("list", help="list the recorded benchmark runs")
 
+    rs = sub.add_parser("rescore", help="recompute the accuracy metrics of all recorded snaq runs with one csnaq_eval")
+    rs.add_argument("--eval-binary", default=DEFAULT_EVAL, help="csnaq_eval to use (default: build/csnaq_eval)")
+    rs.add_argument("--threads", type=int, default=1, help="threads (default: 1)")
+
     args = p.parse_args()
     if args.cmd == "run":
         run_suite(args, "cpp")
@@ -771,6 +829,8 @@ def main():
         report(args)
     elif args.cmd == "list":
         list_runs(args)
+    elif args.cmd == "rescore":
+        rescore(args)
 
 
 if __name__ == "__main__":

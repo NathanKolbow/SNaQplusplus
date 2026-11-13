@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="434" viewBox="0 0 860 434" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="860" height="434" fill="#fcfcfb"/>
+<text x="20" y="30" font-size="17" font-weight="600" fill="#0b0b0b">Speedup over SNaQ.jl across versions — suite standard</text>
+<text x="20" y="52" font-size="12.5" fill="#52514e">geometric mean over the suite's cases, for every recorded run (oldest first)</text>
+
+<line x1="70" y1="311.9" x2="830" y2="311.9" stroke="#e1e0d9" stroke-width="1"/>
+<text x="62" y="315.9" font-size="11" fill="#898781" text-anchor="end">1.00</text>
+<line x1="70" y1="257.0" x2="830" y2="257.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="62" y="261.0" font-size="11" fill="#898781" text-anchor="end">2.00</text>
+<line x1="70" y1="184.4" x2="830" y2="184.4" stroke="#e1e0d9" stroke-width="1"/>
+<text x="62" y="188.4" font-size="11" fill="#898781" text-anchor="end">5.00</text>
+<line x1="70" y1="129.5" x2="830" y2="129.5" stroke="#e1e0d9" stroke-width="1"/>
+<text x="62" y="133.5" font-size="11" fill="#898781" text-anchor="end">10.0</text>
+<text x="16" y="214.0" font-size="11.5" fill="#52514e" text-anchor="middle" transform="rotate(-90 16 214.0)">times faster (log)</text>
+<line x1="70" y1="311.9" x2="830" y2="311.9" stroke="#52514e" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="76" y="306.9" font-size="11" fill="#52514e">SNaQ.jl speed</text>
+<text x="196.7" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 196.7 360)">cpp-initial (20261113)</text>
+<text x="450.0" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 450.0 360)">exp-A-classes (20261113)</text>
+<text x="703.3" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 703.3 360)">exp-B-bound-dedup (20261113)</text>
+<path d="M196.7,208.6 L450.0,138.9 L703.3,116.1" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
+<g><title>geometric-mean speedup · cpp-initial (20261113): 3.68 times faster</title><circle cx="196.7" cy="208.6" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-A-classes (20261113): 8.89 times faster</title><circle cx="450.0" cy="138.9" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-B-bound-dedup (20261113): 11.8 times faster</title><circle cx="703.3" cy="116.1" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<text x="711.3" y="120.1" font-size="10.5" fill="#52514e">11.8</text>
+</svg>

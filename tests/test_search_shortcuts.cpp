@@ -194,3 +194,43 @@ TEST(Dedup, SearchStillFindsTheNetwork) {
         EXPECT_GT(best.fscore, -0.05) << "dedup = " << dedup;
     }
 }
+
+TEST(NewtonFit, ReachesTheOptimumOfLbfgs) {
+    Rng rng(31);
+    std::vector<Network> nets;
+    nets.push_back(nw("(15,(1,((14,(#H1,(((12,13),(11,#H3)),(7,((10)#H3,(8,9)))))),((((2,3))#H2,(6,(5,(#H2,4)))))#H1)));"));
+    nets.push_back(read_trees("gennet_10_2_8.net").at(0));
+    nets.push_back(read_trees("gennet_10_2_12.net").at(0));
+    nets.push_back(random_tree(14, rng));
+    for (Network& truth : nets) {
+        truth = truth.deepcopynetwork();
+        semidirectnetwork(truth);
+        for (EdgeId e : truth.edge) truth.E(e).length = 0.2 + rng.rand();
+        for (NodeId h : truth.hybrid) {
+            truth.E(truth.getparentedgeminor(h)).gamma = 0.3;
+            truth.E(truth.getparentedge(h)).gamma = 0.7;
+        }
+        CFMatrix q = noisy_cfs(truth, rng, 0.1);
+        for (int start = 0; start < 3; ++start) {
+            Network a = truth.deepcopynetwork(), b = truth.deepcopynetwork();
+            for (EdgeId e : a.edge) a.E(e).length = b.E(e).length = start == 0 ? 0.0 : 0.05 + 2.0 * rng.rand();
+            ClassOptions co;
+            co.qlogq = obsqlogq(q);
+            QuartetClasses ca = buildclasses(a, QuartetList::allquartets(a.numtaxa), q, co);
+            QuartetClasses cb = buildclasses(b, QuartetList::allquartets(b.numtaxa), q, co);
+            FitOptions lb, nt;
+            lb.maxeval = 20000;
+            nt.method = FitMethod::newton;
+            FitInfo ia, ib;
+            const double sl = fitclasses(a, ca, 0.0, lb, 1, &ia);
+            const double sn = fitclasses(b, cb, 0.0, nt, 1, &ib);
+            EXPECT_TRUE(ib.converged);
+            // never meaningfully below L-BFGS run to convergence
+            EXPECT_GT(sn, sl - 1e-6 * std::max(1.0, std::abs(sl))) << "start " << start;
+            if (truth.numhybrids == 0) {  // concave score, exact curvature: few evaluations
+                EXPECT_NEAR(sn, sl, 1e-7 * std::max(1.0, std::abs(sl)));
+                EXPECT_LT(ib.evals, 30);
+            }
+        }
+    }
+}

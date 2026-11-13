@@ -104,8 +104,13 @@ advanced (keyword arguments snaq! passes to each search):
   --maxeval INT             maximum number of search iterations (default: 100000000)
   --liktolAbs FLOAT         absolute score improvement to accept a move (default: 1e-8)
   --liktolRel FLOAT         relative score improvement to accept a move (default: 1e-4)
-  --opt_maxeval INT         max. evaluations when fitting a proposed network (default: max(30, #taxa))
+  --opt_maxeval INT         max. evaluations when fitting a proposed network
+                            (default: 200 with newton, max(30, #taxa) with lbfgs)
   --logprefix PATH          write a detailed per-run log to PATH<run number>
+
+parameter optimization (not in SNaQ.jl):
+  --optimizer NAME          "newton": projected Newton method, run to convergence (default);
+                            "lbfgs": L-BFGS limited to --opt_maxeval evaluations, as SNaQ.jl
 
 search shortcuts (not in SNaQ.jl; each can be turned off with "false"):
   --boundPrune [BOOL]       reject a proposed network without fitting it when an upper bound of
@@ -187,6 +192,7 @@ CliArgs parse_cli(const std::vector<std::string>& args) {
     num("--liktolRel", &o.liktolRel);
     integer("--opt_maxeval", &o.opt_maxeval);
     str("--logprefix", &o.logprefix);
+    str("--optimizer", &o.optimizer);
     boolean("--boundPrune", &o.boundPrune);
     boolean("--dedup", &o.dedup);
     boolean("--dedupCounts", &o.dedupCounts);

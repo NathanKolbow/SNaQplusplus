@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="582" viewBox="0 0 860 582" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="860" height="582" fill="#fcfcfb"/>
+<text x="20" y="30" font-size="17" font-weight="600" fill="#0b0b0b">Peak memory — suite standard</text>
+<text x="20" y="52" font-size="12.5" fill="#52514e">Apple M1, 1 thread(s)</text>
+<rect x="170" y="61" width="12" height="12" rx="3" fill="#2a78d6"/>
+<text x="188" y="71" font-size="12" fill="#52514e">SNaQ.jl</text>
+<rect x="255" y="61" width="12" height="12" rx="3" fill="#eb6834"/>
+<text x="273" y="71" font-size="12" fill="#52514e">cpp-initial</text>
+<rect x="368" y="61" width="12" height="12" rx="3" fill="#1baf7a"/>
+<text x="386" y="71" font-size="12" fill="#52514e">exp-A-classes</text>
+<line x1="237.1" y1="94" x2="237.1" y2="542" stroke="#e1e0d9" stroke-width="1"/>
+<text x="237.1" y="558" font-size="11" fill="#898781" text-anchor="middle">10.0</text>
+<line x1="308.1" y1="94" x2="308.1" y2="542" stroke="#e1e0d9" stroke-width="1"/>
+<text x="308.1" y="558" font-size="11" fill="#898781" text-anchor="middle">20.0</text>
+<line x1="402.0" y1="94" x2="402.0" y2="542" stroke="#e1e0d9" stroke-width="1"/>
+<text x="402.0" y="558" font-size="11" fill="#898781" text-anchor="middle">50.0</text>
+<line x1="473.0" y1="94" x2="473.0" y2="542" stroke="#e1e0d9" stroke-width="1"/>
+<text x="473.0" y="558" font-size="11" fill="#898781" text-anchor="middle">100</text>
+<line x1="544.1" y1="94" x2="544.1" y2="542" stroke="#e1e0d9" stroke-width="1"/>
+<text x="544.1" y="558" font-size="11" fill="#898781" text-anchor="middle">200</text>
+<line x1="638.0" y1="94" x2="638.0" y2="542" stroke="#e1e0d9" stroke-width="1"/>
+<text x="638.0" y="558" font-size="11" fill="#898781" text-anchor="middle">500</text>
+<line x1="709.0" y1="94" x2="709.0" y2="542" stroke="#e1e0d9" stroke-width="1"/>
+<text x="709.0" y="558" font-size="11" fill="#898781" text-anchor="middle">1,000</text>
+<text x="470.0" y="576" font-size="11.5" fill="#52514e" text-anchor="middle">MB (peak resident set size) (log scale)</text>
+<line x1="170.0" y1="94" x2="170.0" y2="542" stroke="#c3c2b7" stroke-width="1"/>
+<text x="160" y="124.0" font-size="12" fill="#0b0b0b" text-anchor="end">n10_h1</text>
+<g><title>SNaQ.jl · n10_h1: 1,144 MB (peak resident set size)</title><rect x="170.0" y="100" width="552.7" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="727.7" y="110" font-size="10.5" fill="#52514e" text-anchor="start">1,144</text>
+<g><title>cpp-initial · n10_h1: 7.80 MB (peak resident set size)</title><rect x="170.0" y="114" width="41.6" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="216.6" y="124" font-size="10.5" fill="#52514e" text-anchor="start">7.80</text>
+<g><title>exp-A-classes · n10_h1: 8.25 MB (peak resident set size)</title><rect x="170.0" y="128" width="47.3" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="222.3" y="138" font-size="10.5" fill="#52514e" text-anchor="start">8.25</text>
+<text x="160" y="178.0" font-size="12" fill="#0b0b0b" text-anchor="end">n15_h1</text>
+<g><title>SNaQ.jl · n15_h1: 1,090 MB (peak resident set size)</title><rect x="170.0" y="154" width="547.9" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="722.9" y="164" font-size="10.5" fill="#52514e" text-anchor="start">1,090</text>
+<g><title>cpp-initial · n15_h1: 9.42 MB (peak resident set size)</title><rect x="170.0" y="168" width="61.0" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="236.0" y="178" font-size="10.5" fill="#52514e" text-anchor="start">9.42</text>
+<g><title>exp-A-classes · n15_h1: 9.34 MB (peak resident set size)</title><rect x="170.0" y="182" width="60.1" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="235.1" y="192" font-size="10.5" fill="#52514e" text-anchor="start">9.34</text>
+<text x="160" y="232.0" font-size="12" fill="#0b0b0b" text-anchor="end">n20_h2</text>
+<g><title>SNaQ.jl · n20_h2: 1,082 MB (peak resident set size)</title><rect x="170.0" y="208" width="547.0" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="722.0" y="218" font-size="10.5" fill="#52514e" text-anchor="start">1,082</text>
+<g><title>cpp-initial · n20_h2: 14.1 MB (peak resident set size)</title><rect x="170.0" y="222" width="102.6" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="277.6" y="232" font-size="10.5" fill="#52514e" text-anchor="start">14.1</text>
+<g><title>exp-A-classes · n20_h2: 13.4 MB (peak resident set size)</title><rect x="170.0" y="236" width="97.2" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="272.2" y="246" font-size="10.5" fill="#52514e" text-anchor="start">13.4</text>
+<text x="160" y="286.0" font-size="12" fill="#0b0b0b" text-anchor="end">n25_h1</text>
+<g><title>SNaQ.jl · n25_h1: 1,185 MB (peak resident set size)</title><rect x="170.0" y="262" width="556.4" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="731.4" y="272" font-size="10.5" fill="#52514e" text-anchor="start">1,185</text>
+<g><title>cpp-initial · n25_h1: 13.8 MB (peak resident set size)</title><rect x="170.0" y="276" width="99.8" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="274.8" y="286" font-size="10.5" fill="#52514e" text-anchor="start">13.8</text>
+<g><title>exp-A-classes · n25_h1: 13.3 MB (peak resident set size)</title><rect x="170.0" y="290" width="96.6" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="271.6" y="300" font-size="10.5" fill="#52514e" text-anchor="start">13.3</text>
+<text x="160" y="340.0" font-size="12" fill="#0b0b0b" text-anchor="end">n25_h3</text>
+<g><title>SNaQ.jl · n25_h3: 968 MB (peak resident set size)</title><rect x="170.0" y="316" width="535.7" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="710.7" y="326" font-size="10.5" fill="#52514e" text-anchor="start">968</text>
+<g><title>cpp-initial · n25_h3: 14.7 MB (peak resident set size)</title><rect x="170.0" y="330" width="106.8" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="281.8" y="340" font-size="10.5" fill="#52514e" text-anchor="start">14.7</text>
+<g><title>exp-A-classes · n25_h3: 15.2 MB (peak resident set size)</title><rect x="170.0" y="344" width="109.7" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="284.7" y="354" font-size="10.5" fill="#52514e" text-anchor="start">15.2</text>
+<text x="160" y="394.0" font-size="12" fill="#0b0b0b" text-anchor="end">n30_h2</text>
+<g><title>SNaQ.jl · n30_h2: 967 MB (peak resident set size)</title><rect x="170.0" y="370" width="535.5" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="710.5" y="380" font-size="10.5" fill="#52514e" text-anchor="start">967</text>
+<g><title>cpp-initial · n30_h2: 14.5 MB (peak resident set size)</title><rect x="170.0" y="384" width="105.2" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="280.2" y="394" font-size="10.5" fill="#52514e" text-anchor="start">14.5</text>
+<g><title>exp-A-classes · n30_h2: 13.9 MB (peak resident set size)</title><rect x="170.0" y="398" width="100.6" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="275.6" y="408" font-size="10.5" fill="#52514e" text-anchor="start">13.9</text>
+<text x="160" y="448.0" font-size="12" fill="#0b0b0b" text-anchor="end">n40_h1</text>
+<g><title>SNaQ.jl · n40_h1: 1,209 MB (peak resident set size)</title><rect x="170.0" y="424" width="558.4" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="733.4" y="434" font-size="10.5" fill="#52514e" text-anchor="start">1,209</text>
+<g><title>cpp-initial · n40_h1: 33.7 MB (peak resident set size)</title><rect x="170.0" y="438" width="191.6" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="366.6" y="448" font-size="10.5" fill="#52514e" text-anchor="start">33.7</text>
+<g><title>exp-A-classes · n40_h1: 33.5 MB (peak resident set size)</title><rect x="170.0" y="452" width="191.0" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="366.0" y="462" font-size="10.5" fill="#52514e" text-anchor="start">33.5</text>
+<text x="160" y="502.0" font-size="12" fill="#0b0b0b" text-anchor="end">n50_h2</text>
+<g><title>SNaQ.jl · n50_h2: 1,132 MB (peak resident set size)</title><rect x="170.0" y="478" width="551.7" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="726.7" y="488" font-size="10.5" fill="#52514e" text-anchor="start">1,132</text>
+<g><title>cpp-initial · n50_h2: 36.8 MB (peak resident set size)</title><rect x="170.0" y="492" width="200.5" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="375.5" y="502" font-size="10.5" fill="#52514e" text-anchor="start">36.8</text>
+<g><title>exp-A-classes · n50_h2: 36.8 MB (peak resident set size)</title><rect x="170.0" y="506" width="200.6" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="375.6" y="516" font-size="10.5" fill="#52514e" text-anchor="start">36.8</text>
+</svg>

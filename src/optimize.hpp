@@ -1,5 +1,6 @@
-// Numerical optimization of branch lengths and γ (SNaQ's fit_parameters.jl),
-// using NLopt's LD_LBFGS exactly as SNaQ.jl does.
+// Numerical optimization of branch lengths and γ (SNaQ's fit_parameters.jl):
+// with NLopt's LD_LBFGS exactly as SNaQ.jl does, or with a projected Newton
+// method that uses the curvature of the quartet-class likelihood.
 #pragma once
 
 #include <vector>
@@ -9,12 +10,20 @@
 
 namespace csnaq {
 
+enum class FitMethod {
+    lbfgs,   // NLopt's LD_LBFGS, as SNaQ.jl
+    newton,  // projected Newton with the curvature of evalclasses (quartet classes only)
+};
+
 struct FitOptions {
-    int maxeval = -1;  // -1: max(30, numtaxa)
+    // Maximum number of evaluations of the score.
+    // -1: max(30, numtaxa) with lbfgs, 200 with newton.
+    int maxeval = -1;
     double ftolRel = 1e-12;
     double ftolAbs = 1e-12;
     double xtolRel = 1e-12;
     double xtolAbs = 1e-12;
+    FitMethod method = FitMethod::lbfgs;
 };
 
 // fitnumericalparameters!(net, eqns, observed_CFs, ρ; maxeval, ftolRel, ...)
