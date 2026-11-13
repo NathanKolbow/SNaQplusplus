@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "parallel.hpp"
+#include "porteqn.hpp"
 #include "quartets.hpp"
 
 namespace csnaq {
@@ -408,6 +409,7 @@ QuartetClasses buildclasses(Network& net, const QuartetList& ql, const CFMatrix&
             }
         }
         if (!pend->classes.empty()) {
+            pend->reference = opt.referenceequations;
             pend->nodepos = std::move(nodepos);
             pend->edgepos = std::move(edgepos);
             out.pending = std::move(pend);
@@ -422,10 +424,14 @@ QuartetClasses buildclasses(Network& net, const QuartetList& ql, const CFMatrix&
 void finishclasses(const Network& net, QuartetClasses& cls, int nthreads) {
     if (cls.pending) {
         const QuartetClasses::Pending& pend = *cls.pending;
+        std::unique_ptr<PortEquationBuilder> builder;
+        if (!pend.reference) builder = std::make_unique<PortEquationBuilder>(net);
         parallel_for(pend.classes.size(), nthreads, [&](size_t lo, size_t hi, int) {
             for (size_t t = lo; t < hi; ++t) {
                 auto ce = std::make_shared<ClassEqn>();
-                ce->eqn = portreticulateequation(net, pend.nodepos, pend.edgepos, pend.ports[t], pend.pm, pend.top[t]);
+                ce->eqn = builder ? builder->build(pend.ports[t], pend.top[t])
+                                  : portreticulateequation(net, pend.nodepos, pend.edgepos, pend.ports[t], pend.pm,
+                                                           pend.top[t]);
                 collectparams(ce->eqn, ce->params);
                 cls.eqn[pend.classes[t]] = std::move(ce);
             }

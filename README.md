@@ -145,6 +145,17 @@ The best network and its score are also printed to standard output.
   against a brute-force calculation: on `checks.net`, 88 of 133,552 tested quartets are wrong
   with SNaQ.jl's equations and none with class equations, and the scores from the two sets of
   equations differ for 64 of the 669 networks (on up to 3000 quartets per network).
+- **Equations of reticulate classes.** SNaQ.jl builds the equation of a quartet that
+  reticulations affect by copying the quartet's network once per way its lineages can pass
+  the lowest hybrid node, editing each copy, and recursing. `snaq` leaves the network
+  unchanged and moves the four lineages up it (`src/porteqn.hpp`). The equations have the same
+  value for all parameter values, and are never larger: on `checks.net`,
+  `csnaq_classcheck` finds no difference in score or gradient between the two builders
+  (largest relative difference 1e-11), and 6% fewer equation nodes in total.
+- **Networks are compared by the distance of their score from 0.** The search accepts a
+  proposal, and `snaq` picks the best run, by how close the score is to 0 instead of by how
+  high it is. The score is at most 0 up to rounding (expected CFs are floored at 1e-9), so
+  both orders are the same unless a score is positive.
 - **Parameter optimization.** By default, branch lengths and γ are optimized with a projected
   Newton method run to convergence, followed for networks by L-BFGS started from its result.
   SNaQ.jl uses L-BFGS limited to `max(30, ntaxa)` evaluations; `--optimizer lbfgs` does the same.
@@ -177,7 +188,7 @@ The best network and its score are also printed to standard output.
 |---|---|
 | `tools/julia/setup.jl` | sets up a Julia environment with SNaQ.jl, expected at `../SNaQ.jl` relative to the repository root |
 | `tools/csnaq_check.cpp`, `tools/julia/check_networks.jl` | compare expected CFs, SNaQ scores and gradients of the per-quartet equations with SNaQ.jl on the networks of a Newick file (e.g. `checks.net`) |
-| `tools/classcheck.cpp`, `tools/bruteforce_cf.hpp` | compare the quartet-class likelihood with the per-quartet one, and both with brute-force expected CFs: `build/csnaq_classcheck checks.net 3000` |
+| `tools/classcheck.cpp`, `tools/bruteforce_cf.hpp` | compare the quartet-class likelihood with the per-quartet one, both with brute-force expected CFs, and the two builders of reticulate class equations: `build/csnaq_classcheck checks.net 3000` |
 | `validation/checks_net_comparison.csv` | result of that comparison on `checks.net` |
 | `tools/bench_fit.cpp`, `tools/julia/bench_fit.jl` | time numerical parameter optimization in both implementations, with peak memory |
 | `tools/julia/make_test_fixtures.jl` | regenerates the test fixtures in `tests/data/` |

@@ -72,6 +72,7 @@ struct QuartetClasses {
         std::vector<NodeId> top;
         std::vector<int> nodepos, edgepos;
         ParamMap pm;
+        bool reference = false;  // ClassOptions::referenceequations
     };
     std::shared_ptr<Pending> pending;
     bool complete() const { return !pending; }
@@ -87,6 +88,10 @@ struct ClassOptions {
     // expensive ones): classupperbound can be used right away, and
     // finishclasses builds them if the network is worth fitting.
     bool defer = false;
+    // Build these equations with the reference implementation (SNaQ.jl's
+    // recursion on copies of the network; see porteqn.hpp). Same values,
+    // much slower: for validation.
+    bool referenceequations = false;
 };
 
 // Sum over the rows of `obs` of weight * sum_k q_k log q_k.

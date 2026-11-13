@@ -6,6 +6,7 @@
 
 #include "bruteforce_cf.hpp"
 #include "classes.hpp"
+#include "porteqn.hpp"
 #include "test_support.hpp"
 
 using namespace csnaq;
@@ -241,4 +242,72 @@ TEST(Classes, EquationsReusedAfterMovesMatchRebuild) {
     EXPECT_GT(compared, 200);
     EXPECT_GT(reusedsome, 100);
     EXPECT_GE(maxh, 2);
+}
+
+TEST(Classes, EquationBuilderMatchesReference) {
+    // PortEquationBuilder (the lineages move up an unchanged network) against
+    // the reference implementation (SNaQ.jl's recursion on copies of the
+    // network): same expected CFs for every class, and never a larger equation.
+    Rng rng(29);
+    size_t reticulate = 0;
+    auto compare = [&](Network& net, const CFMatrix& q, const std::string& what) {
+        ClassOptions co;
+        co.qlogq = obsqlogq(q);
+        Network a = net.deepcopynetwork(), b = net.deepcopynetwork();
+        QuartetClasses fast = buildclasses(a, QuartetList::allquartets(a.numtaxa), q, co);
+        co.referenceequations = true;
+        QuartetClasses ref = buildclasses(b, QuartetList::allquartets(b.numtaxa), q, co);
+        ASSERT_EQ(fast.size(), ref.size()) << what;
+        std::vector<double> params = pidparams(a, fast.npid);
+        for (size_t ci = 0; ci < fast.size(); ++ci) {
+            if (ref.eqn[ci]->eqn.division_H < 0) continue;
+            ++reticulate;
+            EXPECT_LE(equationsize(fast.eqn[ci]->eqn), equationsize(ref.eqn[ci]->eqn)) << what << ", class " << ci;
+            for (double rho : {0.0, 0.5}) {
+                auto e1 = classexpectedCF(*fast.eqn[ci], params.data(), fast.npid, rhotoalpha(rho));
+                auto e2 = classexpectedCF(*ref.eqn[ci], params.data(), ref.npid, rhotoalpha(rho));
+                for (size_t k = 0; k < 3; ++k) ASSERT_NEAR(e1[k], e2[k], 1e-12) << what << ", class " << ci;
+            }
+        }
+    };
+    int nfix = 0;
+    for (Network& net : fixture_networks()) {
+        randomize_parameters(net, rng);
+        CFMatrix q = random_cfs(static_cast<size_t>(nchoose4(net.numtaxa)), rng);
+        compare(net, q, "fixture " + std::to_string(nfix++));
+    }
+    // networks reached by random moves, with up to 4 reticulations
+    Network N = random_tree(10, rng).deepcopynetwork();
+    semidirectnetwork(N);
+    N.compact_pids();
+    CFMatrix q = random_cfs(static_cast<size_t>(nchoose4(N.numtaxa)), rng);
+    std::vector<AttemptedMove> none;
+    std::vector<double> deltas;
+    CFMatrix emptyQ;
+    int compared = 0, maxh = 0;
+    for (int it = 0; it < 300; ++it) {
+        Network P = N.deepcopynetwork();
+        try {
+            auto mp = generatemoveproposal(P, nullptr, none, 4, 0.0, emptyQ, deltas, rng, 0.0);
+            if (mp.first == Move::none) continue;
+            applymove(P, mp.first, mp.second, rng);
+            removedegree2nodes(P);
+            while (shrink3cycles(P)) {
+            }
+            while (shrink2cycles(P)) {
+            }
+            semidirectnetwork(P);
+        } catch (const std::exception&) {
+            continue;
+        }
+        randomize_parameters(P, rng);
+        compare(P, q, "move " + std::to_string(it));
+        if (::testing::Test::HasFatalFailure()) return;
+        ++compared;
+        maxh = std::max(maxh, P.numhybrids);
+        N = std::move(P);
+    }
+    EXPECT_GT(compared, 150);
+    EXPECT_GE(maxh, 3);
+    EXPECT_GT(reticulate, 5000u);
 }

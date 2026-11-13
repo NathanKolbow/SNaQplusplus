@@ -52,6 +52,7 @@ add_library(csnaq_core STATIC
     src/likelihood.cpp
     src/optimize.cpp
     src/classes.cpp
+    src/porteqn.cpp
     src/signature.cpp
     src/snaq_network.cpp
     src/compare.cpp

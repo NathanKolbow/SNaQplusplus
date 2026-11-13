@@ -66,8 +66,8 @@ README).
 
 | File | What it tests |
 |---|---|
-| `tests/test_classes.cpp` | Quartet classes: expected CFs against a brute-force calculation, the score against the per-quartet sum, gradients against finite differences, and equations reused after random moves against equations built from scratch. |
-| `tests/test_search_shortcuts.cpp` | The score upper bound (never below a fitted score; does not change a search), the topology signature, the Newton optimizer against L-BFGS run to convergence, the candidate pairs for hybrid additions, and gene weights. |
+| `tests/test_classes.cpp` | Quartet classes: expected CFs against a brute-force calculation, the score against the per-quartet sum, gradients against finite differences, equations reused after random moves against equations built from scratch, and the equation builder against the reference builder. |
+| `tests/test_search_shortcuts.cpp` | The score upper bound (never below a fitted score; does not change a search), the topology signature, the Newton optimizer against L-BFGS run to convergence, the candidate pairs for hybrid additions, gene weights, and the comparison of scores by distance from 0. |
 
 The tests ported from SNaQ.jl compute expected CFs and scores of networks with
 `computeexpectedCFmatrix` and `computeSNaQscore_net`, which now use quartet classes. For

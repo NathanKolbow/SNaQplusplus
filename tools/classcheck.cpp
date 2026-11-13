@@ -9,7 +9,7 @@
 // usage: csnaq_classcheck <networks file> [max quartets per network] [first line] [last line]
 //                         [brute-force quartets per network]
 // prints one line per network and a summary; exits with 1 if a class's expected CFs differ from
-// the brute-force values. (Scores can differ between the two likelihoods: see the summary.)
+// the brute-force values, or if the equations of the two builders (porteqn.hpp) differ in value. (Scores can differ between the two likelihoods: see the summary.)
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -24,6 +24,7 @@
 #include "equations.hpp"
 #include "likelihood.hpp"
 #include "newick.hpp"
+#include "porteqn.hpp"
 #include "quartets.hpp"
 #include "snaq_network.hpp"
 
@@ -51,13 +52,16 @@ int main(int argc, char** argv) {
     std::string s;
     long line = 0, checked = 0, bad = 0, errors = 0, tot_ochecked = 0, tot_obad_old = 0, tot_obad_new = 0;
     const long noracle = argc > 5 ? std::stol(argv[5]) : 200;
-    double worst = 0.0;
+    double worst = 0.0, worstref = 0.0;
+    long refbad = 0;
+    size_t tot_size_new = 0, tot_size_ref = 0;
     while (std::getline(in, s)) {
         ++line;
         if (line < first || line > last || s.find('(') == std::string::npos) continue;
         std::string olderr, newerr;
         long obad_old = 0, obad_new = 0, ochecked = 0;
-        double sold[2] = {0, 0}, snew[2] = {0, 0}, gdiff = 0.0;
+        double sold[2] = {0, 0}, snew[2] = {0, 0}, gdiff = 0.0, refdiff = 0.0;
+        size_t size_new = 0, size_ref = 0;
         size_t nclass = 0, nq = 0;
         int ntaxa = 0, nhyb = 0;
         std::vector<long long> ranks;
@@ -99,6 +103,26 @@ int main(int argc, char** argv) {
                 for (int k = 0; k < 2; ++k) {
                     snew[k] = evalclasses(cls.batch, params.data(), g.data(), rhotoalpha(k ? 0.5 : 0.0), ws, 1);
                     gnew[k] = g;
+                }
+                // the same classes with the reference equation builder: same score and gradient
+                {
+                    Network r = net.deepcopynetwork();
+                    fixnegativeedges(r, false);
+                    ClassOptions ro = co;
+                    ro.referenceequations = true;
+                    QuartetClasses ref = buildclasses(r, QuartetList::fromranks(r.numtaxa, ranks), obs, ro);
+                    if (ref.size() != cls.size() || ref.npid != cls.npid) throw SnaqError("reference classes differ");
+                    std::vector<double> gr(static_cast<size_t>(ref.npid));
+                    for (int k = 0; k < 2; ++k) {
+                        const double sr = evalclasses(ref.batch, params.data(), gr.data(), rhotoalpha(k ? 0.5 : 0.0), ws, 1);
+                        refdiff = std::max(refdiff, std::abs(sr - snew[k]) / std::max(1.0, std::abs(sr)));
+                        for (size_t j = 0; j < gr.size(); ++j)
+                            refdiff = std::max(refdiff, std::abs(gr[j] - gnew[k][j]) / std::max(1.0, std::abs(gr[j])));
+                    }
+                    for (size_t ci = 0; ci < cls.size(); ++ci) {
+                        size_new += equationsize(cls.eqn[ci]->eqn);
+                        size_ref += equationsize(ref.eqn[ci]->eqn);
+                    }
                 }
                 // expected CFs at ρ = 0 against the brute-force oracle, for some quartets
                 {
@@ -170,6 +194,13 @@ int main(int argc, char** argv) {
                       << "; gradient reldiff " << gdiff << "\n";
         ++checked;
         worst = std::max(worst, d);
+        worstref = std::max(worstref, refdiff);
+        tot_size_new += size_new;
+        tot_size_ref += size_ref;
+        if (refdiff > 1e-9) {
+            ++refbad;
+            std::cout << line << " REFERENCE MISMATCH reldiff=" << refdiff << " ";
+        }
         if (d > 1e-8) {
             ++bad;
             std::cout << line << " MISMATCH ";
@@ -178,11 +209,15 @@ int main(int argc, char** argv) {
         }
         std::cout << "ntaxa=" << ntaxa << " h=" << nhyb << " quartets=" << nq << " classes=" << nclass
                   << " score=" << sold[0] << " reldiff=" << d << " oracle: " << ochecked << " quartets, "
-                  << obad_old << " wrong per-quartet, " << obad_new << " wrong classes\n";
+                  << obad_old << " wrong per-quartet, " << obad_new << " wrong classes; equation nodes: " << size_new
+                  << " (reference builder: " << size_ref << ")\n";
     }
     std::cout << "checked " << checked << " network(s), " << errors << " with an error in both implementations, " << bad
               << " with a score or gradient mismatch; worst relative difference " << worst << "\n"
               << "brute-force expected CFs (rho = 0) on " << tot_ochecked << " quartets: " << tot_obad_old
-              << " wrong with per-quartet equations, " << tot_obad_new << " wrong with quartet classes\n";
-    return tot_obad_new ? 1 : 0;
+              << " wrong with per-quartet equations, " << tot_obad_new << " wrong with quartet classes\n"
+              << "equation builder against the reference builder (score and gradient, rho = 0 and 0.5): " << refbad
+              << " network(s) differ; worst relative difference " << worstref << "; equation nodes " << tot_size_new
+              << " (reference: " << tot_size_ref << ")\n";
+    return (tot_obad_new || refbad) ? 1 : 0;
 }
