@@ -112,6 +112,13 @@ parameter optimization (not in SNaQ.jl):
   --optimizer NAME          "newton": projected Newton method, run to convergence (default);
                             "lbfgs": L-BFGS limited to --opt_maxeval evaluations, as SNaQ.jl
 
+hybrid additions (not in SNaQ.jl):
+  --guideHybrids [BOOL]     draw half of the proposed hybrid additions between edges where the
+                            data suggest a reticulation (default: true)
+  --minAddHybrid INT        with fewer than hmax hybridizations, a run does not stop before this
+                            many hybrid additions were evaluated since its last accepted move
+                            (default: Nfail; 0: no such requirement)
+
 search shortcuts (not in SNaQ.jl; each can be turned off with "false"):
   --boundPrune [BOOL]       reject a proposed network without fitting it when an upper bound of
                             its score shows it cannot be accepted (default: true)
@@ -193,6 +200,8 @@ CliArgs parse_cli(const std::vector<std::string>& args) {
     integer("--opt_maxeval", &o.opt_maxeval);
     str("--logprefix", &o.logprefix);
     str("--optimizer", &o.optimizer);
+    boolean("--guideHybrids", &o.guideHybrids);
+    integer("--minAddHybrid", &o.minAddHybrid);
     boolean("--boundPrune", &o.boundPrune);
     boolean("--dedup", &o.dedup);
     boolean("--dedupCounts", &o.dedupCounts);

@@ -342,6 +342,13 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
 
     std::vector<AttemptedMove> moves_attempted;
     MoveStats stats;
+    // Hybrid additions (guideHybrids, minAddHybrid)
+    const long long minaddhybrid = o.minAddHybrid >= 0 ? o.minAddHybrid : maxequivPLs;
+    long long addhybrid_evaluated = 0;  // since the last accepted move
+    long long sweep_skipped = 0;        // proposals in a row that were not evaluated, while only adding hybrids
+    bool hybridsweep = false;           // only hybrid additions are proposed
+    std::vector<HybridCandidate> candidates;
+    bool candidates_current = false;
     logtext(logfile, "Entering main loop with -logPL = " + julia_float(current_logPL));
 
     for (long long j = 2; j <= o.maxeval; ++j) {
@@ -352,8 +359,17 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
                       << maxequivPLs << "              " << std::flush;
         }
         Network Nprime = N.deepcopynetwork();
+        ProposalGuide guide;
+        guide.forceaddhybrid = hybridsweep;
+        if (o.guideHybrids && N.numhybrids < hmax) {
+            if (!candidates_current) {
+                candidates = hybridcandidates(N, N_cls, rho);
+                candidates_current = true;
+            }
+            guide.candidates = &candidates;
+        }
         std::pair<Move, MoveParams> proposal =
-            generatemoveproposal(Nprime, &N_cls, moves_attempted, hmax, o.probQR, qsub, CFdeltas, rng, rho);
+            generatemoveproposal(Nprime, &N_cls, moves_attempted, hmax, o.probQR, qsub, CFdeltas, rng, rho, &guide);
         const Move prop_move = proposal.first;
         const MoveParams prop_params = proposal.second;
         if (prop_move == Move::none) {
@@ -473,6 +489,9 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
                 moves_attempted.clear();
                 accepted = true;
                 ++epoch;
+                candidates_current = false;
+                addhybrid_evaluated = 0;
+                hybridsweep = false;
                 // a topology that was the current network is never fitted again
                 if (havesig) record(sig, current_logPL, true);
             } else {
@@ -487,7 +506,21 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
         // (duplicates are not recorded: the list would grow without bound, and
         // the search stops anyway after 1000 duplicates in a row)
         if (!accepted && !duplicate) moves_attempted.push_back(snapshot_attempt(Nprime, prop_move, prop_params));
-        if (completed && unchanged_iters > maxequivPLs) break;
+        if (completed && !accepted && prop_move == Move::addhybrid) ++addhybrid_evaluated;
+        if (hybridsweep) sweep_skipped = completed ? 0 : sweep_skipped + 1;
+        if (unchanged_iters > maxequivPLs && (completed || hybridsweep)) {
+            // The run would stop here. With room for more reticulations, first
+            // make sure that enough hybrid additions were evaluated.
+            if (N.numhybrids < hmax && addhybrid_evaluated < minaddhybrid && sweep_skipped < 1000) {
+                if (!hybridsweep)
+                    logtext(logfile, "Iteration " + std::to_string(j) + ": " + std::to_string(addhybrid_evaluated) +
+                                         " hybrid additions evaluated since the last accepted move; proposing only "
+                                         "hybrid additions until " + std::to_string(minaddhybrid) + " are.");
+                hybridsweep = true;
+            } else {
+                break;
+            }
+        }
         if (dupskips >= 1000) {
             logtext(logfile, "Iteration " + std::to_string(j) +
                                  ": 1000 proposals in a row were topologies already evaluated, stopping.");

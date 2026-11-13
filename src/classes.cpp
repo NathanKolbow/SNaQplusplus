@@ -332,6 +332,7 @@ QuartetClasses buildclasses(Network& net, const QuartetList& ql, const CFMatrix&
     };
     out.key.resize(nc);
     out.eqn.resize(nc);
+    out.portpid.resize(nc);
     std::vector<std::array<NodeId, 4>> portnodes(nc);
     std::vector<NodeId> topnode(nc);
     std::vector<uint32_t> tobuild;
@@ -351,6 +352,7 @@ QuartetClasses buildclasses(Network& net, const QuartetList& ql, const CFMatrix&
             ancestors(pn);
             const uint64_t* src = &ancstore[static_cast<size_t>(ancidx[static_cast<size_t>(pn)]) * W];
             for (size_t w = 0; w < W; ++w) un[w] |= src[w];
+            out.portpid[ci][static_cast<size_t>(x)] = net.E(be).pid;
             const uint64_t pp = static_cast<uint64_t>(net.E(be).pid);
             k.a += hashrec(0x51ed270bULL, static_cast<uint64_t>(x), pp, 0, 0);
             k.b ^= hashrec(0x2f9be6ccULL, static_cast<uint64_t>(x), pp, 0, 0);
@@ -472,6 +474,51 @@ double classupperbound(const QuartetClasses& cls) {
         }
     }
     return ub;
+}
+
+std::vector<HybridCandidate> hybridcandidates(const Network& net, const QuartetClasses& cls, double rho) {
+    const std::vector<double> params = pidparams(net, cls.npid);
+    const double alpha = rhotoalpha(rho);
+    struct Sum {
+        double excess = 0.0, n = 0.0;
+    };
+    std::unordered_map<uint64_t, Sum> sums;
+    static const int PAIRS[3][2][2] = {{{0, 1}, {2, 3}}, {{0, 2}, {1, 3}}, {{0, 3}, {1, 2}}};
+    for (size_t ci = 0; ci < cls.size(); ++ci) {
+        const auto& Q = cls.Q[ci];
+        const double n = Q[0] + Q[1] + Q[2];
+        if (!(n > 0.0)) continue;
+        const ClassEqn& ce = *cls.eqn[ci];
+        const auto e = classexpectedCF(ce, params.data(), cls.npid, alpha);
+        // a tree-like class: the split it displays is adjusted by branch lengths, not by a reticulation
+        const int displayed = ce.eqn.division_H == -1 ? ce.eqn.which_coal - 1 : -1;
+        for (int k = 0; k < 3; ++k) {
+            if (k == displayed) continue;
+            const double excess = Q[static_cast<size_t>(k)] - n * e[static_cast<size_t>(k)];
+            for (int half = 0; half < 2; ++half) {
+                int a = cls.portpid[ci][static_cast<size_t>(PAIRS[k][half][0])];
+                int b = cls.portpid[ci][static_cast<size_t>(PAIRS[k][half][1])];
+                if (a > b) std::swap(a, b);
+                Sum& sm = sums[(static_cast<uint64_t>(static_cast<uint32_t>(a)) << 32) | static_cast<uint32_t>(b)];
+                sm.excess += excess;
+                sm.n += n;
+            }
+        }
+    }
+    // The excess of a pair is a sum over its quartets: divided by the square
+    // root of their number, pairs supported by few quartets with a consistent
+    // excess rank above pairs with many quartets and a diluted one, and noise
+    // (whose sum grows like that square root) is on the same scale for all.
+    std::vector<HybridCandidate> out;
+    out.reserve(sums.size());
+    for (const auto& kv : sums)
+        if (kv.second.excess > 0.0)
+            out.push_back({static_cast<int>(kv.first >> 32), static_cast<int>(kv.first & 0xffffffffULL),
+                           kv.second.excess / std::sqrt(kv.second.n)});
+    std::sort(out.begin(), out.end(), [](const HybridCandidate& x, const HybridCandidate& y) {
+        return x.weight != y.weight ? x.weight > y.weight : (x.pid1 != y.pid1 ? x.pid1 < y.pid1 : x.pid2 < y.pid2);
+    });
+    return out;
 }
 
 std::vector<double> pidparams(const Network& net, int npid) {

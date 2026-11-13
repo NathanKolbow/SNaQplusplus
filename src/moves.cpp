@@ -101,7 +101,32 @@ NodeId addhybrid(Network& net, EdgeId from_edge, EdgeId to_edge, Rng& rng) {
     return newH;
 }
 
-MoveParams sampleaddhybridparameters(Network& net, Rng& rng) {
+MoveParams sampleaddhybridparameters(Network& net, Rng& rng, const ProposalGuide* guide) {
+    if (guide && guide->candidates && !guide->candidates->empty() && rng.rand() < 0.5) {
+        const std::vector<HybridCandidate>& cands = *guide->candidates;
+        std::vector<double> w(cands.size());
+        for (size_t k = 0; k < cands.size(); ++k) w[k] = cands[k].weight;
+        for (int niter = 0; niter < 20; ++niter) {
+            const HybridCandidate& c = cands[rng.weighted_index(w)];
+            EdgeId e1 = NONE, e2 = NONE;
+            for (EdgeId e : net.edge) {
+                if (net.E(e).pid == c.pid1) e1 = e;
+                if (net.E(e).pid == c.pid2) e2 = e;
+            }
+            if (e1 == NONE || e2 == NONE) continue;
+            if (rng.rand() < 0.5) std::swap(e1, e2);  // the direction is not known
+            MoveParams mp;
+            mp.valid = true;
+            if (isvalidaddhybrid(net, e1, e2)) {
+                mp.p = {{true, e1}, {true, e2}};
+                return mp;
+            }
+            if (isvalidaddhybrid(net, e2, e1)) {
+                mp.p = {{true, e2}, {true, e1}};
+                return mp;
+            }
+        }
+    }
     for (int niter = 0; niter < 1000; ++niter) {
         auto pick = rng.sample_without_replacement(static_cast<long long>(net.edge.size()), 2);
         EdgeId e1 = net.edge[static_cast<size_t>(pick[0])], e2 = net.edge[static_cast<size_t>(pick[1])];
@@ -655,8 +680,9 @@ void applymove(Network& net, Move move, const MoveParams& mp, Rng& rng) {
     throw SnaqError(std::string("Move \"") + move_name(move) + "\" not recognized.");
 }
 
-std::pair<Move, MoveParams> samplemoveproposal(Network& net, int hmax, Rng& rng) {
-    if (net.numhybrids < hmax && rng.rand() < 0.05) return {Move::addhybrid, sampleaddhybridparameters(net, rng)};
+std::pair<Move, MoveParams> samplemoveproposal(Network& net, int hmax, Rng& rng, const ProposalGuide* guide) {
+    if (net.numhybrids < hmax && ((guide && guide->forceaddhybrid) || rng.rand() < 0.05))
+        return {Move::addhybrid, sampleaddhybridparameters(net, rng, guide)};
     if (net.numhybrids == 0) {
         double r = rng.rand();
         if (r < 0.7) return {Move::rNNI1, samplerNNIparameters(net, 1, rng)};
@@ -729,7 +755,7 @@ static EdgeId sampleprobQRedge(Network& N, const QuartetClasses& cls, const CFMa
 std::pair<Move, MoveParams> generatemoveproposal(Network& Nprime, const QuartetClasses* classes,
                                                  const std::vector<AttemptedMove>& attempted, int hmax,
                                                  double probQR, const CFMatrix& Q, std::vector<double>& CFdeltas,
-                                                 Rng& rng, double rho) {
+                                                 Rng& rng, double rho, const ProposalGuide* guide) {
     EdgeId required_edge = NONE;
     if (probQR > 0.0 && (!classes || classes->qclass.empty()))
         throw SnaqError("generatemoveproposal: probQR > 0 needs the quartet classes of the current network");
@@ -743,10 +769,10 @@ std::pair<Move, MoveParams> generatemoveproposal(Network& Nprime, const QuartetC
         return false;
     };
     long retries = 0;
-    auto mp = samplemoveproposal(Nprime, hmax, rng);
+    auto mp = samplemoveproposal(Nprime, hmax, rng, guide);
     int attempted_reqedges = 1;
     while (!validmove(mp.first, mp.second)) {
-        mp = samplemoveproposal(Nprime, hmax, rng);
+        mp = samplemoveproposal(Nprime, hmax, rng, guide);
         ++retries;
         if (retries >= 1000) {
             if (required_edge == NONE || attempted_reqedges >= 100) return {Move::none, {}};

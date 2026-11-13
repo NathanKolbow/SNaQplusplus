@@ -80,6 +80,14 @@ struct SnaqOptions {
     // (towards Nfail). If false, another proposal is drawn instead, so a run
     // tries Nfail distinct topologies before it stops.
     bool dedupCounts = false;
+    // Half of the proposed hybrid additions are drawn between edges where the
+    // data suggest a reticulation (see hybridcandidates); the other half
+    // uniformly, as SNaQ.jl does.
+    bool guideHybrids = true;
+    // A run whose network has fewer than hmax reticulations does not stop
+    // before this many hybrid additions have been evaluated since its last
+    // accepted move. -1: Nfail. 0: no such requirement, as SNaQ.jl.
+    int minAddHybrid = -1;
     // How branch lengths and γ are optimized: "newton" (projected Newton on
     // the quartet classes, run to convergence) or "lbfgs" (NLopt's L-BFGS
     // limited to opt_maxeval evaluations, as SNaQ.jl).

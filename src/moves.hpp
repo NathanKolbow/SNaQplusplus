@@ -60,8 +60,20 @@ bool can_update_inplace(Move m);
 // applymove!(N, move, params)
 void applymove(Network& net, Move move, const MoveParams& params, Rng& rng);
 
+// Optional guidance for proposals (not in SNaQ.jl).
+struct ProposalGuide {
+    // Propose only the addition of a hybrid edge.
+    bool forceaddhybrid = false;
+    // Pairs of edges between which the data suggest a reticulation
+    // (hybridcandidates). Half of the hybrid additions are drawn among them,
+    // with probability proportional to their weight; the other half
+    // uniformly, as SNaQ.jl does.
+    const std::vector<HybridCandidate>* candidates = nullptr;
+};
+
 // samplemoveproposal(N, hmax, rng)
-std::pair<Move, MoveParams> samplemoveproposal(Network& net, int hmax, Rng& rng);
+std::pair<Move, MoveParams> samplemoveproposal(Network& net, int hmax, Rng& rng,
+                                               const ProposalGuide* guide = nullptr);
 
 // generatemoveproposal(...): returns Move::none if no untried move remains.
 // `classes` are the quartet classes of the current network (of which Nprime is
@@ -70,12 +82,12 @@ std::pair<Move, MoveParams> samplemoveproposal(Network& net, int hmax, Rng& rng)
 std::pair<Move, MoveParams> generatemoveproposal(Network& Nprime, const QuartetClasses* classes,
                                                  const std::vector<AttemptedMove>& attempted, int hmax,
                                                  double probQR, const CFMatrix& Q, std::vector<double>& CFdeltas,
-                                                 Rng& rng, double rho);
+                                                 Rng& rng, double rho, const ProposalGuide* guide = nullptr);
 
 // individual moves (exposed for tests)
 bool isvalidaddhybrid(const Network& net, EdgeId from_edge, EdgeId to_edge);
 NodeId addhybrid(Network& net, EdgeId from_edge, EdgeId to_edge, Rng& rng);
-MoveParams sampleaddhybridparameters(Network& net, Rng& rng);
+MoveParams sampleaddhybridparameters(Network& net, Rng& rng, const ProposalGuide* guide = nullptr);
 
 bool isvalidrNNI1(const Network& net, NodeId s, NodeId t, NodeId u, NodeId v);
 bool isvalidrNNI2(const Network& net, NodeId s, NodeId t, NodeId u, NodeId v);

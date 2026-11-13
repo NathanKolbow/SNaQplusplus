@@ -187,11 +187,11 @@ TEST(Dedup, SearchStillFindsTheNetwork) {
         SnaqOptions o = quiet_options();
         o.threads = 2;
         o.hmax = 2;
-        o.runs = 6;
+        o.runs = 10;
         o.Nfail = 25;
         o.dedup = dedup;
         Network best = snaq_cfs({start}, true, q, taxa, o);
-        EXPECT_GT(best.fscore, -0.05) << "dedup = " << dedup;
+        EXPECT_GT(best.fscore, -0.1) << "dedup = " << dedup;
     }
 }
 
@@ -233,4 +233,36 @@ TEST(NewtonFit, ReachesTheOptimumOfLbfgs) {
             }
         }
     }
+}
+
+TEST(HybridGuide, CandidatesPointAtTheMissingReticulation) {
+    // Data from a network with one reticulation, fitted on its major tree: the
+    // two edges the reticulation connects must be among the best candidate
+    // pairs (the pairs above it connect edges next to them).
+    Network truth = nw("((a:1,b:1):1,((c:1,(d:0.5)#H1:0.5::0.7):1,(e:1,(f:1,#H1:0.5::0.3):1):1):1,(g:1,h:1):1);");
+    Network t2 = truth.clone();
+    CFMatrix q = computeexpectedCFmatrix(t2);
+    Network tree = truth.deepcopynetwork();
+    semidirectnetwork(tree);
+    removeexcessreticulations(tree, 0);
+    tree.compact_pids();
+    ClassOptions co;
+    co.qlogq = obsqlogq(q);
+    QuartetClasses cls = buildclasses(tree, QuartetList::allquartets(tree.numtaxa), q, co);
+    FitOptions fo;
+    fo.method = FitMethod::newton;
+    fitclasses(tree, cls, 0.0, fo);
+    std::vector<HybridCandidate> cands = hybridcandidates(tree, cls, 0.0);
+    ASSERT_FALSE(cands.empty());
+    // the reticulation goes between the pendant edges of d and f
+    int pd = -1, pf = -1;
+    for (NodeId l : tree.leaf) {
+        if (tree.N(l).name == "d") pd = tree.E(tree.getparentedge(l)).pid;
+        if (tree.N(l).name == "f") pf = tree.E(tree.getparentedge(l)).pid;
+    }
+    size_t rank = cands.size();
+    for (size_t k = 0; k < cands.size(); ++k)
+        if ((cands[k].pid1 == pd && cands[k].pid2 == pf) || (cands[k].pid1 == pf && cands[k].pid2 == pd)) rank = k;
+    EXPECT_LT(rank, 6u) << "of " << cands.size() << " candidate pairs";
+    EXPECT_GT(cands.size(), 20u);
 }

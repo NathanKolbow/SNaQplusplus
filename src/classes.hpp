@@ -52,6 +52,9 @@ struct QuartetClasses {
     std::vector<ClassKey> key;
     std::vector<std::shared_ptr<const ClassEqn>> eqn;
     std::vector<std::array<double, 3>> Q;  // summed (weighted) observed CFs, in the class's column order
+    // pids of the class's four ports (cut edges), in order: the class's columns
+    // are the splits 01|23, 02|13 and 03|12 of these ports
+    std::vector<std::array<int, 4>> portpid;
     std::unordered_map<ClassKey, uint32_t, ClassKeyHash> bykey;
     // per quartet (only when requested): its class, and the observed-CF column
     // of each class column (2 bits each)
@@ -102,6 +105,19 @@ void finishclasses(const Network& net, QuartetClasses& cls, int nthreads = 1);
 // each class gets the parameter values that suit it best, whatever the other
 // classes need. No fit of the network can score higher.
 double classupperbound(const QuartetClasses& cls);
+
+// A pair of edges between which the data suggest a reticulation.
+struct HybridCandidate {
+    int pid1, pid2;  // Edge::pid of the two edges
+    double weight;
+};
+// Pairs of cut edges that a new hybrid edge could connect to explain what the
+// network `net` (with its current parameter values) does not. For every class
+// and every split that pairs two of its ports, the observed minus expected
+// CFs of the split are added to the pair; the weight of a pair is its total
+// excess divided by the square root of its number of quartets. Pairs with a
+// positive weight are returned, sorted by decreasing weight.
+std::vector<HybridCandidate> hybridcandidates(const Network& net, const QuartetClasses& cls, double rho);
 
 // The value of every parameter of `net`, indexed by pid (`npid` entries).
 std::vector<double> pidparams(const Network& net, int npid);
