@@ -1,0 +1,93 @@
+// Quartet classes: the sufficient statistics of a network's pseudolikelihood.
+//
+// Two quartets are in the same class when their four lineages enter the
+// network through the same four cut edges ("ports": for each taxon, the
+// highest cut edge above it whose descendants include none of the other three
+// taxa). Below its port a lineage is alone, so nothing there affects the
+// quartet's expected CFs: all quartets of a class share one equation, and the
+// pseudolikelihood only needs the sum of their observed CFs.
+//
+// Building the classes costs a few table lookups per quartet, plus one
+// equation per class. Equations are found again in the classes of the
+// previous network (`reuse`) when the part of the network above the four
+// ports is unchanged, whatever the move that was applied.
+#pragma once
+
+#include <array>
+#include <cstdint>
+#include <memory>
+#include <unordered_map>
+#include <vector>
+
+#include "equations.hpp"
+#include "likelihood.hpp"
+#include "network.hpp"
+#include "optimize.hpp"
+
+namespace csnaq {
+
+// The quartets used by a search: all of them, or a sample.
+struct QuartetList {
+    int ntaxa = 0;
+    bool all = false;                      // every quartet, in rank order
+    std::vector<std::array<int, 4>> taxa;  // otherwise: the sorted taxon indices of each quartet
+    size_t size() const { return all ? static_cast<size_t>(nchoose4(ntaxa)) : taxa.size(); }
+    static QuartetList allquartets(int ntaxa);
+    static QuartetList fromranks(int ntaxa, const std::vector<long long>& ranks);
+};
+
+// Identifies the part of a network that determines a class's equation: the
+// four ports, in order, and every edge above them (128-bit hash).
+struct ClassKey {
+    uint64_t a = 0, b = 0;
+    bool operator==(const ClassKey& o) const { return a == o.a && b == o.b; }
+};
+struct ClassKeyHash {
+    size_t operator()(const ClassKey& k) const { return static_cast<size_t>(k.a ^ (k.b * 0x9e3779b97f4a7c15ULL)); }
+};
+
+struct QuartetClasses {
+    int npid = 0;
+    // per class
+    std::vector<ClassKey> key;
+    std::vector<std::shared_ptr<const ClassEqn>> eqn;
+    std::vector<std::array<double, 3>> Q;  // summed (weighted) observed CFs, in the class's column order
+    std::unordered_map<ClassKey, uint32_t, ClassKeyHash> bykey;
+    // per quartet (only when requested): its class, and the observed-CF column
+    // of each class column (2 bits each)
+    std::vector<uint32_t> qclass;
+    std::vector<uint8_t> qcols;
+    // prepared for the fit
+    ClassBatch batch;
+    size_t nbuilt = 0;  // equations built (the others were reused)
+    size_t size() const { return eqn.size(); }
+};
+
+struct ClassOptions {
+    const double* weights = nullptr;          // weight of each quartet (default: 1)
+    const QuartetClasses* reuse = nullptr;    // classes of a previous network to take equations from
+    bool perquartet = false;                  // fill qclass / qcols
+    double qlogq = 0.0;                       // sum over quartets of weight * q log q (see obsqlogq)
+    int nthreads = 1;
+};
+
+// Sum over the rows of `obs` of weight * sum_k q_k log q_k.
+double obsqlogq(const CFMatrix& obs, const double* weights = nullptr);
+
+// The classes of `net` for the quartets `ql`, whose observed CFs are the rows
+// of `obs`. Renumbers the nodes and edges of `net`, as SNaQ does before it
+// builds quartet equations.
+QuartetClasses buildclasses(Network& net, const QuartetList& ql, const CFMatrix& obs, const ClassOptions& opt);
+
+// The value of every parameter of `net`, indexed by pid (`npid` entries).
+std::vector<double> pidparams(const Network& net, int npid);
+
+// fitnumericalparameters! on the classes of `net`. `flipped` is set to true
+// if a hybrid node's major and minor edges were exchanged.
+double fitclasses(Network& net, const QuartetClasses& cls, double rho, const FitOptions& opt, int nthreads = 1,
+                  bool* flipped = nullptr);
+
+// SNaQ score of `net` at its current parameter values.
+double scoreclasses(const Network& net, const QuartetClasses& cls, double rho, int nthreads = 1);
+
+}  // namespace csnaq

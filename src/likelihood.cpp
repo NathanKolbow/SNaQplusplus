@@ -3,8 +3,10 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <memory>
 #include <unordered_map>
 
+#include "classes.hpp"
 #include "parallel.hpp"
 #include "snaq_network.hpp"
 
@@ -515,6 +517,151 @@ double computelossandgradient(const TreeQuartetBatch& batch, const std::vector<Q
     return total;
 }
 
+double evalclasses(const ClassBatch& batch, const double* params, double* grad, double alpha, LossWorkspace& ws,
+                   int nthreads, const int* dense, int ndense, double* hess) {
+    const int np = batch.npid;
+    const size_t nparam = static_cast<size_t>(np);
+    nthreads = hess ? 1 : std::max(1, nthreads);
+    LossWorkspace::Impl* w = ws.get(np, nthreads);
+    for (size_t p = 0; p < nparam; ++p) grad[p] = 0.0;
+    if (hess) std::fill(hess, hess + static_cast<size_t>(ndense) * static_cast<size_t>(ndense), 0.0);
+    const double log3 = std::log(3.0);
+
+    // --- tree-like classes ---
+    const size_t ng = batch.qres.size();
+    std::fill(w->tree_grad.begin(), w->tree_grad.end(), 0.0);
+    std::fill(w->partial.begin(), w->partial.end(), 0.0);
+    parallel_for(ng, nthreads, [&](size_t lo, size_t hi, int tid) {
+        double* g = &w->tree_grad[static_cast<size_t>(tid) * nparam];
+        double total = 0.0;
+        for (size_t j = lo; j < hi; ++j) {
+            const size_t a = batch.off[j], b = batch.off[j + 1];
+            double branchsum = 0.0;
+            for (size_t k = a; k < b; ++k) branchsum += params[batch.coal[k]];
+            const double E = std::exp(-branchsum);
+            const double res = 1.0 - (2.0 / 3.0) * E;
+            const double oth = E / 3.0;
+            const double res_c = std::max(res, 1e-9);
+            const double oth_c = std::max(oth, 1e-9);
+            const double qr = batch.qres[j], qo = batch.qoth[j];
+            const double logoth = (oth >= 1e-9) ? (-branchsum - log3) : std::log(1e-9);
+            total += qr * std::log(res_c) + qo * logoth;
+            const double gc = qr * ((2.0 / 3.0) * E) / res_c - qo * ((1.0 / 3.0) * E) / oth_c;
+            for (size_t k = a; k < b; ++k) g[batch.coal[k]] += gc;
+            if (hess) {
+                const double curv = qr * ((2.0 / 3.0) * E) / (res_c * res_c);
+                for (size_t k = a; k < b; ++k) {
+                    const int dk = dense[batch.coal[k]];
+                    if (dk < 0) continue;
+                    double* row = hess + static_cast<size_t>(dk) * static_cast<size_t>(ndense);
+                    for (size_t l = a; l < b; ++l) {
+                        const int dl = dense[batch.coal[l]];
+                        if (dl >= 0) row[dl] += curv;
+                    }
+                }
+            }
+        }
+        w->partial[static_cast<size_t>(tid)] += total;
+    });
+    double total = -batch.qlogq;
+    for (int t = 0; t < nthreads; ++t) {
+        total += w->partial[static_cast<size_t>(t)];
+        const double* g = &w->tree_grad[static_cast<size_t>(t) * nparam];
+        for (size_t p = 0; p < nparam; ++p) grad[p] += g[p];
+    }
+
+    // --- reticulate classes ---
+    if (!batch.gen.empty()) {
+        for (int t = 0; t < nthreads; ++t) {
+            auto& tg = w->scratch[static_cast<size_t>(t)].total_grad;
+            std::fill(tg.begin(), tg.end(), 0.0);
+            w->partial[static_cast<size_t>(t)] = 0.0;
+        }
+        parallel_for(batch.gen.size(), nthreads, [&](size_t lo, size_t hi, int tid) {
+            ThreadScratch& ts = w->scratch[static_cast<size_t>(tid)];
+            double* ig = ts.quartet_grad.data();
+            double tot = 0.0;
+            for (size_t g = lo; g < hi; ++g) {
+                const auto& ps = batch.gen[g]->params;
+                ts.rg.reset();
+                for (int p : ps) ig[3 * p] = ig[3 * p + 1] = ig[3 * p + 2] = 0.0;
+                auto r = recur(batch.gen[g]->eqn, params, ig, ts.rg, alpha);
+                double e1 = std::max(r[0], 1e-9), e2 = std::max(r[1], 1e-9);
+                double e3 = std::max(1.0 - r[0] - r[1], 1e-9);
+                const auto& Q = batch.genQ[g];
+                tot += Q[0] * std::log(e1) + Q[1] * std::log(e2) + Q[2] * std::log(e3);
+                const double i1 = Q[0] / e1, i2 = Q[1] / e2, i3 = Q[2] / e3;
+                for (int p : ps)
+                    ts.total_grad[static_cast<size_t>(p)] += ig[3 * p] * i1 + ig[3 * p + 1] * i2 + ig[3 * p + 2] * i3;
+                if (hess) {
+                    const double c1 = i1 / e1, c2 = i2 / e2, c3 = i3 / e3;
+                    for (int p : ps) {
+                        const int dp = dense[p];
+                        if (dp < 0) continue;
+                        const double a1 = c1 * ig[3 * p], a2 = c2 * ig[3 * p + 1], a3 = c3 * ig[3 * p + 2];
+                        double* row = hess + static_cast<size_t>(dp) * static_cast<size_t>(ndense);
+                        for (int q : ps) {
+                            const int dq = dense[q];
+                            if (dq >= 0) row[dq] += a1 * ig[3 * q] + a2 * ig[3 * q + 1] + a3 * ig[3 * q + 2];
+                        }
+                    }
+                }
+            }
+            w->partial[static_cast<size_t>(tid)] = tot;
+        });
+        for (int t = 0; t < nthreads; ++t) {
+            total += w->partial[static_cast<size_t>(t)];
+            const auto& tg = w->scratch[static_cast<size_t>(t)].total_grad;
+            for (size_t p = 0; p < nparam; ++p) grad[p] += tg[p];
+        }
+    }
+    return total;
+}
+
+std::array<double, 3> classexpectedCF(const ClassEqn& ce, const double* params, int npid, double alpha) {
+    static thread_local std::vector<double> gs;
+    static thread_local std::unique_ptr<RunningGradient> rg;
+    static thread_local int rgsize = -1;
+    if (gs.size() < 3 * static_cast<size_t>(npid) + 3) gs.assign(3 * static_cast<size_t>(npid) + 3, 0.0);
+    if (rgsize < npid) {
+        rg = std::make_unique<RunningGradient>(npid);
+        rgsize = npid;
+    }
+    rg->reset();
+    auto r = recur(ce.eqn, params, gs.data(), *rg, alpha);
+    return {r[0], r[1], 1.0 - r[0] - r[1]};
+}
+
+double classscoreupperbound(const ClassBatch& batch) {
+    double ub = -batch.qlogq;
+    const double log3 = std::log(3.0), logfloor = std::log(1e-9);
+    for (size_t j = 0; j < batch.qres.size(); ++j) {
+        const double qr = batch.qres[j], qo = batch.qoth[j];
+        if (batch.off[j] == batch.off[j + 1]) {  // no parameter: the path length is 0
+            ub += -(qr + qo) * log3;
+            continue;
+        }
+        // maximize qr log(1 - 2z/3) + qo log(z/3) over z = exp(-s) in (0, 1]
+        double best;
+        if (qo <= 0.0) {
+            best = 0.0;
+        } else {
+            const double z = 3.0 * qo / (2.0 * (qr + qo));
+            best = z >= 1.0 ? -(qr + qo) * log3 : qr * std::log(1.0 - 2.0 * z / 3.0) + qo * std::log(z / 3.0);
+            best = std::max(best, qo * logfloor);  // the loss floors expected CFs at 1e-9
+        }
+        ub += best;
+    }
+    for (size_t g = 0; g < batch.genQ.size(); ++g) {
+        const auto& Q = batch.genQ[g];
+        const double n = Q[0] + Q[1] + Q[2];
+        for (int k = 0; k < 3; ++k)
+            if (Q[k] > 0.0) ub += Q[k] * std::max(std::log(Q[k] / n), logfloor);
+        ub += 4e-9 * n;  // expected CFs floored at 1e-9 can sum to slightly more than 1
+    }
+    return ub;
+}
+
 double computelossandgradient(const std::vector<QuartetData>& qdata, const std::vector<double>& params,
                               std::vector<double>& grad, const CFMatrix& q, double alpha, int nthreads) {
     const int np = static_cast<int>(params.size());
@@ -561,25 +708,39 @@ std::array<double, 2> computeexpectedCF(const QuartetDataImpl& qd, const std::ve
 namespace csnaq {
 
 CFMatrix computeexpectedCFmatrix(Network& net, double rho, int nthreads) {
-    EquationSet es = findquartetequations(net, nthreads);
+    fixnegativeedges(net);
+    checkgammas(net);
+    const size_t nq = static_cast<size_t>(nchoose4(net.numtaxa));
+    CFMatrix dummy;
+    dummy.v.assign(3 * nq, 1.0 / 3.0);
+    ClassOptions co;
+    co.perquartet = true;
+    co.nthreads = nthreads;
+    QuartetClasses cls = buildclasses(net, QuartetList::allquartets(net.numtaxa), dummy, co);
+    const std::vector<double> params = pidparams(net, cls.npid);
+    const double alpha = rhotoalpha(rho);
+    std::vector<std::array<double, 3>> ecf(cls.size());
+    for (size_t c = 0; c < cls.size(); ++c) ecf[c] = classexpectedCF(*cls.eqn[c], params.data(), cls.npid, alpha);
     CFMatrix m;
-    m.v.resize(3 * es.eqns.size());
-    parallel_for(es.eqns.size(), nthreads, [&](size_t lo, size_t hi, int) {
-        for (size_t j = lo; j < hi; ++j) {
-            auto e = computeexpectedCF(*es.eqns[j], es.info.params, rho);
-            m(j, 0) = e[0];
-            m(j, 1) = e[1];
-            m(j, 2) = 1.0 - e[0] - e[1];
-        }
-    });
+    m.v.resize(3 * nq);
+    for (size_t j = 0; j < nq; ++j) {
+        const auto& e = ecf[cls.qclass[j]];
+        const uint8_t cols = cls.qcols[j];
+        for (int k = 0; k < 3; ++k) m(j, (cols >> (2 * k)) & 3) = e[static_cast<size_t>(k)];
+    }
     return m;
 }
 
 double computeSNaQscore_net(Network& N, const CFMatrix& q, double rho, int nthreads) {
     Network c = N.deepcopynetwork();
     semidirectnetwork(c);
-    EquationSet es = findquartetequations(c, nthreads);
-    double s = computeSNaQscore(es.eqns, es.info.params, q, rho, nthreads);
+    fixnegativeedges(c);
+    checkgammas(c);
+    ClassOptions co;
+    co.qlogq = obsqlogq(q);
+    co.nthreads = nthreads;
+    QuartetClasses cls = buildclasses(c, QuartetList::allquartets(c.numtaxa), q, co);
+    double s = scoreclasses(c, cls, rho, nthreads);
     N.fscore = s;
     return s;
 }

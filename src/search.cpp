@@ -13,6 +13,7 @@
 #include <set>
 #include <thread>
 
+#include "classes.hpp"
 #include "equations.hpp"
 #include "moves.hpp"
 #include "network_manip.hpp"
@@ -172,24 +173,6 @@ static std::vector<long long> allranks(long long n) {
     return r;
 }
 
-// optimizetopology!(Nprime, old_eqns, move, params, qsub, ...)
-static double optimizetopology(Network& Nprime, const std::vector<QuartetData>& old_eqns,
-                               std::vector<QuartetData>& new_eqns, Move move, const MoveParams& params,
-                               const CFMatrix& qsub, int opt_maxeval, bool force_resample_all, double rho,
-                               const SnaqOptions& o, int nthreads) {
-    if (!force_resample_all && can_update_inplace(move)) {
-        OptInfo info = gatheroptimizationinfo(Nprime, true);
-        if (move == Move::rNNI1)
-            applyrNNI1update(Nprime, old_eqns, new_eqns, info.param_map, params.p.at(2).id, nthreads);
-        else
-            applyrNNI2update(Nprime, old_eqns, new_eqns, info.param_map, params.p.at(0).id, params.p.at(1).id,
-                             params.p.at(2).id, params.p.at(3).id, nthreads);
-    } else {
-        rebuildquartetequations(Nprime, old_eqns, new_eqns, nthreads);
-    }
-    return fitnumericalparameters(Nprime, new_eqns, qsub, rho, search_fit_options(o, opt_maxeval), nthreads);
-}
-
 static std::string round5(double x) { return julia_float(julia_round(x, 5)); }
 static std::string round3(double x) { return julia_float(julia_round(x, 3)); }
 static std::string round6(double x) { return julia_float(julia_round(x, 6)); }
@@ -272,19 +255,36 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
         q_idxs = sampleqindices(nqall, propQuartets, rng);
     }
     double current_logPL = 0.0;
-    EquationSet neq = findquartetequations(N, q_idxs, nthreads);
-    std::vector<QuartetData> N_eqns = std::move(neq.eqns);
     std::vector<double> CFdeltas;
     long long unchanged_iters = 0;
     CFMatrix qsub = q.rows(q_idxs, nthreads);
+    // The search works on quartet classes (classes.hpp): the equations of the
+    // classes a move leaves untouched are taken from the current network.
+    const QuartetList qlist = QuartetList::fromranks(N.numtaxa, q_idxs);
+    q_idxs = std::vector<long long>();
+    ClassOptions copt;
+    copt.perquartet = o.probQR > 0.0;
+    copt.qlogq = obsqlogq(qsub);
+    copt.nthreads = nthreads;
+    fixnegativeedges(N);
+    checkgammas(N);
+    N.compact_pids();
+    QuartetClasses N_cls = buildclasses(N, qlist, qsub, copt);
+    // Classes of `net` (a copy of N after a move, or N itself), reusing N's equations.
+    auto classesof = [&](Network& net) {
+        ClassOptions po = copt;
+        po.reuse = &N_cls;
+        return buildclasses(net, qlist, qsub, po);
+    };
 
     if (o.updateBL) {
-        fitnumericalparameters(N, N_eqns, qsub, rho, search_fit_options(o, -1), nthreads);
+        bool flipped = false;
+        fitclasses(N, N_cls, rho, search_fit_options(o, -1), nthreads, &flipped);
         if (!o.restrictions(N)) throw SnaqError("N does not meet restrictions after preopt");
         current_logPL = N.fscore;
+        if (flipped) N_cls = classesof(N);
     } else {
-        OptInfo info = gatheroptimizationinfo(N, true);
-        current_logPL = computeSNaQscore(N_eqns, gatherparams(N, info.param_map), qsub, rho, nthreads);
+        current_logPL = scoreclasses(N, N_cls, rho, nthreads);
     }
 
     std::vector<AttemptedMove> moves_attempted;
@@ -300,7 +300,7 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
         }
         Network Nprime = N.deepcopynetwork();
         std::pair<Move, MoveParams> proposal =
-            generatemoveproposal(Nprime, N_eqns, moves_attempted, hmax, o.probQR, qsub, CFdeltas, rng, rho);
+            generatemoveproposal(Nprime, &N_cls, moves_attempted, hmax, o.probQR, qsub, CFdeltas, rng, rho);
         const Move prop_move = proposal.first;
         const MoveParams prop_params = proposal.second;
         if (prop_move == Move::none) {
@@ -338,27 +338,13 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
                 logtext(logfile, prefix() + " REJECTED " + mname + " (restrictions not met)");
                 return false;
             }
-            int Nprime_np = countoptimizationparams(Nprime);
-            int N_np = countoptimizationparams(N);
-            bool cannot_do_inplace = N.numhybrids != Nprime.numhybrids || N_np != Nprime_np;
-            // FIX (deviation from SNaQ.jl): SNaQ.jl's in-place equation update
-            // gives equations that differ from a full rebuild (1) when the move
-            // shifts parameter indices (e.g. a pendant edge becomes internal,
-            // keeping the same parameter count), and (2) for rNNI(1) moves in
-            // which v is the parent of u, because quartets with taxa below t
-            // are not re-derived. Those cases are rebuilt here instead
-            // (see tests/test_inplace_and_data.cpp).
-            if (!cannot_do_inplace && can_update_inplace(prop_move)) {
-                if (!sameparameterlayout(N, Nprime)) cannot_do_inplace = true;
-                if (prop_move == Move::rNNI1) {
-                    NodeId u = prop_params.p.at(2).id, v = prop_params.p.at(3).id;
-                    auto vp = Nprime.getparents(v);
-                    if (!(vp.size() == 1 && Nprime.getparent_node(v) == u)) cannot_do_inplace = true;
-                }
-            }
-            std::vector<QuartetData> Nprime_eqns;
-            double Nprime_logPL = optimizetopology(Nprime, N_eqns, Nprime_eqns, prop_move, prop_params, qsub,
-                                                   opt_maxeval, cannot_do_inplace, rho, o, nthreads);
+            // (SNaQ.jl updates the equations in place after rNNI moves and rebuilds
+            // them otherwise; here every move reuses the equations of the classes
+            // it leaves untouched.)
+            QuartetClasses Nprime_cls = classesof(Nprime);
+            bool flipped = false;
+            double Nprime_logPL =
+                fitclasses(Nprime, Nprime_cls, rho, search_fit_options(o, opt_maxeval), nthreads, &flipped);
             if (Nprime_logPL == -std::numeric_limits<double>::infinity())
                 throw SnaqError("Nprime_logPL is -Inf?? newick: " + writenewick(Nprime, true));
             if (std::isnan(Nprime_logPL))
@@ -368,7 +354,10 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
             if (Nprime_logPL - current_logPL > o.liktolAbs &&
                 (current_logPL - Nprime_logPL) / current_logPL > o.liktolRel) {
                 N = std::move(Nprime);
-                N_eqns = std::move(Nprime_eqns);
+                N_cls = std::move(Nprime_cls);
+                // equations refer to a hybrid's minor edge: rebuild those of the
+                // hybrids whose major and minor edges were exchanged by the fit
+                if (flipped) N_cls = classesof(N);
                 CFdeltas.clear();
                 stats.accepted[mname] += 1;
                 stats.dPL[mname].push_back(Nprime_logPL - current_logPL);
@@ -401,7 +390,14 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
         logmessage(filename, "Re-optimizing branch lengths with ALL quartets.");
         // QUIRK: SNaQ.jl calls fitnumericalparameters!(N, q) here, which uses ρ = 0
         // regardless of the ρ of the search.
-        N.fscore = fitnumericalparameters_all(N, q.matrix(), 0.0, FitOptions{}, nthreads);
+        const CFMatrix& full = q.matrix();
+        ClassOptions fo;
+        fo.qlogq = obsqlogq(full);
+        fo.nthreads = nthreads;
+        fixnegativeedges(N);
+        checkgammas(N);
+        QuartetClasses fc = buildclasses(N, QuartetList::allquartets(N.numtaxa), full, fo);
+        N.fscore = fitclasses(N, fc, 0.0, FitOptions{}, nthreads);
         logmessage(filename,
                    "END propQuartets<1.0 post-search parameter optimization: found minimizer topology with SNaQ "
                    "score=" + round5(N.fscore));
@@ -410,8 +406,14 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
         logmessage(filename, "Re-optimizing branch lengths with " + std::to_string(final_idxs.size()) + " of " +
                                  std::to_string(nchoose4(N.numtaxa)) + " quartets (propQuartetsFinal = " +
                                  julia_float(propQuartetsFinal) + ").");
-        EquationSet fe = findquartetequations(N, final_idxs, nthreads);
-        N.fscore = fitnumericalparameters(N, fe.eqns, q.rows(final_idxs, nthreads), rho, FitOptions{}, nthreads);
+        const CFMatrix fq = q.rows(final_idxs, nthreads);
+        ClassOptions fo;
+        fo.qlogq = obsqlogq(fq);
+        fo.nthreads = nthreads;
+        fixnegativeedges(N);
+        checkgammas(N);
+        QuartetClasses fc = buildclasses(N, QuartetList::fromranks(N.numtaxa, final_idxs), fq, fo);
+        N.fscore = fitclasses(N, fc, rho, FitOptions{}, nthreads);
         logmessage(filename,
                    "END propQuartetsFinal<1.0 post-search parameter optimization: found minimizer topology with "
                    "SNaQ score=" + round5(N.fscore));
@@ -516,9 +518,14 @@ long long rescoreonsharedquartets(std::vector<Network>& nets, const CFSource& q,
     Rng rng(static_cast<uint64_t>(seed));
     std::vector<long long> idxs = sampleqindices(q.nrows(), propQuartetsFinal, rng);
     CFMatrix qsub = q.rows(idxs, nthreads);
+    ClassOptions co;
+    co.qlogq = obsqlogq(qsub);
+    co.nthreads = nthreads;
     for (Network& net : nets) {
-        EquationSet es = findquartetequations(net, idxs, nthreads);
-        net.fscore = computeSNaQscore(es.eqns, es.info.params, qsub, rho, nthreads);
+        fixnegativeedges(net);
+        checkgammas(net);
+        QuartetClasses cls = buildclasses(net, QuartetList::fromranks(net.numtaxa, idxs), qsub, co);
+        net.fscore = scoreclasses(net, cls, rho, nthreads);
     }
     return static_cast<long long>(idxs.size());
 }

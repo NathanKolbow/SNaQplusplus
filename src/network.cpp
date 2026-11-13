@@ -24,6 +24,7 @@ NodeId Network::new_node(int number, bool isleaf, bool ishybrid) {
     n.leaf = isleaf;
     n.hybrid = ishybrid;
     n.booln1 = ishybrid;
+    n.pid = next_pid++;
     npool.push_back(std::move(n));
     return static_cast<NodeId>(npool.size() - 1);
 }
@@ -32,6 +33,7 @@ EdgeId Network::new_edge(int number, double length) {
     Edge e;
     e.number = number;
     e.length = length;
+    e.pid = next_pid++;
     epool.push_back(e);
     return static_cast<EdgeId>(epool.size() - 1);
 }
@@ -44,6 +46,7 @@ EdgeId Network::new_edge(int number, double length, bool hyb, double gamma, bool
     e.gamma = hyb ? gamma : 1.0;
     e.ismajor = ismajor;
     e.containroot = !hyb;
+    e.pid = next_pid++;
     epool.push_back(e);
     return static_cast<EdgeId>(epool.size() - 1);
 }
@@ -293,6 +296,7 @@ Network Network::deepcopynetwork() const {
         const Node& src = N(n);
         NodeId id = c.new_node(src.number, src.leaf, src.hybrid);
         c.N(id).name = src.name;
+        c.N(id).pid = src.pid;
         nmap[static_cast<size_t>(n)] = id;
         c.node.push_back(id);
     }
@@ -303,6 +307,7 @@ Network Network::deepcopynetwork() const {
         // Edge(number, length, hybrid, gamma, [n1, n2])
         Edge ne;
         ne.number = src.number;
+        ne.pid = src.pid;
         ne.length = src.length;
         ne.hybrid = src.hybrid;
         ne.gamma = src.hybrid ? src.gamma : 1.0;  // QUIRK: tree edges get γ = 1 in copies
@@ -328,7 +333,15 @@ Network Network::deepcopynetwork() const {
     c.names = names;
     c.isrooted = isrooted;
     c.fscore = fscore;
+    c.next_pid = next_pid;
     return c;
+}
+
+void Network::compact_pids() {
+    int k = 0;
+    for (NodeId n : node) N(n).pid = k++;
+    for (EdgeId e : edge) E(e).pid = k++;
+    next_pid = k;
 }
 
 }  // namespace csnaq

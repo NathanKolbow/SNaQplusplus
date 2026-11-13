@@ -449,7 +449,7 @@ TEST(AllMoves, ThousandsOfRandomMoves) {
             CFMatrix emptyQ;
             std::vector<double> deltas;
             std::pair<Move, MoveParams> mp;
-            ASSERT_NO_THROW(mp = generatemoveproposal(t2, {}, none, nhyb, 0.0, emptyQ, deltas, rng, 0.0))
+            ASSERT_NO_THROW(mp = generatemoveproposal(t2, nullptr, none, nhyb, 0.0, emptyQ, deltas, rng, 0.0))
                 << "z=" << z << " iter=" << miter << " newick=" << prev;
             if (mp.first == Move::none) break;
             try {

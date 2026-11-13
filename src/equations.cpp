@@ -401,8 +401,14 @@ bool trytreelikequartet_names(const Network& net, const std::array<std::string, 
 // hybrid_quartets.jl
 // ------------------------------------------------------------------------
 
-Network inducedquartetnetwork(const TreeQuartetContext& ctx, const std::array<int, 4>& taxa) {
-    const Network& net = *ctx.net;
+// The subnetwork of `net` made of the 4 `seeds` and all their ancestors.
+// With `names`, the seeds become leaves with these names whatever they are in
+// `net` (they must not be ancestors of each other).
+// With `top` (a node that every path from the root to a seed goes through),
+// the subnetwork stops at `top`, which becomes its root.
+Network inducednetwork(const Network& net, const std::vector<int>& nodepos, const std::vector<int>& edgepos,
+                       const std::array<NodeId, 4>& seeds, const std::array<std::string, 4>* names,
+                       NodeId top = NONE) {
     // node -> its id in the subnetwork (valid when nstamp matches)
     static thread_local std::vector<uint32_t> nstamp, estamp;
     static thread_local std::vector<NodeId> nmapv;
@@ -419,8 +425,7 @@ Network inducedquartetnetwork(const TreeQuartetContext& ctx, const std::array<in
     }
     auto kept_has = [&](NodeId n) { return nstamp[static_cast<size_t>(n)] == stamp; };
     std::vector<NodeId> stack, kept;
-    for (int t : taxa) {
-        NodeId l = ctx.leaf_of_taxon[static_cast<size_t>(t)];
+    for (NodeId l : seeds) {
         if (kept_has(l)) continue;
         nstamp[static_cast<size_t>(l)] = stamp;
         stack.push_back(l);
@@ -429,6 +434,7 @@ Network inducedquartetnetwork(const TreeQuartetContext& ctx, const std::array<in
     while (!stack.empty()) {
         NodeId n = stack.back();
         stack.pop_back();
+        if (n == top) continue;
         for (EdgeId e : net.N(n).edge) {
             if (!net.ischildof(n, e)) continue;
             NodeId p = net.getparent(e);
@@ -439,14 +445,22 @@ Network inducedquartetnetwork(const TreeQuartetContext& ctx, const std::array<in
         }
     }
     std::sort(kept.begin(), kept.end(), [&](NodeId a, NodeId b) {
-        return ctx.nodepos[static_cast<size_t>(a)] < ctx.nodepos[static_cast<size_t>(b)];
+        return nodepos[static_cast<size_t>(a)] < nodepos[static_cast<size_t>(b)];
     });
     Network sub;
     sub.npool.reserve(kept.size() + 8);
     for (NodeId n : kept) {
         const Node& src = net.N(n);
-        NodeId id = sub.new_node(src.number, src.leaf, src.hybrid);
-        if (src.leaf || src.hybrid) sub.N(id).name = src.name;  // other names are never used here
+        int seedk = -1;
+        if (names)
+            for (int k = 0; k < 4; ++k)
+                if (seeds[static_cast<size_t>(k)] == n) seedk = k;
+        NodeId id = seedk >= 0 ? sub.new_node(src.number, true, false) : sub.new_node(src.number, src.leaf, src.hybrid);
+        if (seedk >= 0)
+            sub.N(id).name = (*names)[static_cast<size_t>(seedk)];
+        else if (src.leaf || src.hybrid)
+            sub.N(id).name = src.name;  // other names are never used here
+        sub.N(id).pid = src.pid;
         nmapv[static_cast<size_t>(n)] = id;
         sub.node.push_back(id);
     }
@@ -459,7 +473,7 @@ Network inducedquartetnetwork(const TreeQuartetContext& ctx, const std::array<in
             edges.push_back(e);
         }
     std::sort(edges.begin(), edges.end(), [&](EdgeId a, EdgeId b) {
-        return ctx.edgepos[static_cast<size_t>(a)] < ctx.edgepos[static_cast<size_t>(b)];
+        return edgepos[static_cast<size_t>(a)] < edgepos[static_cast<size_t>(b)];
     });
     sub.epool.reserve(edges.size());
     for (EdgeId e : edges) {
@@ -467,6 +481,7 @@ Network inducedquartetnetwork(const TreeQuartetContext& ctx, const std::array<in
         NodeId c1 = nmapv[static_cast<size_t>(src.nd[0])], c2 = nmapv[static_cast<size_t>(src.nd[1])];
         Edge ne;
         ne.number = src.number;
+        ne.pid = src.pid;
         ne.length = src.length;
         ne.hybrid = src.hybrid;
         ne.gamma = src.hybrid ? src.gamma : 1.0;
@@ -486,7 +501,7 @@ Network inducedquartetnetwork(const TreeQuartetContext& ctx, const std::array<in
         if (sub.N(id).leaf) sub.leaf.push_back(id);
         if (sub.N(id).hybrid) sub.hybrid.push_back(id);
     }
-    NodeId root = net.getroot();
+    NodeId root = top == NONE ? net.getroot() : top;
     if (!kept_has(root)) throw SnaqError("inducedquartetnetwork: the network root is not an ancestor of the quartet.");
     sub.rooti = sub.index_of_node(nmapv[static_cast<size_t>(root)]);
     sub.numtaxa = static_cast<int>(sub.leaf.size());
@@ -494,7 +509,14 @@ Network inducedquartetnetwork(const TreeQuartetContext& ctx, const std::array<in
     sub.numedges = static_cast<int>(sub.edge.size());
     sub.numhybrids = static_cast<int>(sub.hybrid.size());
     sub.isrooted = net.isrooted;
+    sub.next_pid = net.next_pid;
     return sub;
+}
+
+Network inducedquartetnetwork(const TreeQuartetContext& ctx, const std::array<int, 4>& taxa) {
+    std::array<NodeId, 4> seeds;
+    for (size_t k = 0; k < 4; ++k) seeds[k] = ctx.leaf_of_taxon[static_cast<size_t>(taxa[k])];
+    return inducednetwork(*ctx.net, ctx.nodepos, ctx.edgepos, seeds, nullptr);
 }
 
 NodeId getlowesthybridrecur(const Network& net, NodeId node) {
@@ -588,8 +610,13 @@ void dropparentedge(Network& div, EdgeId rm, EdgeId keepe) {
     div.N(div.getchild(keepe)).hybrid = false;
 }
 
+// `unroot`: SNaQ.jl removes a hybrid edge that cannot affect the quartet with
+// unroot = true. When this leaves a root of degree 2, the root's two edges are
+// fused into one, and the equation loses the parameter of one of them: wrong
+// if both edges are on the quartet's internal path. Quartet classes use
+// unroot = false, which keeps the root (see portquartetequation).
 RecursiveCFEquation get4taxaquartetequations(Network& net, const std::array<std::string, 4>& taxa,
-                                             const ParamMap& pm) {
+                                             const ParamMap& pm, bool unroot = true) {
     if (net.numhybrids == 0) {
         RecursiveCFEquation eqn;
         trytreelikequartet_names(net, taxa, pm, eqn);
@@ -635,8 +662,8 @@ RecursiveCFEquation get4taxaquartetequations(Network& net, const std::array<std:
         out.which_coal = 0;
         out.division_H = pm.at(Hnumber);
         out.divisions.reserve(2);
-        out.divisions.push_back(get4taxaquartetequations(div_minor, taxa, pm));
-        out.divisions.push_back(get4taxaquartetequations(div_major, taxa, pm));
+        out.divisions.push_back(get4taxaquartetequations(div_minor, taxa, pm, unroot));
+        out.divisions.push_back(get4taxaquartetequations(div_major, taxa, pm, unroot));
         return out;
     } else if (n_below_H == 2) {
         std::vector<EdgeId> int_edges = getinternaledgesbelowlowesthybrid(net, lowest_H);
@@ -694,10 +721,10 @@ RecursiveCFEquation get4taxaquartetequations(Network& net, const std::array<std:
 
         RecursiveCFEquation out;
         out.divisions.reserve(4);
-        out.divisions.push_back(get4taxaquartetequations(div1, taxa, pm));
-        out.divisions.push_back(get4taxaquartetequations(div2, taxa, pm));
-        out.divisions.push_back(get4taxaquartetequations(div3, taxa, pm));
-        out.divisions.push_back(get4taxaquartetequations(div4, taxa, pm));
+        out.divisions.push_back(get4taxaquartetequations(div1, taxa, pm, unroot));
+        out.divisions.push_back(get4taxaquartetequations(div2, taxa, pm, unroot));
+        out.divisions.push_back(get4taxaquartetequations(div3, taxa, pm, unroot));
+        out.divisions.push_back(get4taxaquartetequations(div4, taxa, pm, unroot));
         out.can_coalesce_here = !int_edges.empty();
         for (EdgeId e : int_edges) out.coal_edges.push_back(pm.at(net.E(e).number));
         out.which_coal = which_quartet;
@@ -705,14 +732,14 @@ RecursiveCFEquation get4taxaquartetequations(Network& net, const std::array<std:
         return out;
     } else {
         // 3 or 4 leaves below this hybrid, so it has no effect on eCFs
-        deletehybridedge(net, net.getparentedgeminor(lowest_H), false, true, false, true, false);
-        return get4taxaquartetequations(net, taxa, pm);
+        deletehybridedge(net, net.getparentedgeminor(lowest_H), false, unroot, false, true, false);
+        return get4taxaquartetequations(net, taxa, pm, unroot);
     }
 }
 
-QuartetData reticulatequartetequations(const TreeQuartetContext& ctx, const std::array<int, 4>& taxa,
-                                       const ParamMap& pm) {
-    Network net = inducedquartetnetwork(ctx, taxa);
+// Remove the minor hybrid edges of the blobs of a 4-taxon network that have a
+// single leaf below them.
+void trimexternalblobs(Network& net, bool unroot = true) {
     auto bcc = biconnectedcomponents(net, true);
     auto entry = biconnectedcomponent_entrynodes(net, bcc, true);
     std::vector<long> entryindex;
@@ -736,9 +763,15 @@ QuartetData reticulatequartetequations(const TreeQuartetContext& ctx, const std:
         for (EdgeId he : bcc[ib]) {
             if (net.E(he).ismajor) continue;
             if (net.index_of_edge(he) < 0) continue;
-            deletehybridedge(net, he, false, true, false, true, false);
+            deletehybridedge(net, he, false, unroot, false, true, false);
         }
     }
+}
+
+QuartetData reticulatequartetequations(const TreeQuartetContext& ctx, const std::array<int, 4>& taxa,
+                                       const ParamMap& pm) {
+    Network net = inducedquartetnetwork(ctx, taxa);
+    trimexternalblobs(net);
     std::array<std::string, 4> names;
     for (int k = 0; k < 4; ++k) names[static_cast<size_t>(k)] = ctx.taxa[static_cast<size_t>(taxa[static_cast<size_t>(k)])];
     auto q = std::make_shared<QuartetDataImpl>();
@@ -794,7 +827,24 @@ QuartetData findquartetequations4taxa(const TreeQuartetContext& ctx, const std::
     return reticulatequartetequations(ctx, taxa, pm);
 }
 
-static void check_gammas(const Network& net) {
+Chain treelikechain(const Network& net, NodeId node) { return make_chain(net, treelikeancestorchain(net, node)); }
+
+RecursiveCFEquation portquartetequation(const Network& net, const std::vector<int>& nodepos,
+                                        const std::vector<int>& edgepos, const std::array<NodeId, 4>& ports,
+                                        const std::array<const Chain*, 4>& chains, const ParamMap& pm, NodeId top) {
+    RecursiveCFEquation eqn;
+    if (treelikequartetdata<ParamList>(net, *chains[0], *chains[1], *chains[2], *chains[3], pm, true, tl_scratch, eqn,
+                                       nullptr))
+        return eqn;
+    static const std::array<std::string, 4> names{"1", "2", "3", "4"};
+    // Nothing above `top` can affect the quartet: if the four lineages get
+    // there without having coalesced, they are exchangeable from then on.
+    Network sub = inducednetwork(net, nodepos, edgepos, ports, &names, top);
+    trimexternalblobs(sub, false);
+    return get4taxaquartetequations(sub, names, pm, false);
+}
+
+void checkgammas(const Network& net) {
     for (EdgeId e : net.edge)
         if (net.E(e).hybrid && !(net.E(e).gamma <= 1.0 && net.E(e).gamma >= 0.0))
             throw SnaqError("net has gammas that are not in [0, 1]");
@@ -807,7 +857,7 @@ static void check_gammas(const Network& net) {
 
 EquationSet findquartetequations(Network& net, const std::vector<long long>& ranks, int nthreads) {
     fixnegativeedges(net);
-    check_gammas(net);
+    checkgammas(net);
     EquationSet out;
     out.info = gatheroptimizationinfo(net, true);
     TreeQuartetContext ctx = treequartetcontext(net);

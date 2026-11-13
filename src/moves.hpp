@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "classes.hpp"
 #include "equations.hpp"
 #include "likelihood.hpp"
 #include "network.hpp"
@@ -63,7 +64,10 @@ void applymove(Network& net, Move move, const MoveParams& params, Rng& rng);
 std::pair<Move, MoveParams> samplemoveproposal(Network& net, int hmax, Rng& rng);
 
 // generatemoveproposal(...): returns Move::none if no untried move remains.
-std::pair<Move, MoveParams> generatemoveproposal(Network& Nprime, const std::vector<QuartetData>& N_eqns,
+// `classes` are the quartet classes of the current network (of which Nprime is
+// a copy), built with their per-quartet data; they are only used when
+// probQR > 0 and may be null otherwise.
+std::pair<Move, MoveParams> generatemoveproposal(Network& Nprime, const QuartetClasses* classes,
                                                  const std::vector<AttemptedMove>& attempted, int hmax,
                                                  double probQR, const CFMatrix& Q, std::vector<double>& CFdeltas,
                                                  Rng& rng, double rho);

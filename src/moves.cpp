@@ -684,21 +684,26 @@ std::pair<Move, MoveParams> samplemoveproposal(Network& net, int hmax, Rng& rng)
     return {Move::flip_hybrid, samplefliphybridparameters(net, rng)};
 }
 
-static EdgeId sampleprobQRedge(Network& N, const std::vector<QuartetData>& eqns, const CFMatrix& Q,
+static EdgeId sampleprobQRedge(Network& N, const QuartetClasses& cls, const CFMatrix& Q,
                                std::vector<double>& CFdeltas, Rng& rng, double rho) {
     OptInfo info = gatheroptimizationinfo(N, false);
     if (CFdeltas.empty()) {
         // QUIRK: gatherparams(N) renumbers N (gatheroptimizationinfo(N, true)).
-        OptInfo renum = gatheroptimizationinfo(N, true);
-        std::vector<double> params = gatherparams(N, renum.param_map);
-        for (size_t j = 0; j < eqns.size(); ++j) {
-            auto e = computeexpectedCF(*eqns[j], params, rho);
-            double e3 = 1.0 - e[0] - e[1];
-            CFdeltas.push_back(std::abs(e[0] - Q(j, 0)) + std::abs(e[1] - Q(j, 1)) + std::abs(e3 - Q(j, 2)));
+        gatheroptimizationinfo(N, true);
+        const std::vector<double> params = pidparams(N, cls.npid);
+        const double alpha = rhotoalpha(rho);
+        std::vector<std::array<double, 3>> ecf(cls.size());
+        for (size_t c = 0; c < cls.size(); ++c) ecf[c] = classexpectedCF(*cls.eqn[c], params.data(), cls.npid, alpha);
+        for (size_t j = 0; j < cls.qclass.size(); ++j) {
+            const auto& e = ecf[cls.qclass[j]];
+            const uint8_t cols = cls.qcols[j];
+            double d = 0.0;
+            for (int k = 0; k < 3; ++k) d += std::abs(e[static_cast<size_t>(k)] - Q(j, (cols >> (2 * k)) & 3));
+            CFdeltas.push_back(d);
         }
     }
     size_t iq = rng.weighted_index(CFdeltas);
-    std::vector<const RecursiveCFEquation*> queue{&eqns[iq]->eqn};
+    std::vector<const RecursiveCFEquation*> queue{&cls.eqn[cls.qclass[iq]]->eqn};
     std::vector<int> edges;
     size_t head = 0;
     while (head < queue.size()) {
@@ -710,7 +715,10 @@ static EdgeId sampleprobQRedge(Network& N, const std::vector<QuartetData>& eqns,
         std::vector<int> uniq;
         for (int p : edges)
             if (std::find(uniq.begin(), uniq.end(), p) == uniq.end()) uniq.push_back(p);
-        return info.idx_obj.at(static_cast<size_t>(uniq[rng.index(uniq.size())])).id;
+        const int pid = uniq[rng.index(uniq.size())];
+        for (EdgeId e : N.edge)
+            if (N.E(e).pid == pid) return e;
+        throw SnaqError("sampleprobQRedge: the classes do not belong to this network");
     }
     std::vector<int> validkeys;
     for (size_t k = 0; k < info.idx_obj.size(); ++k)
@@ -718,12 +726,14 @@ static EdgeId sampleprobQRedge(Network& N, const std::vector<QuartetData>& eqns,
     return info.idx_obj.at(static_cast<size_t>(validkeys[rng.index(validkeys.size())])).id;
 }
 
-std::pair<Move, MoveParams> generatemoveproposal(Network& Nprime, const std::vector<QuartetData>& N_eqns,
+std::pair<Move, MoveParams> generatemoveproposal(Network& Nprime, const QuartetClasses* classes,
                                                  const std::vector<AttemptedMove>& attempted, int hmax,
                                                  double probQR, const CFMatrix& Q, std::vector<double>& CFdeltas,
                                                  Rng& rng, double rho) {
     EdgeId required_edge = NONE;
-    if (probQR > 0.0 && rng.rand() <= probQR) required_edge = sampleprobQRedge(Nprime, N_eqns, Q, CFdeltas, rng, rho);
+    if (probQR > 0.0 && (!classes || classes->qclass.empty()))
+        throw SnaqError("generatemoveproposal: probQR > 0 needs the quartet classes of the current network");
+    if (probQR > 0.0 && rng.rand() <= probQR) required_edge = sampleprobQRedge(Nprime, *classes, Q, CFdeltas, rng, rho);
     auto validmove = [&](Move mv, const MoveParams& pars) {
         if (!pars.valid) return false;
         if (alreadyattempted(attempted, Nprime, mv, pars)) return false;
@@ -740,7 +750,7 @@ std::pair<Move, MoveParams> generatemoveproposal(Network& Nprime, const std::vec
         ++retries;
         if (retries >= 1000) {
             if (required_edge == NONE || attempted_reqedges >= 100) return {Move::none, {}};
-            required_edge = sampleprobQRedge(Nprime, N_eqns, Q, CFdeltas, rng, rho);
+            required_edge = sampleprobQRedge(Nprime, *classes, Q, CFdeltas, rng, rho);
             ++attempted_reqedges;
             retries = 0;
         }

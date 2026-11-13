@@ -1,6 +1,7 @@
 // Benchmark of numerical parameter optimization (fitnumericalparameters!):
 // fits the branch lengths and γ of a fixed network to the observed CFs of a
-// set of gene trees and reports the SNaQ score and the time taken. Compared
+// set of gene trees and reports the SNaQ score and the time taken
+// (equations_seconds is the time to build the network's quartet classes). Compared
 // against SNaQ.jl by tools/julia/bench_fit.jl.
 //
 // usage: csnaq_bench_fit <network newick file> <gene trees file> <maxeval> <threads> [repeats]
@@ -11,6 +12,7 @@
 #include <numeric>
 #include <string>
 
+#include "classes.hpp"
 #include "equations.hpp"
 #include "newick.hpp"
 #include "optimize.hpp"
@@ -38,6 +40,7 @@ int main(int argc, char** argv) {
         q.v.resize(3 * ranks.size());
         obs.compute_rows(ranks, q.v.data(), nthreads);
 
+        const double qlogq = obsqlogq(q);
         double best_fit = 1e300, best_eq = 1e300, score = 0.0;
         size_t np = 0;
         Network net;
@@ -51,15 +54,19 @@ int main(int argc, char** argv) {
                 net.E(net.getparentedgeminor(h)).gamma = 0.3;
             }
             double t0 = wall_time();
-            EquationSet es = findquartetequations(net, nthreads);
+            fixnegativeedges(net);
+            ClassOptions co;
+            co.qlogq = qlogq;
+            co.nthreads = nthreads;
+            QuartetClasses cls = buildclasses(net, QuartetList::allquartets(net.numtaxa), q, co);
             double t1 = wall_time();
             FitOptions fo;
             fo.maxeval = maxeval;
-            score = fitnumericalparameters(net, es.eqns, q, 0.0, fo, nthreads);
+            score = fitclasses(net, cls, 0.0, fo, nthreads);
             double t2 = wall_time();
             best_eq = std::min(best_eq, t1 - t0);
             best_fit = std::min(best_fit, t2 - t1);
-            np = es.info.params.size();
+            np = static_cast<size_t>(countoptimizationparams(net));
         }
         std::cout.precision(17);
         std::cout << net.numtaxa << " " << net.numhybrids << " " << obs.nquartets() << " " << np << " " << score << " "

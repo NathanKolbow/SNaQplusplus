@@ -51,6 +51,7 @@ add_library(csnaq_core STATIC
     src/equations.cpp
     src/likelihood.cpp
     src/optimize.cpp
+    src/classes.cpp
     src/snaq_network.cpp
     src/compare.cpp
     src/moves.cpp
@@ -86,6 +87,10 @@ if(CSNAQ_BUILD_TOOLS)
 # against SNaQ.jl by tools/julia scripts).
 add_executable(csnaq_check tools/csnaq_check.cpp)
 target_link_libraries(csnaq_check PRIVATE csnaq_core)
+
+# Validation of the quartet-class likelihood against the per-quartet one.
+add_executable(csnaq_classcheck tools/classcheck.cpp)
+target_link_libraries(csnaq_classcheck PRIVATE csnaq_core)
 
 # Benchmark of numerical parameter optimization (compared against SNaQ.jl by
 # tools/julia/bench_fit.jl).

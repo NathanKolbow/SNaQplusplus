@@ -24,6 +24,9 @@ using NodeList = SmallVec<int, 4>;
 
 struct Node {
     int number = -1;
+    // Persistent id: unlike `number`, it is never reassigned, and it is kept
+    // by copies of the network. A hybrid node's pid identifies its γ parameter.
+    int pid = -1;
     bool leaf = false;
     bool hybrid = false;
     std::string name;
@@ -36,6 +39,9 @@ struct Node {
 
 struct Edge {
     int number = -1;
+    // Persistent id (see Node::pid); identifies the edge's length parameter.
+    // Node and edge pids of a network are all distinct.
+    int pid = -1;
     double length = 1.0;
     bool hybrid = false;
     double y = -1.0;
@@ -80,6 +86,10 @@ public:
     double fscore = 0.0;
     bool isrooted = false;
     std::vector<NodeId> vec_node;  // preorder
+    int next_pid = 0;              // next unused persistent id
+
+    // Reassign the persistent ids of the nodes and edges in the lists to 0, 1, ...
+    void compact_pids();
 
     // ---- pool access ----
     Node& N(NodeId id) { return npool[static_cast<size_t>(id)]; }

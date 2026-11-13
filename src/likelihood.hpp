@@ -59,6 +59,49 @@ private:
     Impl* impl_ = nullptr;
 };
 
+// ------------------------------------------------------------------------
+// Quartet classes
+// ------------------------------------------------------------------------
+// A class is the set of quartets whose four lineages enter the network
+// through the same four cut edges: they have the same expected CFs, so the
+// fit needs one equation per class and the sum of the class's observed CFs.
+// Class equations use persistent parameter ids (Node::pid / Edge::pid), so
+// they stay valid in copies of the network and after topology moves.
+
+struct ClassEqn {
+    RecursiveCFEquation eqn;  // parameters are pids
+    std::vector<int> params;  // the distinct pids of the equation tree
+};
+
+// The classes of a network, prepared for repeated loss/gradient evaluation.
+struct ClassBatch {
+    int npid = 0;  // parameter arrays are indexed by pid: 0 .. npid-1
+    // tree-like classes (off.size() = number of classes + 1)
+    std::vector<int> coal;
+    std::vector<uint32_t> off;
+    std::vector<double> qres, qoth;
+    // reticulate classes
+    std::vector<const ClassEqn*> gen;
+    std::vector<std::array<double, 3>> genQ;  // summed observed CFs, in the class's column order
+    double qlogq = 0.0;                       // sum over all quartets of q log q
+};
+
+// Loss and its gradient with respect to every pid (`params` and `grad` have
+// `npid` entries). If `hess` is given, it receives a positive semidefinite
+// approximation of minus the Hessian over the parameters with dense[pid] >= 0
+// (ndense x ndense, row-major): exact for tree-like classes, Gauss-Newton for
+// reticulate classes.
+double evalclasses(const ClassBatch& batch, const double* params, double* grad, double alpha, LossWorkspace& ws,
+                   int nthreads, const int* dense = nullptr, int ndense = 0, double* hess = nullptr);
+
+// Expected CFs (in the class's column order) of one class.
+std::array<double, 3> classexpectedCF(const ClassEqn& ce, const double* params, int npid, double alpha);
+
+// An upper bound of the loss of `batch` over all parameter values: each class
+// is given the parameter values that suit it best, ignoring that classes
+// share parameters.
+double classscoreupperbound(const ClassBatch& batch);
+
 // computelossandgradient!(batch, qdata, params, grad, q, α)
 double computelossandgradient(const TreeQuartetBatch& batch, const std::vector<QuartetData>& qdata,
                               const double* params, size_t nparam, double* grad, const CFMatrix& q, double alpha,
@@ -73,6 +116,7 @@ double computeSNaQscore(const std::vector<QuartetData>& qdata, const std::vector
 
 // computeexpectedCFmatrix(net, ρ): expected CFs of all quartets of `net`
 // (modifies net as SNaQ.jl does: renumbering, negative hybrid lengths -> 0).
+// Computed from the network's quartet classes.
 CFMatrix computeexpectedCFmatrix(Network& net, double rho = 0.0, int nthreads = 1);
 
 // computeSNaQscore!(N, q, ρ): score of a copy of N made semidirected, on all
