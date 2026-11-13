@@ -137,6 +137,13 @@ def dataset_files(name):
             (("truth", "truth.net"), ("genetrees", "genetrees.tre"), ("start", "start.tre"))}
 
 
+def dataset_ntaxa(files):
+    """Number of taxa of a dataset (leaf names of its starting tree)."""
+    with open(files["start"]) as f:
+        newick = f.readline()
+    return len(set(re.findall(r"[(,]\s*([^(),:;#\s\[]+)", newick)))
+
+
 def slug(s):
     return re.sub(r"[^A-Za-z0-9._-]+", "-", s).strip("-") or "run"
 
@@ -193,6 +200,15 @@ def run_suite(args, implementation):
     print(f"run {run_id}: suite '{args.suite}', {len(cases)} case(s), label '{label}'")
     for case in cases:
         files = dataset_files(case["dataset"])
+        case = dict(case)
+        if suite["kind"] == "snaq" and "nquartets" in suite and "propQuartets" not in case:
+            # about `nquartets` quartets per case: min(1, nquartets / binomial(ntaxa, 4))
+            ntaxa = dataset_ntaxa(files)
+            # (the -1e-9 keeps ceil(binomial(ntaxa,4) * prop) at exactly `nquartets`
+            # despite floating-point rounding; both implementations sample that many)
+            prop = min(1.0, (suite["nquartets"] - 1e-9) / math.comb(ntaxa, 4))
+            case.setdefault("propQuartets", prop)
+            case.setdefault("propQuartetsFinal", prop)
         print(f"  {case['name']} ...", flush=True)
         rec = dict(common)
         rec["case"] = case["name"]

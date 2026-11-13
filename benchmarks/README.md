@@ -43,12 +43,16 @@ python3 benchmarks/bench.py run --suite standard --cases n10_h1,n20_h2   # a sub
 
 ## What is measured
 
-The suites are defined in `suites.json`:
+The suites are defined in `suites.json`. In the `quick` and `standard` suites, every case uses about 1000
+quartets. `propQuartets` and `propQuartetsFinal` are both set to `min(1, 1000 / binomial(ntaxa, 4))`
+(the suite's `nquartets`), so the 10-taxon case uses all 210 of its quartets. A case can override
+this with its own `propQuartets` and `propQuartetsFinal`.
+
 
 | Suite | What it runs |
 |---|---|
-| `quick` | Three `snaq` cases, from 10 to 50 taxa; a few minutes for C++. |
-| `standard` | Nine `snaq` cases: 10 to 50 taxa, 1 to 3 reticulations. The 40- and 50-taxon cases use `propQuartets` = `propQuartetsFinal` = 0.005, one of them with `--lazy`. |
+| `quick` | Three `snaq` cases, from 10 to 50 taxa. |
+| `standard` | Nine `snaq` cases: 10 to 50 taxa, 1 to 3 reticulations, one case with `--lazy`. |
 | `fit` | Parameter optimization of the true network (`fitnumericalparameters!`, maxeval 1000), on 10 to 50 taxa. |
 
 For every case, the history records:
@@ -83,7 +87,8 @@ Each record also holds:
 
 - **New case on an existing dataset:** add an object to a suite in `suites.json`. The
   available keys are `name`, `dataset`, `hmax`, `runs`, `Nfail`, `seed`, `propQuartets`,
-  `propQuartetsFinal` and `lazy` (`maxeval` for the fit suite).
+  `propQuartetsFinal` and `lazy`. A suite-level `nquartets` sets both proportions for every case
+  that does not set them (`maxeval` for the fit suite).
 - **New dataset:** add it to `DATASETS` in `julia/make_datasets.jl` and run
   `julia --project=tools/julia benchmarks/julia/make_datasets.jl`.
 
