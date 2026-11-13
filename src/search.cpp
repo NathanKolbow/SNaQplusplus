@@ -318,9 +318,12 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
     // Whether a score would be accepted over the current network's.
     // QUIRK: the relative criterion divides by the current score, which is
     // negative; it is undefined (NaN) if the current score is 0.
+    // (scores are compared through scorerank: closest to 0 is best)
     auto improves = [&](double score) {
-        return score - current_logPL > o.liktolAbs && (current_logPL - score) / current_logPL > o.liktolRel;
+        const double cur = scorerank(current_logPL), prop = scorerank(score);
+        return prop - cur > o.liktolAbs && (cur - prop) / cur > o.liktolRel;
     };
+    auto better = [](double a, double b) { return scorerank(a) >= scorerank(b) ? a : b; };
     // Topologies this run has evaluated (o.dedup): the score of their fit, or
     // an upper bound of it. An evaluation is final if its fit converged, if it
     // was a bound, or if it was made from the current network (fitting again
@@ -337,7 +340,7 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
         if (it == evaluated.end()) {
             evaluated.emplace(sig, Evaluated{score, converged, epoch});
         } else {
-            it->second.score = std::max(it->second.score, score);
+            it->second.score = better(it->second.score, score);
             it->second.converged = it->second.converged || converged;
             it->second.epoch = epoch;
         }
@@ -347,7 +350,7 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
             if (sit == shared->score.end())
                 shared->score.emplace(sig, score);
             else
-                sit->second = std::max(sit->second, score);
+                sit->second = better(sit->second, score);
         }
     };
     if (o.dedup) {
@@ -469,8 +472,9 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
             // it leaves untouched.)
             QuartetClasses Nprime_cls = classesof(Nprime, o.boundPrune);
             if (o.boundPrune) {
-                // no fit of Nprime can score more than `bound`
-                const double bound = classupperbound(Nprime_cls);
+                // no fit of Nprime can score more than classupperbound, so none
+                // can be closer to 0 than `bound`
+                const double bound = std::min(classupperbound(Nprime_cls), 0.0);
                 if (!improves(bound)) {
                     unchanged_iters += 1;
                     logtext(logfile, prefix() + " REJECTED " + mname + " (bound " + round3(bound) + " < " +
@@ -818,7 +822,7 @@ std::vector<Network> multisearch(std::vector<Network> N, bool single_input, cons
     std::vector<size_t> sort_idx(all_nets.size());
     std::iota(sort_idx.begin(), sort_idx.end(), size_t{0});
     std::stable_sort(sort_idx.begin(), sort_idx.end(),
-                     [&](size_t a, size_t b) { return all_nets[a].fscore > all_nets[b].fscore; });
+                     [&](size_t a, size_t b) { return scorerank(all_nets[a].fscore) > scorerank(all_nets[b].fscore); });
     Network& bestnet = all_nets[sort_idx[0]];
 
     if (!filename.empty()) {

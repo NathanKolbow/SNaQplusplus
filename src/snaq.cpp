@@ -63,7 +63,7 @@ Network lazysnaq(const std::vector<Network>& startnets, bool single_input, const
         rescoreonsharedquartets(all_nets, q, o.propQuartetsFinal, o.seed, o.rho, o.threads, o.geneWeights);
     size_t bestidx = 0;
     for (size_t k = 1; k < all_nets.size(); ++k)
-        if (all_nets[k].fscore > all_nets[bestidx].fscore) bestidx = k;
+        if (scorerank(all_nets[k].fscore) > scorerank(all_nets[bestidx].fscore)) bestidx = k;
     // QUIRK: `bestidx` is the position among the runs' networks sorted by their
     // (not comparable) per-run scores, not the run number.
     logmessage(o.filename, "snaq! (lazy DataCF): selected run " + std::to_string(bestidx + 1) + " of " +

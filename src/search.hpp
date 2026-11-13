@@ -106,6 +106,12 @@ struct SnaqOptions {
     int threads = 1;
 };
 
+// Networks are compared by how close their score is to 0, the score of a
+// model whose expected CFs equal the observed CFs: larger is better. The score
+// is at most 0 (up to rounding: expected CFs are floored at 1e-9), so this is
+// the order of the scores themselves unless a score is positive.
+inline double scorerank(double score) { return score > 0.0 ? -score : score; }
+
 // Scores of the topologies fitted by the runs of a multisearch, shared when
 // every run uses the same quartets.
 struct SearchShared {

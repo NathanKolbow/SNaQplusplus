@@ -324,3 +324,14 @@ TEST(GeneWeights, QuartetsWeighByTheirShareOfGeneTrees) {
     }
     EXPECT_EQ(scores[0], scores[1]);
 }
+
+TEST(ScoreRank, ClosestToZeroIsBest) {
+    // Networks are compared by the distance of their score from 0. Scores are
+    // at most 0 up to rounding, where this is the order of the scores.
+    EXPECT_EQ(scorerank(-1.5), -1.5);
+    EXPECT_EQ(scorerank(0.0), 0.0);
+    EXPECT_GT(scorerank(-0.1), scorerank(-0.2));
+    EXPECT_GT(scorerank(-0.1), scorerank(0.5));
+    EXPECT_GT(scorerank(0.1), scorerank(-0.5));
+    EXPECT_EQ(scorerank(0.3), scorerank(-0.3));
+}
