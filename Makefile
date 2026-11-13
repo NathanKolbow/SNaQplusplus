@@ -5,7 +5,7 @@ BUILD_DIR ?= build
 PREFIX    ?= $(HOME)/.local
 JOBS      ?= 4
 
-.PHONY: all snaq install test clean
+.PHONY: all snaq install test clean tools bench bench-quick bench-fit bench-julia bench-report
 
 all: snaq
 
@@ -29,3 +29,31 @@ test:
 
 clean:
 	rm -rf $(BUILD_DIR) bin
+
+# ---------------------------------------------------------------- benchmarks
+# See benchmarks/README.md. LABEL names the version being benchmarked,
+# THREADS sets the number of threads, ARGS passes extra flags to snaq.
+LABEL   ?=
+THREADS ?= 1
+ARGS    ?=
+SUITE   ?= standard
+BENCH_OPTS = --threads $(THREADS) $(if $(LABEL),--label "$(LABEL)") $(if $(ARGS),--extra-args "$(ARGS)")
+
+tools:
+	cmake -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Release -DCSNAQ_BUILD_TOOLS=ON
+	cmake --build $(BUILD_DIR) --config Release --parallel $(JOBS)
+
+bench: tools
+	python3 benchmarks/bench.py run --suite $(SUITE) $(BENCH_OPTS)
+
+bench-quick: tools
+	python3 benchmarks/bench.py run --suite quick $(BENCH_OPTS)
+
+bench-fit: tools
+	python3 benchmarks/bench.py run --suite fit $(BENCH_OPTS)
+
+bench-julia: tools
+	python3 benchmarks/bench.py run-julia --suite $(SUITE) --threads $(THREADS)
+
+bench-report:
+	python3 benchmarks/bench.py report

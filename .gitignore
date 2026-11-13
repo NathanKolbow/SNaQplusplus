@@ -21,5 +21,10 @@ compile_commands.json
 # Scratch outputs from running snaq locally
 *.log
 *.out
+!/benchmarks/history/outputs/**/*.out
 *.networks
+!/benchmarks/history/outputs/**/*.networks
 *_runs/
+
+# Benchmark scratch (history and reports are committed)
+/benchmarks/history/outputs/*/*.log

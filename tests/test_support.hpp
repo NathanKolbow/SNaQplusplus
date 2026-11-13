@@ -16,9 +16,12 @@
 #include "network_manip.hpp"
 #include "newick.hpp"
 #include "snaq.hpp"
+#include "compare.hpp"
 #include "snaq_network.hpp"
 
 namespace csnaq::test {
+
+using csnaq::hardwiredclusterdistance;
 
 // Path of a fixture file in tests/data.
 std::string data(const std::string& file);
@@ -36,8 +39,6 @@ std::vector<NodeId> get_nodes(const Network& net, std::initializer_list<const ch
 // writenewick of a copy with all edge lengths missing, compared to `correct`.
 bool testnewickequality(const Network& net, const std::string& correct);
 
-// PhyloNetworks.hardwiredclusterdistance(net1, net2, rooted)
-int hardwiredclusterdistance(const Network& net1, const Network& net2, bool rooted);
 // PhyloNetworks.shrinkedge!(net, edge): returns true if a bad polytomy was created
 bool shrinkedge(Network& net, EdgeId e);
 // SNaQ.tcgidentifiable(N)

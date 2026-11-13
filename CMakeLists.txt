@@ -52,6 +52,7 @@ add_library(csnaq_core STATIC
     src/likelihood.cpp
     src/optimize.cpp
     src/snaq_network.cpp
+    src/compare.cpp
     src/moves.cpp
     src/restrictions.cpp
     src/search.cpp
@@ -90,6 +91,10 @@ target_link_libraries(csnaq_check PRIVATE csnaq_core)
 # tools/julia/bench_fit.jl).
 add_executable(csnaq_bench_fit tools/bench_fit.cpp)
 target_link_libraries(csnaq_bench_fit PRIVATE csnaq_core)
+
+# Accuracy evaluation used by the benchmark framework (benchmarks/bench.py).
+add_executable(csnaq_eval tools/eval.cpp)
+target_link_libraries(csnaq_eval PRIVATE csnaq_core)
 endif()
 
 # --------------------------------------------------------------------------
