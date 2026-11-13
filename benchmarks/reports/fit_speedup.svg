@@ -3,77 +3,77 @@
 <text x="20" y="30" font-size="17" font-weight="600" fill="#0b0b0b">Speedup over SNaQ.jl — suite fit</text>
 <text x="20" y="52" font-size="12.5" fill="#52514e">SNaQ.jl time ÷ version time; Apple M1, 1 thread(s)</text>
 <rect x="170" y="61" width="12" height="12" rx="3" fill="#2a78d6"/>
-<text x="188" y="71" font-size="12" fill="#52514e">exp-C-newton-hybrids</text>
-<rect x="346" y="61" width="12" height="12" rx="3" fill="#eb6834"/>
-<text x="364" y="71" font-size="12" fill="#52514e">exp-D-eqbuilder</text>
-<rect x="487" y="61" width="12" height="12" rx="3" fill="#1baf7a"/>
-<text x="505" y="71" font-size="12" fill="#52514e">exp-E-evaluator</text>
-<line x1="197.6" y1="94" x2="197.6" y2="542" stroke="#e1e0d9" stroke-width="1"/>
-<text x="197.6" y="558" font-size="11" fill="#898781" text-anchor="middle">1.00</text>
-<line x1="354.3" y1="94" x2="354.3" y2="542" stroke="#e1e0d9" stroke-width="1"/>
-<text x="354.3" y="558" font-size="11" fill="#898781" text-anchor="middle">10.0</text>
-<line x1="511.1" y1="94" x2="511.1" y2="542" stroke="#e1e0d9" stroke-width="1"/>
-<text x="511.1" y="558" font-size="11" fill="#898781" text-anchor="middle">100</text>
-<line x1="667.8" y1="94" x2="667.8" y2="542" stroke="#e1e0d9" stroke-width="1"/>
-<text x="667.8" y="558" font-size="11" fill="#898781" text-anchor="middle">1,000</text>
+<text x="188" y="71" font-size="12" fill="#52514e">exp-D-eqbuilder</text>
+<rect x="311" y="61" width="12" height="12" rx="3" fill="#eb6834"/>
+<text x="329" y="71" font-size="12" fill="#52514e">exp-E-evaluator</text>
+<rect x="452" y="61" width="12" height="12" rx="3" fill="#1baf7a"/>
+<text x="470" y="71" font-size="12" fill="#52514e">exp-F-equal-classes</text>
+<line x1="197.2" y1="94" x2="197.2" y2="542" stroke="#e1e0d9" stroke-width="1"/>
+<text x="197.2" y="558" font-size="11" fill="#898781" text-anchor="middle">1.00</text>
+<line x1="351.5" y1="94" x2="351.5" y2="542" stroke="#e1e0d9" stroke-width="1"/>
+<text x="351.5" y="558" font-size="11" fill="#898781" text-anchor="middle">10.0</text>
+<line x1="505.8" y1="94" x2="505.8" y2="542" stroke="#e1e0d9" stroke-width="1"/>
+<text x="505.8" y="558" font-size="11" fill="#898781" text-anchor="middle">100</text>
+<line x1="660.1" y1="94" x2="660.1" y2="542" stroke="#e1e0d9" stroke-width="1"/>
+<text x="660.1" y="558" font-size="11" fill="#898781" text-anchor="middle">1,000</text>
 <text x="470.0" y="576" font-size="11.5" fill="#52514e" text-anchor="middle">times faster (log scale)</text>
 <line x1="170.0" y1="94" x2="170.0" y2="542" stroke="#c3c2b7" stroke-width="1"/>
-<line x1="197.6" y1="94" x2="197.6" y2="542" stroke="#52514e" stroke-width="1" stroke-dasharray="4 3"/>
-<text x="201.6" y="90" font-size="11" fill="#52514e">same speed</text>
+<line x1="197.2" y1="94" x2="197.2" y2="542" stroke="#52514e" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="201.2" y="90" font-size="11" fill="#52514e">same speed</text>
 <text x="160" y="124.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n10_h1</text>
-<g><title>exp-C-newton-hybrids · fit_n10_h1: 10.2 times faster</title><rect x="170.0" y="100" width="185.5" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="360.5" y="110" font-size="10.5" fill="#52514e" text-anchor="start">10.2</text>
-<g><title>exp-D-eqbuilder · fit_n10_h1: 9.56 times faster</title><rect x="170.0" y="114" width="181.3" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="356.3" y="124" font-size="10.5" fill="#52514e" text-anchor="start">9.56</text>
-<g><title>exp-E-evaluator · fit_n10_h1: 15.9 times faster</title><rect x="170.0" y="128" width="216.0" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="391.0" y="138" font-size="10.5" fill="#52514e" text-anchor="start">15.9</text>
+<g><title>exp-D-eqbuilder · fit_n10_h1: 9.56 times faster</title><rect x="170.0" y="100" width="178.5" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="353.5" y="110" font-size="10.5" fill="#52514e" text-anchor="start">9.56</text>
+<g><title>exp-E-evaluator · fit_n10_h1: 15.9 times faster</title><rect x="170.0" y="114" width="212.6" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="387.6" y="124" font-size="10.5" fill="#52514e" text-anchor="start">15.9</text>
+<g><title>exp-F-equal-classes · fit_n10_h1: 16.5 times faster</title><rect x="170.0" y="128" width="214.8" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="389.8" y="138" font-size="10.5" fill="#52514e" text-anchor="start">16.5</text>
 <text x="160" y="178.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n15_h1</text>
-<g><title>exp-C-newton-hybrids · fit_n15_h1: 159 times faster</title><rect x="170.0" y="154" width="372.9" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="547.9" y="164" font-size="10.5" fill="#52514e" text-anchor="start">159</text>
-<g><title>exp-D-eqbuilder · fit_n15_h1: 172 times faster</title><rect x="170.0" y="168" width="377.9" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="552.9" y="178" font-size="10.5" fill="#52514e" text-anchor="start">172</text>
-<g><title>exp-E-evaluator · fit_n15_h1: 338 times faster</title><rect x="170.0" y="182" width="424.0" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="599.0" y="192" font-size="10.5" fill="#52514e" text-anchor="start">338</text>
+<g><title>exp-D-eqbuilder · fit_n15_h1: 172 times faster</title><rect x="170.0" y="154" width="372.0" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="547.0" y="164" font-size="10.5" fill="#52514e" text-anchor="start">172</text>
+<g><title>exp-E-evaluator · fit_n15_h1: 338 times faster</title><rect x="170.0" y="168" width="417.4" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="592.4" y="178" font-size="10.5" fill="#52514e" text-anchor="start">338</text>
+<g><title>exp-F-equal-classes · fit_n15_h1: 172 times faster</title><rect x="170.0" y="182" width="372.3" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="547.3" y="192" font-size="10.5" fill="#52514e" text-anchor="start">172</text>
 <text x="160" y="232.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n20_h2</text>
-<g><title>exp-C-newton-hybrids · fit_n20_h2: 276 times faster</title><rect x="170.0" y="208" width="410.1" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="585.1" y="218" font-size="10.5" fill="#52514e" text-anchor="start">276</text>
-<g><title>exp-D-eqbuilder · fit_n20_h2: 260 times faster</title><rect x="170.0" y="222" width="406.0" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="581.0" y="232" font-size="10.5" fill="#52514e" text-anchor="start">260</text>
-<g><title>exp-E-evaluator · fit_n20_h2: 483 times faster</title><rect x="170.0" y="236" width="448.3" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="623.3" y="246" font-size="10.5" fill="#52514e" text-anchor="start">483</text>
+<g><title>exp-D-eqbuilder · fit_n20_h2: 260 times faster</title><rect x="170.0" y="208" width="399.7" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="574.7" y="218" font-size="10.5" fill="#52514e" text-anchor="start">260</text>
+<g><title>exp-E-evaluator · fit_n20_h2: 483 times faster</title><rect x="170.0" y="222" width="441.3" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="616.3" y="232" font-size="10.5" fill="#52514e" text-anchor="start">483</text>
+<g><title>exp-F-equal-classes · fit_n20_h2: 418 times faster</title><rect x="170.0" y="236" width="431.7" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="606.7" y="246" font-size="10.5" fill="#52514e" text-anchor="start">418</text>
 <text x="160" y="286.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n25_h1</text>
-<g><title>exp-C-newton-hybrids · fit_n25_h1: 551 times faster</title><rect x="170.0" y="262" width="457.3" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="632.3" y="272" font-size="10.5" fill="#52514e" text-anchor="start">551</text>
-<g><title>exp-D-eqbuilder · fit_n25_h1: 591 times faster</title><rect x="170.0" y="276" width="462.1" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="637.1" y="286" font-size="10.5" fill="#52514e" text-anchor="start">591</text>
-<g><title>exp-E-evaluator · fit_n25_h1: 861 times faster</title><rect x="170.0" y="290" width="487.7" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="662.7" y="300" font-size="10.5" fill="#52514e" text-anchor="start">861</text>
+<g><title>exp-D-eqbuilder · fit_n25_h1: 591 times faster</title><rect x="170.0" y="262" width="454.9" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="629.9" y="272" font-size="10.5" fill="#52514e" text-anchor="start">591</text>
+<g><title>exp-E-evaluator · fit_n25_h1: 861 times faster</title><rect x="170.0" y="276" width="480.1" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="655.1" y="286" font-size="10.5" fill="#52514e" text-anchor="start">861</text>
+<g><title>exp-F-equal-classes · fit_n25_h1: 973 times faster</title><rect x="170.0" y="290" width="488.3" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="663.3" y="300" font-size="10.5" fill="#52514e" text-anchor="start">973</text>
 <text x="160" y="340.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n25_h3</text>
-<g><title>exp-C-newton-hybrids · fit_n25_h3: 529 times faster</title><rect x="170.0" y="316" width="454.6" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="629.6" y="326" font-size="10.5" fill="#52514e" text-anchor="start">529</text>
-<g><title>exp-D-eqbuilder · fit_n25_h3: 663 times faster</title><rect x="170.0" y="330" width="469.9" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="644.9" y="340" font-size="10.5" fill="#52514e" text-anchor="start">663</text>
-<g><title>exp-E-evaluator · fit_n25_h3: 2,583 times faster</title><rect x="170.0" y="344" width="562.4" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="737.4" y="354" font-size="10.5" fill="#52514e" text-anchor="start">2,583</text>
+<g><title>exp-D-eqbuilder · fit_n25_h3: 663 times faster</title><rect x="170.0" y="316" width="462.6" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="637.6" y="326" font-size="10.5" fill="#52514e" text-anchor="start">663</text>
+<g><title>exp-E-evaluator · fit_n25_h3: 2,583 times faster</title><rect x="170.0" y="330" width="553.7" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="728.7" y="340" font-size="10.5" fill="#52514e" text-anchor="start">2,583</text>
+<g><title>exp-F-equal-classes · fit_n25_h3: 1,923 times faster</title><rect x="170.0" y="344" width="533.9" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="708.9" y="354" font-size="10.5" fill="#52514e" text-anchor="start">1,923</text>
 <text x="160" y="394.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n30_h2</text>
-<g><title>exp-C-newton-hybrids · fit_n30_h2: 408 times faster</title><rect x="170.0" y="370" width="436.8" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="611.8" y="380" font-size="10.5" fill="#52514e" text-anchor="start">408</text>
-<g><title>exp-D-eqbuilder · fit_n30_h2: 501 times faster</title><rect x="170.0" y="384" width="450.7" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="625.7" y="394" font-size="10.5" fill="#52514e" text-anchor="start">501</text>
-<g><title>exp-E-evaluator · fit_n30_h2: 714 times faster</title><rect x="170.0" y="398" width="474.9" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="649.9" y="408" font-size="10.5" fill="#52514e" text-anchor="start">714</text>
+<g><title>exp-D-eqbuilder · fit_n30_h2: 501 times faster</title><rect x="170.0" y="370" width="443.7" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="618.7" y="380" font-size="10.5" fill="#52514e" text-anchor="start">501</text>
+<g><title>exp-E-evaluator · fit_n30_h2: 714 times faster</title><rect x="170.0" y="384" width="467.6" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="642.6" y="394" font-size="10.5" fill="#52514e" text-anchor="start">714</text>
+<g><title>exp-F-equal-classes · fit_n30_h2: 849 times faster</title><rect x="170.0" y="398" width="479.1" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="654.1" y="408" font-size="10.5" fill="#52514e" text-anchor="start">849</text>
 <text x="160" y="448.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n40_h1</text>
-<g><title>exp-C-newton-hybrids · fit_n40_h1: 135 times faster</title><rect x="170.0" y="424" width="361.6" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="536.6" y="434" font-size="10.5" fill="#52514e" text-anchor="start">135</text>
-<g><title>exp-D-eqbuilder · fit_n40_h1: 163 times faster</title><rect x="170.0" y="438" width="374.2" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="549.2" y="448" font-size="10.5" fill="#52514e" text-anchor="start">163</text>
-<g><title>exp-E-evaluator · fit_n40_h1: 241 times faster</title><rect x="170.0" y="452" width="401.0" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="576.0" y="462" font-size="10.5" fill="#52514e" text-anchor="start">241</text>
+<g><title>exp-D-eqbuilder · fit_n40_h1: 163 times faster</title><rect x="170.0" y="424" width="368.3" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="543.3" y="434" font-size="10.5" fill="#52514e" text-anchor="start">163</text>
+<g><title>exp-E-evaluator · fit_n40_h1: 241 times faster</title><rect x="170.0" y="438" width="394.8" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="569.8" y="448" font-size="10.5" fill="#52514e" text-anchor="start">241</text>
+<g><title>exp-F-equal-classes · fit_n40_h1: 200 times faster</title><rect x="170.0" y="452" width="382.4" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="557.4" y="462" font-size="10.5" fill="#52514e" text-anchor="start">200</text>
 <text x="160" y="502.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n50_h2</text>
-<g><title>exp-C-newton-hybrids · fit_n50_h2: 1,127 times faster</title><rect x="170.0" y="478" width="506.0" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="681.0" y="488" font-size="10.5" fill="#52514e" text-anchor="start">1,127</text>
-<g><title>exp-D-eqbuilder · fit_n50_h2: 1,056 times faster</title><rect x="170.0" y="492" width="501.6" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="676.6" y="502" font-size="10.5" fill="#52514e" text-anchor="start">1,056</text>
-<g><title>exp-E-evaluator · fit_n50_h2: 2,990 times faster</title><rect x="170.0" y="506" width="572.4" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="747.4" y="516" font-size="10.5" fill="#52514e" text-anchor="start">2,990</text>
+<g><title>exp-D-eqbuilder · fit_n50_h2: 1,056 times faster</title><rect x="170.0" y="478" width="493.8" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="668.8" y="488" font-size="10.5" fill="#52514e" text-anchor="start">1,056</text>
+<g><title>exp-E-evaluator · fit_n50_h2: 2,990 times faster</title><rect x="170.0" y="492" width="563.5" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="738.5" y="502" font-size="10.5" fill="#52514e" text-anchor="start">2,990</text>
+<g><title>exp-F-equal-classes · fit_n50_h2: 3,437 times faster</title><rect x="170.0" y="506" width="572.8" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="747.8" y="516" font-size="10.5" fill="#52514e" text-anchor="start">3,437</text>
 </svg>
