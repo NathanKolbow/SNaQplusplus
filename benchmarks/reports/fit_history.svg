@@ -3,33 +3,37 @@
 <text x="20" y="30" font-size="17" font-weight="600" fill="#0b0b0b">Speedup over SNaQ.jl across versions — suite fit</text>
 <text x="20" y="52" font-size="12.5" fill="#52514e">geometric mean over the suite's cases, for every recorded run (oldest first)</text>
 
-<line x1="70" y1="327.3" x2="830" y2="327.3" stroke="#e1e0d9" stroke-width="1"/>
-<text x="62" y="331.3" font-size="11" fill="#898781" text-anchor="end">1.00</text>
-<line x1="70" y1="298.8" x2="830" y2="298.8" stroke="#e1e0d9" stroke-width="1"/>
-<text x="62" y="302.8" font-size="11" fill="#898781" text-anchor="end">2.00</text>
-<line x1="70" y1="261.2" x2="830" y2="261.2" stroke="#e1e0d9" stroke-width="1"/>
-<text x="62" y="265.2" font-size="11" fill="#898781" text-anchor="end">5.00</text>
-<line x1="70" y1="232.7" x2="830" y2="232.7" stroke="#e1e0d9" stroke-width="1"/>
-<text x="62" y="236.7" font-size="11" fill="#898781" text-anchor="end">10.0</text>
-<line x1="70" y1="204.2" x2="830" y2="204.2" stroke="#e1e0d9" stroke-width="1"/>
-<text x="62" y="208.2" font-size="11" fill="#898781" text-anchor="end">20.0</text>
-<line x1="70" y1="166.5" x2="830" y2="166.5" stroke="#e1e0d9" stroke-width="1"/>
-<text x="62" y="170.5" font-size="11" fill="#898781" text-anchor="end">50.0</text>
-<line x1="70" y1="138.0" x2="830" y2="138.0" stroke="#e1e0d9" stroke-width="1"/>
-<text x="62" y="142.0" font-size="11" fill="#898781" text-anchor="end">100</text>
-<line x1="70" y1="109.5" x2="830" y2="109.5" stroke="#e1e0d9" stroke-width="1"/>
-<text x="62" y="113.5" font-size="11" fill="#898781" text-anchor="end">200</text>
+<line x1="70" y1="328.9" x2="830" y2="328.9" stroke="#e1e0d9" stroke-width="1"/>
+<text x="62" y="332.9" font-size="11" fill="#898781" text-anchor="end">1.00</text>
+<line x1="70" y1="303.1" x2="830" y2="303.1" stroke="#e1e0d9" stroke-width="1"/>
+<text x="62" y="307.1" font-size="11" fill="#898781" text-anchor="end">2.00</text>
+<line x1="70" y1="269.1" x2="830" y2="269.1" stroke="#e1e0d9" stroke-width="1"/>
+<text x="62" y="273.1" font-size="11" fill="#898781" text-anchor="end">5.00</text>
+<line x1="70" y1="243.3" x2="830" y2="243.3" stroke="#e1e0d9" stroke-width="1"/>
+<text x="62" y="247.3" font-size="11" fill="#898781" text-anchor="end">10.0</text>
+<line x1="70" y1="217.5" x2="830" y2="217.5" stroke="#e1e0d9" stroke-width="1"/>
+<text x="62" y="221.5" font-size="11" fill="#898781" text-anchor="end">20.0</text>
+<line x1="70" y1="183.4" x2="830" y2="183.4" stroke="#e1e0d9" stroke-width="1"/>
+<text x="62" y="187.4" font-size="11" fill="#898781" text-anchor="end">50.0</text>
+<line x1="70" y1="157.7" x2="830" y2="157.7" stroke="#e1e0d9" stroke-width="1"/>
+<text x="62" y="161.7" font-size="11" fill="#898781" text-anchor="end">100</text>
+<line x1="70" y1="131.9" x2="830" y2="131.9" stroke="#e1e0d9" stroke-width="1"/>
+<text x="62" y="135.9" font-size="11" fill="#898781" text-anchor="end">200</text>
+<line x1="70" y1="97.8" x2="830" y2="97.8" stroke="#e1e0d9" stroke-width="1"/>
+<text x="62" y="101.8" font-size="11" fill="#898781" text-anchor="end">500</text>
 <text x="16" y="214.0" font-size="11.5" fill="#52514e" text-anchor="middle" transform="rotate(-90 16 214.0)">times faster (log)</text>
-<line x1="70" y1="327.3" x2="830" y2="327.3" stroke="#52514e" stroke-width="1" stroke-dasharray="4 3"/>
-<text x="76" y="322.3" font-size="11" fill="#52514e">SNaQ.jl speed</text>
-<text x="165.0" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 165.0 360)">cpp-initial (20261113)</text>
-<text x="355.0" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 355.0 360)">exp-A-classes (20261113)</text>
-<text x="545.0" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 545.0 360)">exp-C-newton-hybrids (20261113)</text>
-<text x="735.0" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 735.0 360)">exp-D-eqbuilder (20261113)</text>
-<path d="M165.0,151.8 L355.0,133.0 L545.0,103.6 L735.0,100.7" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
-<g><title>geometric-mean speedup · cpp-initial (20261113): 71.5 times faster</title><circle cx="165.0" cy="151.8" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
-<g><title>geometric-mean speedup · exp-A-classes (20261113): 113 times faster</title><circle cx="355.0" cy="133.0" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
-<g><title>geometric-mean speedup · exp-C-newton-hybrids (20261113): 231 times faster</title><circle cx="545.0" cy="103.6" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
-<g><title>geometric-mean speedup · exp-D-eqbuilder (20261113): 248 times faster</title><circle cx="735.0" cy="100.7" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
-<text x="743.0" y="104.7" font-size="10.5" fill="#52514e">248</text>
+<line x1="70" y1="328.9" x2="830" y2="328.9" stroke="#52514e" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="76" y="323.9" font-size="11" fill="#52514e">SNaQ.jl speed</text>
+<text x="146.0" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 146.0 360)">cpp-initial (20261113)</text>
+<text x="298.0" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 298.0 360)">exp-A-classes (20261113)</text>
+<text x="450.0" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 450.0 360)">exp-C-newton-hybrids (20261113)</text>
+<text x="602.0" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 602.0 360)">exp-D-eqbuilder (20261113)</text>
+<text x="754.0" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 754.0 360)">exp-E-evaluator (20261113)</text>
+<path d="M146.0,170.1 L298.0,153.1 L450.0,126.5 L602.0,123.9 L754.0,99.1" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
+<g><title>geometric-mean speedup · cpp-initial (20261113): 71.5 times faster</title><circle cx="146.0" cy="170.1" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-A-classes (20261113): 113 times faster</title><circle cx="298.0" cy="153.1" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-C-newton-hybrids (20261113): 231 times faster</title><circle cx="450.0" cy="126.5" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-D-eqbuilder (20261113): 248 times faster</title><circle cx="602.0" cy="123.9" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-E-evaluator (20261113): 483 times faster</title><circle cx="754.0" cy="99.1" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<text x="762.0" y="103.1" font-size="10.5" fill="#52514e">483</text>
 </svg>

@@ -85,10 +85,15 @@ struct ClassBatch {
     // reticulate classes
     std::vector<const ClassEqn*> gen;
     std::vector<std::array<double, 3>> genQ;  // summed observed CFs, in the class's column order
-    EqnDag dag;                               // the equations of `gen` (see preparebatch)
-    double qlogq = 0.0;                       // sum over all quartets of q log q
+    // The equations of `gen` with their sub-equations shared (see preparebatch).
+    // Classes with the same equation are evaluated together: `root` lists the
+    // distinct root nodes, `rootQ` the summed observed CFs of their classes.
+    EqnDag dag;
+    std::vector<uint32_t> root;
+    std::vector<std::array<double, 3>> rootQ;
+    double qlogq = 0.0;  // sum over all quartets of q log q
 };
-// Fills batch.dag from batch.gen.
+// Fills batch.dag, root and rootQ from batch.gen and genQ.
 void preparebatch(ClassBatch& batch);
 
 // Loss and its gradient with respect to every pid (`params` and `grad` have

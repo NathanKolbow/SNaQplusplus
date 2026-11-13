@@ -388,7 +388,23 @@ double computelossandgradient(const TreeQuartetBatch& batch, const std::vector<Q
     return total;
 }
 
-void preparebatch(ClassBatch& batch) { batch.dag.build(batch.gen); }
+void preparebatch(ClassBatch& batch) {
+    batch.dag.build(batch.gen);
+    batch.root.clear();
+    batch.rootQ.clear();
+    std::vector<int32_t> at(batch.dag.node.size(), -1);
+    for (size_t g = 0; g < batch.gen.size(); ++g) {
+        const uint32_t r = batch.dag.root[g];
+        if (at[r] < 0) {
+            at[r] = static_cast<int32_t>(batch.root.size());
+            batch.root.push_back(r);
+            batch.rootQ.push_back(batch.genQ[g]);
+        } else {
+            auto& Q = batch.rootQ[static_cast<size_t>(at[r])];
+            for (size_t k = 0; k < 3; ++k) Q[k] += batch.genQ[g][k];
+        }
+    }
+}
 
 double evalclassvalues(const ClassBatch& batch, const double* params, double alpha, LossWorkspace& ws,
                        int nthreads) {
@@ -423,11 +439,11 @@ double evalclassvalues(const ClassBatch& batch, const double* params, double alp
         if (batch.dag.root.size() != batch.gen.size()) throw SnaqError("evalclasses: preparebatch was not called");
         batch.dag.values(params, alpha, w->dag);
         const double* val = w->dag.val.data();
-        for (size_t g = 0; g < batch.gen.size(); ++g) {
-            const double* v = val + 2 * static_cast<size_t>(batch.dag.root[g]);
+        for (size_t g = 0; g < batch.root.size(); ++g) {
+            const double* v = val + 2 * static_cast<size_t>(batch.root[g]);
             const double e1 = std::max(v[0], 1e-9), e2 = std::max(v[1], 1e-9);
             const double e3 = std::max(1.0 - v[0] - v[1], 1e-9);
-            const auto& Q = batch.genQ[g];
+            const auto& Q = batch.rootQ[g];
             total += Q[0] * std::log(e1) + Q[1] * std::log(e2) + Q[2] * std::log(e3);
         }
     }
@@ -484,12 +500,12 @@ void evalclassderivatives(const ClassBatch& batch, const double* params, double*
         dag.derivatives(params, alpha, w->dag);
         const double* val = w->dag.val.data();
         const double* jac = w->dag.jac.data();
-        for (size_t g = 0; g < batch.gen.size(); ++g) {
-            const EqnDag::Node& n = dag.node[dag.root[g]];
-            const double* v = val + 2 * static_cast<size_t>(dag.root[g]);
+        for (size_t g = 0; g < batch.root.size(); ++g) {
+            const EqnDag::Node& n = dag.node[batch.root[g]];
+            const double* v = val + 2 * static_cast<size_t>(batch.root[g]);
             const double e1 = std::max(v[0], 1e-9), e2 = std::max(v[1], 1e-9);
             const double e3 = std::max(1.0 - v[0] - v[1], 1e-9);
-            const auto& Q = batch.genQ[g];
+            const auto& Q = batch.rootQ[g];
             const double i1 = Q[0] / e1, i2 = Q[1] / e2, i3 = Q[2] / e3;
             // d e3 = -(d e1 + d e2)
             const double a1 = i1 - i3, a2 = i2 - i3;

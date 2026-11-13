@@ -152,6 +152,13 @@ The best network and its score are also printed to standard output.
   value for all parameter values, and are never larger: on `checks.net`,
   `csnaq_classcheck` finds no difference in score or gradient between the two builders
   (largest relative difference 1e-11), and 6% fewer equation nodes in total.
+- **Evaluation of reticulate classes.** SNaQ.jl evaluates the equation of each quartet by
+  recursion, with a list of the parameters seen on the way down from which it obtains the
+  gradient. `snaq` stores every distinct sub-equation of a network's reticulate classes once
+  (`src/eqndag.hpp`) and computes its expected CFs and their derivatives once per evaluation;
+  classes with the same equation are evaluated together. The values are the same up to
+  rounding: `csnaq_classcheck` compares the score, gradient and curvature with those of one
+  recursion per class.
 - **Networks are compared by the distance of their score from 0.** The search accepts a
   proposal, and `snaq` picks the best run, by how close the score is to 0 instead of by how
   high it is. The score is at most 0 up to rounding (expected CFs are floored at 1e-9), so
@@ -188,7 +195,7 @@ The best network and its score are also printed to standard output.
 |---|---|
 | `tools/julia/setup.jl` | sets up a Julia environment with SNaQ.jl, expected at `../SNaQ.jl` relative to the repository root |
 | `tools/csnaq_check.cpp`, `tools/julia/check_networks.jl` | compare expected CFs, SNaQ scores and gradients of the per-quartet equations with SNaQ.jl on the networks of a Newick file (e.g. `checks.net`) |
-| `tools/classcheck.cpp`, `tools/bruteforce_cf.hpp` | compare the quartet-class likelihood with the per-quartet one, both with brute-force expected CFs, and the two builders of reticulate class equations: `build/csnaq_classcheck checks.net 3000` |
+| `tools/classcheck.cpp`, `tools/bruteforce_cf.hpp` | compare the quartet-class likelihood with the per-quartet one, both with brute-force expected CFs, the two builders of reticulate class equations, and the evaluation on shared sub-equations with one recursion per class: `build/csnaq_classcheck checks.net 3000` |
 | `validation/checks_net_comparison.csv` | result of that comparison on `checks.net` |
 | `tools/bench_fit.cpp`, `tools/julia/bench_fit.jl` | time numerical parameter optimization in both implementations, with peak memory |
 | `tools/julia/make_test_fixtures.jl` | regenerates the test fixtures in `tests/data/` |
