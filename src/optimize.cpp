@@ -355,6 +355,7 @@ double fitclasses(Network& net, const QuartetClasses& cls, double rho, const Fit
         if (!cls.batch.gen.empty() && narg > 0 && std::isfinite(maxf) && data.evals < maxeval) {
             const double fnewton = maxf;
             const std::vector<double> xnewton = x;
+            const bool newtonconverged = converged;
             for (unsigned j = 0; j < narg; ++j) {  // NLopt needs a start strictly inside the bounds
                 x[j] = std::min(info.UB[j] - 1e-12, std::max(info.LB[j] + 1e-12, x[j]));
             }
@@ -363,6 +364,11 @@ double fitclasses(Network& net, const QuartetClasses& cls, double rho, const Fit
                 maxf = fnewton;
                 x = xnewton;
             }
+            // L-BFGS started at an optimum can stop on an error (its line search
+            // finds nothing better, to rounding): the fit has converged all the same.
+            if (!converged && newtonconverged && data.evals < maxeval &&
+                maxf - fnewton <= std::max(fo.ftolAbs, fo.ftolRel * std::abs(fnewton)))
+                converged = true;
         }
     } else {
         lbfgs(maxeval);

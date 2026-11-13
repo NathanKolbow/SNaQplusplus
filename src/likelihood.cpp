@@ -17,119 +17,10 @@ double alphatorho(double alpha) { return std::isinf(alpha) ? 0.0 : 1.0 / (1.0 + 
 
 namespace {
 
-// ------------------------------------------------------------------------
-// RunningGradient (running_gradient.jl)
-// ------------------------------------------------------------------------
-struct RunningGradient {
-    double shared[3] = {1.0, 1.0, 1.0};
-    std::vector<int> exceptionparam;
-    std::vector<double> exceptionvalue;  // 3 x capacity, column-major (3*s + k)
-    std::vector<int> exceptionslot;      // nparam: 0 if not an exception, else 1-based slot
-    std::vector<char> params_seen;
-    int nexceptions = 0;
-    std::vector<double> savestack;
-    size_t savetop = 0;
-
-    explicit RunningGradient(int nparam)
-        : exceptionparam(8, 0),
-          exceptionvalue(3 * 8, 0.0),
-          exceptionslot(static_cast<size_t>(nparam), 0),
-          params_seen(static_cast<size_t>(nparam), 0),
-          savestack(64, 0.0) {}
-
-    void reset() {
-        shared[0] = shared[1] = shared[2] = 1.0;
-        for (int s = 0; s < nexceptions; ++s) {
-            exceptionslot[static_cast<size_t>(exceptionparam[static_cast<size_t>(s)])] = 0;
-            params_seen[static_cast<size_t>(exceptionparam[static_cast<size_t>(s)])] = 0;
-        }
-        nexceptions = 0;
-        savetop = 0;
-    }
-    double value(int p, int k) const {
-        int s = exceptionslot[static_cast<size_t>(p)];
-        return s == 0 ? shared[k] : exceptionvalue[3 * static_cast<size_t>(s - 1) + static_cast<size_t>(k)];
-    }
-    double& exval(int s0, int k) { return exceptionvalue[3 * static_cast<size_t>(s0) + static_cast<size_t>(k)]; }
-    void addexception(int p) {
-        if (exceptionslot[static_cast<size_t>(p)] != 0) return;
-        if (nexceptions == static_cast<int>(exceptionparam.size())) {
-            exceptionparam.resize(exceptionparam.size() * 2);
-            exceptionvalue.resize(exceptionvalue.size() * 2);
-        }
-        int s0 = nexceptions++;
-        exceptionparam[static_cast<size_t>(s0)] = p;
-        exceptionslot[static_cast<size_t>(p)] = s0 + 1;
-        exval(s0, 0) = shared[0];
-        exval(s0, 1) = shared[1];
-        exval(s0, 2) = shared[2];
-    }
-    void dropexceptionsto(int nex0) {
-        for (int s = nexceptions - 1; s >= nex0; --s)
-            exceptionslot[static_cast<size_t>(exceptionparam[static_cast<size_t>(s)])] = 0;
-        nexceptions = nex0;
-    }
-    size_t save() {
-        size_t need = savetop + 3 + 3 * static_cast<size_t>(nexceptions);
-        if (savestack.size() < need) savestack.resize(std::max(need, 2 * savestack.size()));
-        savestack[savetop] = shared[0];
-        savestack[savetop + 1] = shared[1];
-        savestack[savetop + 2] = shared[2];
-        size_t o = savetop + 3;
-        for (int s = 0; s < nexceptions; ++s) {
-            savestack[o] = exval(s, 0);
-            savestack[o + 1] = exval(s, 1);
-            savestack[o + 2] = exval(s, 2);
-            o += 3;
-        }
-        savetop = need;
-        return need;
-    }
-    void restore(size_t top) {
-        size_t base = top - 3 - 3 * static_cast<size_t>(nexceptions);
-        shared[0] = savestack[base];
-        shared[1] = savestack[base + 1];
-        shared[2] = savestack[base + 2];
-        size_t o = base + 3;
-        for (int s = 0; s < nexceptions; ++s) {
-            exval(s, 0) = savestack[o];
-            exval(s, 1) = savestack[o + 1];
-            exval(s, 2) = savestack[o + 2];
-            o += 3;
-        }
-        savetop = base;
-    }
-    void scale(double f, int skip = -1) {
-        shared[0] *= f;
-        shared[1] *= f;
-        shared[2] *= f;
-        for (int s = 0; s < nexceptions; ++s) {
-            if (exceptionparam[static_cast<size_t>(s)] == skip) continue;
-            exval(s, 0) *= f;
-            exval(s, 1) *= f;
-            exval(s, 2) *= f;
-        }
-    }
-    void scaleexception(int p, double f) {
-        int s = exceptionslot[static_cast<size_t>(p)];
-        if (s == 0) return;
-        exval(s - 1, 0) *= f;
-        exval(s - 1, 1) *= f;
-        exval(s - 1, 2) *= f;
-    }
-};
-
 inline double coalbranchsum(const RecursiveCFEquation& eqn, const double* params) {
     double s = 0.0;
     for (int p : eqn.coal_edges) s += params[p];
     return s;
-}
-
-template <class V>
-inline bool iscoaledge(const V& coal, int p) {
-    for (int e : coal)
-        if (e == p) return true;
-    return false;
 }
 
 double quadsplitprobability(int type, double g, double a) {
@@ -164,101 +55,75 @@ double quadsplitprobabilitygradient(int type, double g, double a) {
     throw SnaqError("Found impossible type");
 }
 
-// gs: nparam x 3, row-major (gs[3*p + k])
-std::array<double, 2> recur(const RecursiveCFEquation& eqn, const double* params, double* gs, RunningGradient& rg,
-                            double alpha) {
+// Expected CFs (e1, e2, e3) of an equation. If `gs` is given (nparam x 3,
+// row-major), w * d e_k / d p is added to gs[3*p + k] for every parameter p of
+// the equation.
+//
+// One pass: `w`, the weight of this sub-equation in the whole equation (the
+// product of the probabilities on the way to it), goes down, and values come
+// back up. A parameter's derivative is the sum, over the places where it
+// appears, of the weight of the place times the local derivative there.
+// (SNaQ.jl's running_gradient.jl obtains the same derivatives with a list of
+// the parameters seen on the way down, updated at every division.)
+std::array<double, 3> recur(const RecursiveCFEquation& eqn, const double* params, double* gs, double w, double alpha) {
     const auto& coal = eqn.coal_edges;
     const int wc = eqn.which_coal;
     if (eqn.division_H == -1) {
         const double E = std::exp(-coalbranchsum(eqn, params));
-        const double d[3] = {wc == 1 ? 2.0 / 3.0 * E : -1.0 / 3.0 * E, wc == 2 ? 2.0 / 3.0 * E : -1.0 / 3.0 * E,
-                             wc == 3 ? 2.0 / 3.0 * E : -1.0 / 3.0 * E};
-        const double f[3] = {wc == 1 ? 1 - 2.0 / 3.0 * E : 1.0 / 3.0 * E, wc == 2 ? 1 - 2.0 / 3.0 * E : 1.0 / 3.0 * E,
-                             wc == 3 ? 1 - 2.0 / 3.0 * E : 1.0 / 3.0 * E};
-        for (int p : coal)
-            for (int k = 0; k < 3; ++k) gs[3 * p + k] += rg.value(p, k) * d[k];
-        for (int s = 0; s < rg.nexceptions; ++s) {
-            int p = rg.exceptionparam[static_cast<size_t>(s)];
-            if (!rg.params_seen[static_cast<size_t>(p)]) continue;
-            if (iscoaledge(coal, p)) continue;
-            for (int k = 0; k < 3; ++k) gs[3 * p + k] += rg.exval(s, k) * f[k];
+        const double res = 1 - 2.0 / 3.0 * E, oth = 1.0 / 3.0 * E;
+        if (gs) {
+            const double wo = w * oth;
+            for (int p : coal) {
+                gs[3 * p] += wc == 1 ? 2.0 * wo : -wo;
+                gs[3 * p + 1] += wc == 2 ? 2.0 * wo : -wo;
+                gs[3 * p + 2] += wc == 3 ? 2.0 * wo : -wo;
+            }
         }
-        if (wc == 1) return {1 - 2.0 / 3.0 * E, 1.0 / 3.0 * E};
-        if (wc == 2) return {1.0 / 3.0 * E, 1 - 2.0 / 3.0 * E};
-        return {1.0 / 3.0 * E, 1.0 / 3.0 * E};
+        if (wc == 1) return {res, oth, oth};
+        if (wc == 2) return {oth, res, oth};
+        return {oth, oth, res};
     } else if (eqn.divisions.size() == 4) {
-        double e1 = 0.0, e2 = 0.0;
-        const int nex0 = rg.nexceptions;
         double early = std::exp(-coalbranchsum(eqn, params));
         early = std::max(early, 1e-9);
-        const int wk = wc - 1;
-        if (eqn.can_coalesce_here) {
-            if (wc == 1)
-                e1 += 1 - early;
-            else if (wc == 2)
-                e2 += 1 - early;
-            for (int p : coal) {
-                if (rg.params_seen[static_cast<size_t>(p)]) throw SnaqError("Already seen this param??");
-                gs[3 * p + wk] += rg.value(p, wk) * early;
-            }
-            for (int s = 0; s < rg.nexceptions; ++s) {
-                int p = rg.exceptionparam[static_cast<size_t>(s)];
-                if (!rg.params_seen[static_cast<size_t>(p)]) continue;
-                gs[3 * p + wk] += rg.exval(s, wk) * (1 - early);
-            }
-            for (int p : coal) rg.params_seen[static_cast<size_t>(p)] = 1;
-        }
-        for (int p : coal) rg.addexception(p);
-        rg.scale(early);
         const int H = eqn.division_H;
-        if (rg.params_seen[static_cast<size_t>(H)]) throw SnaqError("Already seen this param??");
-        rg.addexception(H);
-        rg.params_seen[static_cast<size_t>(H)] = 1;
         const double g = params[H];
+        const double we = w * early;
+        double below[3] = {0.0, 0.0, 0.0};  // early * sum of split_prob * division
+        double dg[3] = {0.0, 0.0, 0.0};     // sum of split_grad * division
         for (int di = 1; di <= 4; ++di) {
-            double split_grad = quadsplitprobabilitygradient(di, g, alpha);
-            double split_prob = quadsplitprobability(di, g, alpha);
-            size_t top = rg.save();
-            rg.scale(split_prob, H);
-            rg.scaleexception(H, split_grad);
-            for (int e : coal) rg.scaleexception(e, -1.0);
-            auto r = recur(eqn.divisions[static_cast<size_t>(di - 1)], params, gs, rg, alpha);
-            rg.restore(top);
-            double fct = early * split_prob;
-            e1 += fct * r[0];
-            e2 += fct * r[1];
+            const double split_grad = quadsplitprobabilitygradient(di, g, alpha);
+            const double split_prob = quadsplitprobability(di, g, alpha);
+            const auto r = recur(eqn.divisions[static_cast<size_t>(di - 1)], params, gs, we * split_prob, alpha);
+            const double fct = early * split_prob;
+            for (int k = 0; k < 3; ++k) {
+                below[k] += fct * r[static_cast<size_t>(k)];
+                dg[k] += split_grad * r[static_cast<size_t>(k)];
+            }
         }
-        rg.scale(1.0 / early);
-        for (int e : coal) rg.params_seen[static_cast<size_t>(e)] = 0;
-        rg.params_seen[static_cast<size_t>(H)] = 0;
-        rg.dropexceptionsto(nex0);
-        return {e1, e2};
+        const bool here = eqn.can_coalesce_here && wc >= 1;
+        if (gs) {
+            for (int k = 0; k < 3; ++k) gs[3 * H + k] += we * dg[k];
+            for (int p : coal) {
+                for (int k = 0; k < 3; ++k) gs[3 * p + k] -= w * below[k];
+                if (here) gs[3 * p + wc - 1] += we;
+            }
+        }
+        std::array<double, 3> e = {below[0], below[1], below[2]};
+        if (here) e[static_cast<size_t>(wc - 1)] += 1 - early;
+        return e;
     } else {
         if (eqn.can_coalesce_here) throw SnaqError("Can coalesce w/ 1 taxa splitting at a single hybrid??");
-        const int nex0 = rg.nexceptions;
         const int H = eqn.division_H;
         double g = params[H];
         g = std::max(1e-9, g);
         g = std::min(1.0 - 1e-9, g);
-        rg.addexception(H);
-        rg.params_seen[static_cast<size_t>(H)] = 1;
-
-        rg.scale(g, H);
-        auto r = recur(eqn.divisions[0], params, gs, rg, alpha);
-        double e1 = g * r[0], e2 = g * r[1];
-        rg.scale(1.0 / g, H);
-
-        rg.scale(1 - g, H);
-        rg.scaleexception(H, -1.0);
-        auto s = recur(eqn.divisions[1], params, gs, rg, alpha);
-        rg.scale(1.0 / (1 - g), H);
-        rg.scaleexception(H, -1.0);
-
-        rg.params_seen[static_cast<size_t>(H)] = 0;
-        rg.dropexceptionsto(nex0);
-        e1 += (1 - g) * s[0];
-        e2 += (1 - g) * s[1];
-        return {e1, e2};
+        const auto r = recur(eqn.divisions[0], params, gs, w * g, alpha);
+        const auto s = recur(eqn.divisions[1], params, gs, w * (1 - g), alpha);
+        std::array<double, 3> e;
+        for (size_t k = 0; k < 3; ++k) e[k] = g * r[k] + (1 - g) * s[k];
+        if (gs)
+            for (size_t k = 0; k < 3; ++k) gs[3 * static_cast<size_t>(H) + k] += w * (r[k] - s[k]);
+        return e;
     }
 }
 
@@ -287,23 +152,21 @@ double treequartetlossandgradient(const RecursiveCFEquation& eqn, const double* 
 
 struct ThreadScratch {
     std::vector<double> quartet_grad;  // nparam x 3
-    RunningGradient rg;
-    std::vector<double> total_grad;  // nparam
+    std::vector<double> total_grad;    // nparam
     explicit ThreadScratch(int np)
-        : quartet_grad(3 * static_cast<size_t>(np), 0.0), rg(np), total_grad(static_cast<size_t>(np), 0.0) {}
+        : quartet_grad(3 * static_cast<size_t>(np), 0.0), total_grad(static_cast<size_t>(np), 0.0) {}
 };
 
 // General quartet: loss, gradient accumulated into ts.total_grad.
 double quartetlossandgradient_general(const QuartetDataImpl& qd, const double* params, const double* q, double alpha,
                                       ThreadScratch& ts) {
     double* ig = ts.quartet_grad.data();
-    ts.rg.reset();
     for (int p : qd.relevant_params) {
         ig[3 * p] = 0.0;
         ig[3 * p + 1] = 0.0;
         ig[3 * p + 2] = 0.0;
     }
-    auto r = recur(qd.eqn, params, ig, ts.rg, alpha);
+    auto r = recur(qd.eqn, params, ig, 1.0, alpha);
     double e1 = r[0], e2 = r[1];
     double e3 = 1.0 - e1 - e2;
     e1 = std::max(e1, 1e-9);
@@ -495,9 +358,8 @@ double computelossandgradient(const TreeQuartetBatch& batch, const std::vector<Q
             double tot = 0.0;
             for (size_t g = lo; g < hi; ++g) {
                 const auto& ps = batch.gen_params[g];
-                ts.rg.reset();
                 for (int p : ps) ig[3 * p] = ig[3 * p + 1] = ig[3 * p + 2] = 0.0;
-                auto r = recur(batch.gen_rep[g]->eqn, params, ig, ts.rg, alpha);
+                auto r = recur(batch.gen_rep[g]->eqn, params, ig, 1.0, alpha);
                 double e1 = std::max(r[0], 1e-9), e2 = std::max(r[1], 1e-9);
                 double e3 = std::max(1.0 - r[0] - r[1], 1e-9);
                 const auto& Q = batch.gen_q[g];
@@ -583,9 +445,8 @@ double evalclasses(const ClassBatch& batch, const double* params, double* grad, 
             double tot = 0.0;
             for (size_t g = lo; g < hi; ++g) {
                 const auto& ps = batch.gen[g]->params;
-                ts.rg.reset();
                 for (int p : ps) ig[3 * p] = ig[3 * p + 1] = ig[3 * p + 2] = 0.0;
-                auto r = recur(batch.gen[g]->eqn, params, ig, ts.rg, alpha);
+                auto r = recur(batch.gen[g]->eqn, params, ig, 1.0, alpha);
                 double e1 = std::max(r[0], 1e-9), e2 = std::max(r[1], 1e-9);
                 double e3 = std::max(1.0 - r[0] - r[1], 1e-9);
                 const auto& Q = batch.genQ[g];
@@ -618,17 +479,8 @@ double evalclasses(const ClassBatch& batch, const double* params, double* grad, 
     return total;
 }
 
-std::array<double, 3> classexpectedCF(const ClassEqn& ce, const double* params, int npid, double alpha) {
-    static thread_local std::vector<double> gs;
-    static thread_local std::unique_ptr<RunningGradient> rg;
-    static thread_local int rgsize = -1;
-    if (gs.size() < 3 * static_cast<size_t>(npid) + 3) gs.assign(3 * static_cast<size_t>(npid) + 3, 0.0);
-    if (rgsize < npid) {
-        rg = std::make_unique<RunningGradient>(npid);
-        rgsize = npid;
-    }
-    rg->reset();
-    auto r = recur(ce.eqn, params, gs.data(), *rg, alpha);
+std::array<double, 3> classexpectedCF(const ClassEqn& ce, const double* params, int /*npid*/, double alpha) {
+    const auto r = recur(ce.eqn, params, nullptr, 1.0, alpha);
     return {r[0], r[1], 1.0 - r[0] - r[1]};
 }
 
@@ -686,10 +538,8 @@ double computeSNaQscore(const std::vector<QuartetData>& qdata, const std::vector
 }
 
 std::array<double, 2> computeexpectedCF(const QuartetDataImpl& qd, const std::vector<double>& params, double rho) {
-    double alpha = rhotoalpha(rho);
-    std::vector<double> gs(3 * params.size() + 3, 0.0);
-    RunningGradient rg(static_cast<int>(params.size()));
-    return recur(qd.eqn, params.data(), gs.data(), rg, alpha);
+    const auto r = recur(qd.eqn, params.data(), nullptr, 1.0, rhotoalpha(rho));
+    return {r[0], r[1]};
 }
 
 }  // namespace csnaq
