@@ -235,6 +235,51 @@ TEST(NewtonFit, ReachesTheOptimumOfLbfgs) {
     }
 }
 
+TEST(NewtonFit, DoesNotStopAtBoundsOrStepLimits) {
+    // Optima with branch lengths at their bounds, started far away: Newton
+    // steps are cut by the bounds and by the step limits. The fit must still
+    // reach the optimum that L-BFGS run to convergence finds, in few evaluations.
+    Rng rng(43);
+    std::vector<Network> nets;
+    nets.push_back(nw("(15,(1,((14,(#H1,(((12,13),(11,#H3)),(7,((10)#H3,(8,9)))))),((((2,3))#H2,(6,(5,(#H2,4)))))#H1)));"));
+    nets.push_back(read_trees("gennet_10_2_8.net").at(0));
+    nets.push_back(random_tree(16, rng));
+    int total = 0, fits = 0;
+    for (Network& truth : nets) {
+        truth = truth.deepcopynetwork();
+        semidirectnetwork(truth);
+        for (EdgeId e : truth.edge) {
+            const double u = rng.rand();
+            truth.E(e).length = u < 0.3 ? 0.0 : (u < 0.6 ? 12.0 : 0.2 + rng.rand());  // many optima at a bound
+        }
+        for (NodeId h : truth.hybrid) {
+            truth.E(truth.getparentedgeminor(h)).gamma = 0.3;
+            truth.E(truth.getparentedge(h)).gamma = 0.7;
+        }
+        CFMatrix q = noisy_cfs(truth, rng, 0.02);
+        for (int start = 0; start < 3; ++start) {
+            Network a = truth.deepcopynetwork(), b = truth.deepcopynetwork();
+            for (EdgeId e : a.edge) a.E(e).length = b.E(e).length = start == 0 ? 1.0 : 0.05 + 3.0 * rng.rand();
+            ClassOptions co;
+            co.qlogq = obsqlogq(q);
+            QuartetClasses ca = buildclasses(a, QuartetList::allquartets(a.numtaxa), q, co);
+            QuartetClasses cb = buildclasses(b, QuartetList::allquartets(b.numtaxa), q, co);
+            FitOptions lb, nt;
+            lb.maxeval = 50000;
+            nt.method = FitMethod::newton;
+            FitInfo ia, ib;
+            const double sl = fitclasses(a, ca, 0.0, lb, 1, &ia);
+            const double sn = fitclasses(b, cb, 0.0, nt, 1, &ib);
+            EXPECT_TRUE(ib.converged) << "start " << start;
+            EXPECT_GT(sn, sl - 1e-6 * std::max(1.0, std::abs(sl))) << "start " << start;
+            EXPECT_LT(ib.evals, 100) << "start " << start;
+            total += ib.evals;
+            ++fits;
+        }
+    }
+    EXPECT_LT(total, 40 * fits);
+}
+
 TEST(HybridGuide, CandidatesPointAtTheMissingReticulation) {
     // Data from a network with one reticulation, fitted on its major tree: the
     // two edges the reticulation connects must be among the best candidate

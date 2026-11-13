@@ -164,7 +164,10 @@ The best network and its score are also printed to standard output.
   high it is. The score is at most 0 up to rounding (expected CFs are floored at 1e-9), so
   both orders are the same unless a score is positive.
 - **Parameter optimization.** By default, branch lengths and γ are optimized with a projected
-  Newton method run to convergence, followed for networks by L-BFGS started from its result.
+  Newton method run to convergence: until a step close to a full Newton step is predicted to
+  gain less than the tolerances. For networks, L-BFGS continues from its result in the rare
+  fits where it stops for another reason (no step improves the score, or several steps in a
+  row gain less than the tolerances).
   SNaQ.jl uses L-BFGS limited to `max(30, ntaxa)` evaluations; `--optimizer lbfgs` does the same.
 - **Proposals rejected without a fit** (`--boundPrune`). An upper bound of the score of a
   proposed network is computed first: each class is given the parameter values that suit it

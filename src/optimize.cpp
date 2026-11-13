@@ -162,17 +162,35 @@ bool dampedsolve(const std::vector<double>& B, const std::vector<double>& g, con
     return true;
 }
 
+// How newtonfit stopped.
+enum class NewtonStop {
+    gradient,   // the gradient of the free variables is zero to working precision
+    predicted,  // a step close to a full Newton step is predicted to gain less than the tolerances
+    stalled,    // no step improves the score, however damped
+    slow,       // several steps in a row gained less than the tolerances
+    maxeval,    // out of evaluations
+    notfinite   // the score at the starting point is not finite
+};
+
 // Projected Newton method with Levenberg-Marquardt damping, for the
 // maximization of the class likelihood within the parameters' bounds.
 //
 // The curvature matrix B of evalclasses is exact for tree-like classes, whose
 // terms are concave in the branch lengths, and a Gauss-Newton approximation
 // for reticulate classes; it is positive semidefinite, so every damped step
-// is an ascent direction. Variables at a bound whose gradient points outside
-// are held fixed; a step is accepted only if it increases the score.
+// is an ascent direction before it is cut to the bounds and step limits.
+// Variables at a bound are held there if the gradient points outside, or if
+// the step would take them outside (the step of the others is then computed
+// again without them). A step is accepted only if it increases the score; a
+// step that the cuts turned into a descent direction is damped further, which
+// turns it towards the gradient.
+//
+// The fit has converged when a step close to a full Newton step (little
+// damping) is predicted, by the quadratic model, to gain less than the
+// tolerances: the predicted gain of that step estimates what is left to gain.
 double newtonfit(const ClassBatch& batch, const std::vector<int>& pidof, std::vector<double>& params, double alpha,
                  std::vector<double>& x, const OptInfo& info, const FitOptions& fo, int maxeval, int& evals,
-                 bool& converged) {
+                 NewtonStop& stop) {
     const size_t n = x.size();
     std::vector<int> dense(static_cast<size_t>(batch.npid), -1);
     for (size_t j = 0; j < n; ++j) dense[static_cast<size_t>(pidof[j])] = static_cast<int>(j);
@@ -191,15 +209,15 @@ double newtonfit(const ClassBatch& batch, const std::vector<int>& pidof, std::ve
         for (size_t j = 0; j < n; ++j) grad[j] = gpid[static_cast<size_t>(pidof[j])];
     };
     double f = score(x);
-    converged = false;
     if (n == 0 || !std::isfinite(f)) {
-        converged = n == 0;
+        stop = n == 0 ? NewtonStop::gradient : NewtonStop::notfinite;
         return f;
     }
     double lambda = 1e-3;
     int smallgains = 0;
-    std::vector<int> freeidx;
+    std::vector<int> freeidx, active;
     std::vector<double> step(n);
+    stop = NewtonStop::maxeval;
     while (evals < maxeval) {
         derivatives(g, B);  // x is the last point scored
         // free variables: not held at a bound by the gradient
@@ -214,23 +232,45 @@ double newtonfit(const ClassBatch& batch, const std::vector<int>& pidof, std::ve
             pg = std::max(pg, std::abs(g[j]));
         }
         if (freeidx.empty() || pg <= 1e-11 * (1.0 + std::abs(f))) {
-            converged = true;
+            stop = NewtonStop::gradient;
             break;
         }
         const double floor = 1e-8 * maxdiag + 1e-12;
-        bool accepted = false, stalled = false;
-        double fnew = f, usedlambda = lambda;
-        for (int attempt = 0; attempt < 30 && evals < maxeval; ++attempt) {
-            if (!dampedsolve(B, g, freeidx, lambda, floor, L, d, n)) {
-                lambda *= 10.0;
+        bool accepted = false, stalled = false, done = false;
+        double fnew = f;
+        auto dampmore = [&](double factor) {
+            lambda *= factor;
+            if (lambda > 1e14) stalled = true;
+        };
+        while (!stalled && evals < maxeval) {
+            // damped Newton step of the free variables; those that it would take
+            // out of the bound they are at are held, and the others solved again
+            active = freeidx;
+            bool solved = false;
+            while (!active.empty() && dampedsolve(B, g, active, lambda, floor, L, d, n)) {
+                size_t kept = 0;
+                for (size_t a = 0; a < active.size(); ++a) {
+                    const size_t j = static_cast<size_t>(active[a]);
+                    const bool leaves = (x[j] <= info.LB[j] + 1e-10 && d[a] < 0.0) ||
+                                        (x[j] >= info.UB[j] - 1e-10 && d[a] > 0.0);
+                    if (!leaves) active[kept++] = active[a];
+                }
+                if (kept == active.size()) {
+                    solved = true;
+                    break;
+                }
+                active.resize(kept);
+            }
+            if (!solved) {  // not positive definite, or every variable held: more damping
+                dampmore(10.0);
                 continue;
             }
             // step, limited per parameter and kept within the bounds
             xt = x;
             std::fill(step.begin(), step.end(), 0.0);
             double maxstep = 0.0, linear = 0.0;
-            for (size_t a = 0; a < freeidx.size(); ++a) {
-                const size_t j = static_cast<size_t>(freeidx[a]);
+            for (size_t a = 0; a < active.size(); ++a) {
+                const size_t j = static_cast<size_t>(active[a]);
                 const double limit = info.idx_obj[j].is_hybrid_node ? 0.25 : 3.0;
                 double v = x[j] + std::max(-limit, std::min(limit, d[a]));
                 v = std::max(info.LB[j], std::min(info.UB[j], v));
@@ -239,25 +279,36 @@ double newtonfit(const ClassBatch& batch, const std::vector<int>& pidof, std::ve
                 maxstep = std::max(maxstep, std::abs(step[j]));
                 linear += g[j] * step[j];
             }
-            if (maxstep <= 1e-14 || linear <= 0.0) {
+            if (maxstep <= 1e-14) {
                 stalled = true;  // no room to move
                 break;
             }
+            if (linear <= 0.0) {  // the limits made it a descent direction
+                dampmore(8.0);
+                continue;
+            }
             // gain predicted by the quadratic model
             double quad = 0.0;
-            for (size_t a = 0; a < freeidx.size(); ++a) {
-                const size_t j = static_cast<size_t>(freeidx[a]);
+            for (size_t a = 0; a < active.size(); ++a) {
+                const size_t j = static_cast<size_t>(active[a]);
                 if (step[j] == 0.0) continue;
                 double row = 0.0;
-                for (size_t c = 0; c < freeidx.size(); ++c) {
-                    const size_t k = static_cast<size_t>(freeidx[c]);
+                for (size_t c = 0; c < active.size(); ++c) {
+                    const size_t k = static_cast<size_t>(active[c]);
                     row += B[j * n + k] * step[k];
                 }
                 quad += step[j] * row;
             }
             const double predicted = linear - 0.5 * quad;
+            if (predicted <= 0.0) {  // the limits made it a step the model rejects
+                dampmore(8.0);
+                continue;
+            }
+            if (lambda <= 1e-2 && predicted <= std::max(fo.ftolAbs, fo.ftolRel * std::abs(f))) {
+                done = true;
+                break;
+            }
             fnew = score(xt);
-            usedlambda = lambda;
             const double ratio = (std::isfinite(fnew) && predicted > 0.0) ? (fnew - f) / predicted : -1.0;
             if (std::isfinite(fnew) && fnew > f) {
                 accepted = true;
@@ -267,28 +318,26 @@ double newtonfit(const ClassBatch& batch, const std::vector<int>& pidof, std::ve
                     lambda *= 4.0;
                 break;
             }
-            lambda *= 8.0;
-            if (lambda > 1e14) {
-                stalled = true;
-                break;
-            }
+            dampmore(8.0);
+        }
+        if (done) {
+            stop = NewtonStop::predicted;
+            break;
         }
         if (!accepted) {
-            // no damped step improves the score: x is a (local) maximum to working precision,
-            // unless the evaluations ran out
-            converged = stalled || evals < maxeval;
+            // no step improves the score, however damped: x is a (local) maximum
+            // to working precision, unless the evaluations ran out
+            stop = stalled ? NewtonStop::stalled : NewtonStop::maxeval;
             break;
         }
         const double gain = fnew - f;
         x.swap(xt);
         f = fnew;
-        // A small gain means convergence only if the step was close to a full
-        // Newton step; heavily damped steps are small whatever the distance to
-        // the optimum (but several of them in a row are not worth continuing).
+        // Steps that keep gaining less than the tolerances although more was
+        // predicted are not worth continuing.
         if (gain <= fo.ftolAbs || gain <= fo.ftolRel * std::abs(f)) {
-            ++smallgains;
-            if (usedlambda <= 1e-2 || smallgains >= 8) {
-                converged = usedlambda <= 1e-2;
+            if (++smallgains >= 8) {
+                stop = NewtonStop::slow;
                 break;
             }
         } else {
@@ -350,12 +399,16 @@ double fitclasses(Network& net, const QuartetClasses& cls, double rho, const Fit
         converged = ret > 0 && ret != NLOPT_MAXEVAL_REACHED;
     };
     if (newton) {
-        maxf = newtonfit(cls.batch, pidof, data.params, data.alpha, x, info, fo, maxeval, data.evals, converged);
+        NewtonStop stop;
+        maxf = newtonfit(cls.batch, pidof, data.params, data.alpha, x, info, fo, maxeval, data.evals, stop);
+        converged = stop == NewtonStop::gradient || stop == NewtonStop::predicted || stop == NewtonStop::stalled;
         // The curvature of reticulate classes is approximate (Gauss-Newton), and
-        // Newton steps can stall on it far from the optimum: L-BFGS finishes
-        // from where they stopped, and stops at once if they had converged.
+        // Newton steps can stall on it away from the optimum: when they stopped
+        // without the prediction of a full step saying that nothing is left to
+        // gain, L-BFGS finishes from where they stopped.
         // Trees need no such check: their curvature is exact and the score concave.
-        if (!cls.batch.gen.empty() && narg > 0 && std::isfinite(maxf) && data.evals < maxeval) {
+        const bool finish = stop == NewtonStop::stalled || stop == NewtonStop::slow;
+        if (finish && !cls.batch.gen.empty() && narg > 0 && std::isfinite(maxf) && data.evals < maxeval) {
             const double fnewton = maxf;
             const std::vector<double> xnewton = x;
             const bool newtonconverged = converged;
