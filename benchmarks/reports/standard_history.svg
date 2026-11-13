@@ -3,29 +3,33 @@
 <text x="20" y="30" font-size="17" font-weight="600" fill="#0b0b0b">Speedup over SNaQ.jl across versions — suite standard</text>
 <text x="20" y="52" font-size="12.5" fill="#52514e">geometric mean over the suite's cases, for every recorded run (oldest first)</text>
 
-<line x1="70" y1="312.8" x2="830" y2="312.8" stroke="#e1e0d9" stroke-width="1"/>
-<text x="62" y="316.8" font-size="11" fill="#898781" text-anchor="end">1.00</text>
-<line x1="70" y1="259.5" x2="830" y2="259.5" stroke="#e1e0d9" stroke-width="1"/>
-<text x="62" y="263.5" font-size="11" fill="#898781" text-anchor="end">2.00</text>
-<line x1="70" y1="189.0" x2="830" y2="189.0" stroke="#e1e0d9" stroke-width="1"/>
-<text x="62" y="193.0" font-size="11" fill="#898781" text-anchor="end">5.00</text>
-<line x1="70" y1="135.6" x2="830" y2="135.6" stroke="#e1e0d9" stroke-width="1"/>
-<text x="62" y="139.6" font-size="11" fill="#898781" text-anchor="end">10.0</text>
+<line x1="70" y1="315.5" x2="830" y2="315.5" stroke="#e1e0d9" stroke-width="1"/>
+<text x="62" y="319.5" font-size="11" fill="#898781" text-anchor="end">1.00</text>
+<line x1="70" y1="266.7" x2="830" y2="266.7" stroke="#e1e0d9" stroke-width="1"/>
+<text x="62" y="270.7" font-size="11" fill="#898781" text-anchor="end">2.00</text>
+<line x1="70" y1="202.3" x2="830" y2="202.3" stroke="#e1e0d9" stroke-width="1"/>
+<text x="62" y="206.3" font-size="11" fill="#898781" text-anchor="end">5.00</text>
+<line x1="70" y1="153.5" x2="830" y2="153.5" stroke="#e1e0d9" stroke-width="1"/>
+<text x="62" y="157.5" font-size="11" fill="#898781" text-anchor="end">10.0</text>
+<line x1="70" y1="104.8" x2="830" y2="104.8" stroke="#e1e0d9" stroke-width="1"/>
+<text x="62" y="108.8" font-size="11" fill="#898781" text-anchor="end">20.0</text>
 <text x="16" y="214.0" font-size="11.5" fill="#52514e" text-anchor="middle" transform="rotate(-90 16 214.0)">times faster (log)</text>
-<line x1="70" y1="312.8" x2="830" y2="312.8" stroke="#52514e" stroke-width="1" stroke-dasharray="4 3"/>
-<text x="76" y="307.8" font-size="11" fill="#52514e">SNaQ.jl speed</text>
-<text x="133.3" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 133.3 360)">cpp-initial (20261113)</text>
-<text x="260.0" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 260.0 360)">exp-A-classes (20261113)</text>
-<text x="386.7" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 386.7 360)">exp-B-bound-dedup (20261113)</text>
-<text x="513.3" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 513.3 360)">exp-B-bound-dedupcount (20261113</text>
-<text x="640.0" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 640.0 360)">exp-C-newton (20261113)</text>
-<text x="766.7" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 766.7 360)">exp-C-newton-hybrids (20261113)</text>
-<path d="M133.3,212.5 L260.0,144.7 L386.7,149.5 L513.3,115.2 L640.0,140.9 L766.7,140.3" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
-<g><title>geometric-mean speedup · cpp-initial (20261113): 3.68 times faster</title><circle cx="133.3" cy="212.5" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
-<g><title>geometric-mean speedup · exp-A-classes (20261113): 8.89 times faster</title><circle cx="260.0" cy="144.7" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
-<g><title>geometric-mean speedup · exp-B-bound-dedup (20261113): 8.35 times faster</title><circle cx="386.7" cy="149.5" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
-<g><title>geometric-mean speedup · exp-B-bound-dedupcount (20261113): 13.0 times faster</title><circle cx="513.3" cy="115.2" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
-<g><title>geometric-mean speedup · exp-C-newton (20261113): 9.34 times faster</title><circle cx="640.0" cy="140.9" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
-<g><title>geometric-mean speedup · exp-C-newton-hybrids (20261113): 9.41 times faster</title><circle cx="766.7" cy="140.3" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
-<text x="774.7" y="144.3" font-size="10.5" fill="#52514e">9.41</text>
+<line x1="70" y1="315.5" x2="830" y2="315.5" stroke="#52514e" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="76" y="310.5" font-size="11" fill="#52514e">SNaQ.jl speed</text>
+<text x="124.3" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 124.3 360)">cpp-initial (20261113)</text>
+<text x="232.9" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 232.9 360)">exp-A-classes (20261113)</text>
+<text x="341.4" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 341.4 360)">exp-B-bound-dedup (20261113)</text>
+<text x="450.0" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 450.0 360)">exp-B-bound-dedupcount (20261113</text>
+<text x="558.6" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 558.6 360)">exp-C-newton (20261113)</text>
+<text x="667.1" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 667.1 360)">exp-C-newton-hybrids (20261113)</text>
+<text x="775.7" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 775.7 360)">exp-D-eqbuilder (20261113)</text>
+<path d="M124.3,223.8 L232.9,161.8 L341.4,166.2 L450.0,134.9 L558.6,158.4 L667.1,157.8 L775.7,112.5" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
+<g><title>geometric-mean speedup · cpp-initial (20261113): 3.68 times faster</title><circle cx="124.3" cy="223.8" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-A-classes (20261113): 8.89 times faster</title><circle cx="232.9" cy="161.8" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-B-bound-dedup (20261113): 8.35 times faster</title><circle cx="341.4" cy="166.2" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-B-bound-dedupcount (20261113): 13.0 times faster</title><circle cx="450.0" cy="134.9" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-C-newton (20261113): 9.34 times faster</title><circle cx="558.6" cy="158.4" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-C-newton-hybrids (20261113): 9.41 times faster</title><circle cx="667.1" cy="157.8" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-D-eqbuilder (20261113): 17.9 times faster</title><circle cx="775.7" cy="112.5" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<text x="783.7" y="116.5" font-size="10.5" fill="#52514e">17.9</text>
 </svg>
