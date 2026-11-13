@@ -15,6 +15,7 @@ endif()
 
 option(CSNAQ_BUILD_TESTS "Build the CSNaQ unit tests (fetches GoogleTest)" OFF)
 option(CSNAQ_NATIVE "Optimize for the build machine's CPU (-march=native)" OFF)
+option(CSNAQ_BUILD_TOOLS "Build the validation and benchmark tools" OFF)
 
 include(FetchContent)
 
@@ -76,10 +77,20 @@ if(MSVC)
     target_compile_options(snaq PRIVATE /utf-8)
 endif()
 
+include(GNUInstallDirs)
+install(TARGETS snaq RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+if(CSNAQ_BUILD_TOOLS)
 # Validation tool: expected CFs, scores and gradients for networks (compared
 # against SNaQ.jl by tools/julia scripts).
 add_executable(csnaq_check tools/csnaq_check.cpp)
 target_link_libraries(csnaq_check PRIVATE csnaq_core)
+
+# Benchmark of numerical parameter optimization (compared against SNaQ.jl by
+# tools/julia/bench_fit.jl).
+add_executable(csnaq_bench_fit tools/bench_fit.cpp)
+target_link_libraries(csnaq_bench_fit PRIVATE csnaq_core)
+endif()
 
 # --------------------------------------------------------------------------
 # Tests

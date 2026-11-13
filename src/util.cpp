@@ -1,6 +1,5 @@
 #include "util.hpp"
 
-#include <charconv>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -24,10 +23,15 @@ std::string julia_float(double x) {
     if (std::isnan(x)) return "NaN";
     if (std::isinf(x)) return x > 0 ? "Inf" : "-Inf";
 
-    // Shortest round-trip digits via scientific to_chars: "d.ddde+XX".
+    // Shortest round-trip digits: the smallest precision whose correctly
+    // rounded scientific representation parses back to x (portable
+    // alternative to std::to_chars, which older macOS/GCC lack for doubles).
     char buf[64];
-    auto res = std::to_chars(buf, buf + sizeof(buf), x, std::chars_format::scientific);
-    std::string sci(buf, res.ptr);
+    for (int prec = 0; prec <= 17; ++prec) {
+        std::snprintf(buf, sizeof(buf), "%.*e", prec, x);
+        if (std::strtod(buf, nullptr) == x) break;
+    }
+    std::string sci(buf);
     bool neg = false;
     size_t p = 0;
     if (sci[0] == '-') {
