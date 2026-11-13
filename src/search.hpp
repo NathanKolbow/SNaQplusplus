@@ -2,7 +2,10 @@
 // multiple independent runs (multisearch.jl).
 #pragma once
 
+#include <cstdint>
+#include <mutex>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "likelihood.hpp"
@@ -63,14 +66,36 @@ struct SnaqOptions {
     double liktolRel = 1e-4;
     int opt_maxeval = -1;  // -1: max(30, number of taxa)
     std::string logprefix;
+    // CSNaQ options (not in SNaQ.jl)
+    // Reject a proposed network without fitting it when an upper bound of its
+    // score shows that it cannot be accepted. The proposal is still counted
+    // as a failed proposal, so this does not change what a search does.
+    bool boundPrune = true;
+    // Do not fit a proposed network whose topology this run has already
+    // fitted (such proposals are drawn again, like moves that were already
+    // attempted). When every run uses the same quartets (propQuartets = 1),
+    // topologies fitted by other runs are not fitted again either.
+    bool dedup = true;
+    // Whether a proposal skipped by `dedup` counts as a failed proposal
+    // (towards Nfail). If false, another proposal is drawn instead, so a run
+    // tries Nfail distinct topologies before it stops.
+    bool dedupCounts = false;
     // CLI-only
     bool lazy = false;
     int threads = 1;
 };
 
+// Scores of the topologies fitted by the runs of a multisearch, shared when
+// every run uses the same quartets.
+struct SearchShared {
+    std::mutex m;
+    std::unordered_map<uint64_t, double> score;  // topology signature -> best converged score
+};
+
 // One search (SNaQ's `search`). `logfile` and `filename` as in SNaQ.
 Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, long long seed,
-               double propQuartetsFinal, const std::string& logfile, const std::string& filename, int nthreads);
+               double propQuartetsFinal, const std::string& logfile, const std::string& filename, int nthreads,
+               SearchShared* shared = nullptr);
 
 // SNaQ's `multisearch`: returns the networks of all runs, sorted by score
 // (best first). `startnets` has length 1 or `o.runs`.

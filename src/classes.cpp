@@ -377,10 +377,11 @@ QuartetClasses buildclasses(Network& net, const QuartetList& ql, const CFMatrix&
     }
 
     // ---- equations of the classes not found in `reuse` ----
+    out.nbuilt = tobuild.size();
     if (!tobuild.empty()) {
-        ParamMap pm;
-        for (EdgeId e : net.edge) pm.set(net.E(e).number, net.E(e).pid);
-        for (NodeId h : net.hybrid) pm.set(net.N(h).number, net.N(h).pid);
+        auto pend = std::make_shared<QuartetClasses::Pending>();
+        for (EdgeId e : net.edge) pend->pm.set(net.E(e).number, net.E(e).pid);
+        for (NodeId h : net.hybrid) pend->pm.set(net.N(h).number, net.N(h).pid);
         std::vector<int> chainidx(NP, -1);
         std::vector<Chain> chains;
         for (uint32_t ci : tobuild)
@@ -389,31 +390,62 @@ QuartetClasses buildclasses(Network& net, const QuartetList& ql, const CFMatrix&
                     chainidx[static_cast<size_t>(pn)] = static_cast<int>(chains.size());
                     chains.push_back(treelikechain(net, pn));
                 }
-        parallel_for(tobuild.size(), opt.nthreads, [&](size_t lo, size_t hi, int) {
-            for (size_t t = lo; t < hi; ++t) {
-                const uint32_t ci = tobuild[t];
-                std::array<const Chain*, 4> ch;
-                for (size_t x = 0; x < 4; ++x)
-                    ch[x] = &chains[static_cast<size_t>(chainidx[static_cast<size_t>(portnodes[ci][x])])];
-                auto ce = std::make_shared<ClassEqn>();
-                ce->eqn = portquartetequation(net, nodepos, edgepos, portnodes[ci], ch, pm, topnode[ci]);
+        // tree-like classes are cheap; the others are built by finishclasses
+        for (uint32_t ci : tobuild) {
+            std::array<const Chain*, 4> ch;
+            for (size_t x = 0; x < 4; ++x)
+                ch[x] = &chains[static_cast<size_t>(chainidx[static_cast<size_t>(portnodes[ci][x])])];
+            auto ce = std::make_shared<ClassEqn>();
+            if (porttreelikeequation(net, ch, pend->pm, ce->eqn)) {
                 collectparams(ce->eqn, ce->params);
                 out.eqn[ci] = std::move(ce);
+            } else {
+                pend->classes.push_back(ci);
+                pend->ports.push_back(portnodes[ci]);
+                pend->top.push_back(topnode[ci]);
+            }
+        }
+        if (!pend->classes.empty()) {
+            pend->nodepos = std::move(nodepos);
+            pend->edgepos = std::move(edgepos);
+            out.pending = std::move(pend);
+        }
+    }
+    out.batch.npid = out.npid;
+    out.batch.qlogq = opt.qlogq;
+    if (!opt.defer) finishclasses(net, out, opt.nthreads);
+    return out;
+}
+
+void finishclasses(const Network& net, QuartetClasses& cls, int nthreads) {
+    if (cls.pending) {
+        const QuartetClasses::Pending& pend = *cls.pending;
+        parallel_for(pend.classes.size(), nthreads, [&](size_t lo, size_t hi, int) {
+            for (size_t t = lo; t < hi; ++t) {
+                auto ce = std::make_shared<ClassEqn>();
+                ce->eqn = portreticulateequation(net, pend.nodepos, pend.edgepos, pend.ports[t], pend.pm, pend.top[t]);
+                collectparams(ce->eqn, ce->params);
+                cls.eqn[pend.classes[t]] = std::move(ce);
             }
         });
+        cls.pending.reset();
     }
-    out.nbuilt = tobuild.size();
-    out.bykey.reserve(nc * 2);
-    for (size_t ci = 0; ci < nc; ++ci) out.bykey.emplace(out.key[ci], static_cast<uint32_t>(ci));
+    const size_t nc = cls.size();
+    cls.bykey.clear();
+    cls.bykey.reserve(nc * 2);
+    for (size_t ci = 0; ci < nc; ++ci) cls.bykey.emplace(cls.key[ci], static_cast<uint32_t>(ci));
 
     // ---- batch for the fit ----
-    ClassBatch& b = out.batch;
-    b.npid = out.npid;
-    b.qlogq = opt.qlogq;
-    b.off.push_back(0);
+    ClassBatch& b = cls.batch;
+    b.coal.clear();
+    b.off.assign(1, 0);
+    b.qres.clear();
+    b.qoth.clear();
+    b.gen.clear();
+    b.genQ.clear();
     for (size_t ci = 0; ci < nc; ++ci) {
-        const RecursiveCFEquation& eq = out.eqn[ci]->eqn;
-        const auto& Q = out.Q[ci];
+        const RecursiveCFEquation& eq = cls.eqn[ci]->eqn;
+        const auto& Q = cls.Q[ci];
         if (eq.division_H == -1) {
             for (int p : eq.coal_edges) b.coal.push_back(p);
             b.off.push_back(static_cast<uint32_t>(b.coal.size()));
@@ -421,11 +453,25 @@ QuartetClasses buildclasses(Network& net, const QuartetList& ql, const CFMatrix&
             b.qres.push_back(r);
             b.qoth.push_back((Q[0] + Q[1] + Q[2]) - r);
         } else {
-            b.gen.push_back(out.eqn[ci].get());
+            b.gen.push_back(cls.eqn[ci].get());
             b.genQ.push_back(Q);
         }
     }
-    return out;
+}
+
+double classupperbound(const QuartetClasses& cls) {
+    double ub = -cls.batch.qlogq;
+    for (size_t ci = 0; ci < cls.size(); ++ci) {
+        const auto& Q = cls.Q[ci];
+        const ClassEqn* ce = cls.eqn[ci].get();
+        if (ce && ce->eqn.division_H == -1) {
+            const double r = Q[static_cast<size_t>(ce->eqn.which_coal - 1)];
+            ub += treeclassbound(r, (Q[0] + Q[1] + Q[2]) - r, !ce->eqn.coal_edges.empty());
+        } else {
+            ub += generalclassbound(Q);
+        }
+    }
+    return ub;
 }
 
 std::vector<double> pidparams(const Network& net, int npid) {

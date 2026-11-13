@@ -19,6 +19,7 @@
 #include "network_manip.hpp"
 #include "newick.hpp"
 #include "optimize.hpp"
+#include "signature.hpp"
 #include "snaq_network.hpp"
 
 namespace csnaq {
@@ -178,7 +179,8 @@ static std::string round3(double x) { return julia_float(julia_round(x, 3)); }
 static std::string round6(double x) { return julia_float(julia_round(x, 6)); }
 
 Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, long long seed,
-               double propQuartetsFinal, const std::string& logfile, const std::string& filename, int nthreads) {
+               double propQuartetsFinal, const std::string& logfile, const std::string& filename, int nthreads,
+               SearchShared* shared) {
     const double rho = o.rho;
     const double propQuartets = o.propQuartets;
     const long long maxequivPLs = o.Nfail;
@@ -271,20 +273,62 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
     N.compact_pids();
     QuartetClasses N_cls = buildclasses(N, qlist, qsub, copt);
     // Classes of `net` (a copy of N after a move, or N itself), reusing N's equations.
-    auto classesof = [&](Network& net) {
+    auto classesof = [&](Network& net, bool defer = false) {
         ClassOptions po = copt;
         po.reuse = &N_cls;
+        po.defer = defer;
         return buildclasses(net, qlist, qsub, po);
     };
 
     if (o.updateBL) {
-        bool flipped = false;
-        fitclasses(N, N_cls, rho, search_fit_options(o, -1), nthreads, &flipped);
+        FitInfo fi;
+        fitclasses(N, N_cls, rho, search_fit_options(o, -1), nthreads, &fi);
         if (!o.restrictions(N)) throw SnaqError("N does not meet restrictions after preopt");
         current_logPL = N.fscore;
-        if (flipped) N_cls = classesof(N);
+        if (fi.flipped) N_cls = classesof(N);
     } else {
         current_logPL = scoreclasses(N, N_cls, rho, nthreads);
+    }
+
+    // Whether a score would be accepted over the current network's.
+    // QUIRK: the relative criterion divides by the current score, which is
+    // negative; it is undefined (NaN) if the current score is 0.
+    auto improves = [&](double score) {
+        return score - current_logPL > o.liktolAbs && (current_logPL - score) / current_logPL > o.liktolRel;
+    };
+    // Topologies this run has evaluated (o.dedup): the score of their fit, or
+    // an upper bound of it. An evaluation is final if its fit converged, if it
+    // was a bound, or if it was made from the current network (fitting again
+    // would repeat the same computation). `epoch` counts accepted moves.
+    struct Evaluated {
+        double score;
+        bool converged;
+        long long epoch;
+    };
+    std::unordered_map<uint64_t, Evaluated> evaluated;
+    long long epoch = 0, dupskips = 0;
+    auto record = [&](uint64_t sig, double score, bool converged) {
+        auto it = evaluated.find(sig);
+        if (it == evaluated.end()) {
+            evaluated.emplace(sig, Evaluated{score, converged, epoch});
+        } else {
+            it->second.score = std::max(it->second.score, score);
+            it->second.converged = it->second.converged || converged;
+            it->second.epoch = epoch;
+        }
+        if (shared && converged) {
+            std::lock_guard<std::mutex> g(shared->m);
+            auto sit = shared->score.find(sig);
+            if (sit == shared->score.end())
+                shared->score.emplace(sig, score);
+            else
+                sit->second = std::max(sit->second, score);
+        }
+    };
+    if (o.dedup) {
+        bool discrete = false;
+        const uint64_t sig = topologysignature(N, &discrete);
+        if (discrete) evaluated.emplace(sig, Evaluated{current_logPL, true, epoch});
     }
 
     std::vector<AttemptedMove> moves_attempted;
@@ -314,6 +358,7 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
         stats.dPL[mname];
 
         bool accepted = false;
+        bool duplicate = false;  // the proposal is a topology already evaluated (o.dedup)
         auto prefix = [&]() {
             return "Iteration " + std::to_string(j) + " (N.h=" + std::to_string(N.numhybrids) +
                    "), in a row = " + std::to_string(unchanged_iters) + "/" + std::to_string(maxequivPLs);
@@ -338,26 +383,75 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
                 logtext(logfile, prefix() + " REJECTED " + mname + " (restrictions not met)");
                 return false;
             }
+            uint64_t sig = 0;
+            bool havesig = false;
+            if (o.dedup) {
+                sig = topologysignature(Nprime, &havesig);
+                if (havesig) {
+                    auto it = evaluated.find(sig);
+                    if (it != evaluated.end() && (it->second.converged || it->second.epoch == epoch) &&
+                        !improves(it->second.score)) {
+                        logtext(logfile, prefix() + " REJECTED " + mname + " (topology already evaluated)");
+                        if (o.dedupCounts) {
+                            unchanged_iters += 1;
+                            return true;
+                        }
+                        // not a new proposal: draw another one, as for moves already attempted
+                        ++dupskips;
+                        duplicate = true;
+                        return false;
+                    }
+                    if (shared) {
+                        bool known = false;
+                        double other = 0.0;
+                        {
+                            std::lock_guard<std::mutex> g(shared->m);
+                            auto sit = shared->score.find(sig);
+                            if (sit != shared->score.end()) {
+                                known = true;
+                                other = sit->second;
+                            }
+                        }
+                        if (known && !improves(other)) {
+                            unchanged_iters += 1;
+                            logtext(logfile, prefix() + " REJECTED " + mname + " (" + round3(other) + " < " +
+                                                 round3(current_logPL) + ", fitted by another run)");
+                            evaluated.emplace(sig, Evaluated{other, true, epoch});
+                            return true;
+                        }
+                    }
+                }
+            }
+            dupskips = 0;
             // (SNaQ.jl updates the equations in place after rNNI moves and rebuilds
             // them otherwise; here every move reuses the equations of the classes
             // it leaves untouched.)
-            QuartetClasses Nprime_cls = classesof(Nprime);
-            bool flipped = false;
+            QuartetClasses Nprime_cls = classesof(Nprime, o.boundPrune);
+            if (o.boundPrune) {
+                // no fit of Nprime can score more than `bound`
+                const double bound = classupperbound(Nprime_cls);
+                if (!improves(bound)) {
+                    unchanged_iters += 1;
+                    logtext(logfile, prefix() + " REJECTED " + mname + " (bound " + round3(bound) + " < " +
+                                         round3(current_logPL) + ")");
+                    if (havesig) record(sig, bound, true);
+                    return true;
+                }
+                finishclasses(Nprime, Nprime_cls, nthreads);
+            }
+            FitInfo fi;
             double Nprime_logPL =
-                fitclasses(Nprime, Nprime_cls, rho, search_fit_options(o, opt_maxeval), nthreads, &flipped);
+                fitclasses(Nprime, Nprime_cls, rho, search_fit_options(o, opt_maxeval), nthreads, &fi);
             if (Nprime_logPL == -std::numeric_limits<double>::infinity())
                 throw SnaqError("Nprime_logPL is -Inf?? newick: " + writenewick(Nprime, true));
             if (std::isnan(Nprime_logPL))
                 throw SnaqError("Nprime_logPL = NaN\n" + writenewick(Nprime, true));
-            // QUIRK: the relative criterion divides by the current score, which
-            // is negative; it is undefined (NaN) if the current score is 0.
-            if (Nprime_logPL - current_logPL > o.liktolAbs &&
-                (current_logPL - Nprime_logPL) / current_logPL > o.liktolRel) {
+            if (improves(Nprime_logPL)) {
                 N = std::move(Nprime);
                 N_cls = std::move(Nprime_cls);
                 // equations refer to a hybrid's minor edge: rebuild those of the
                 // hybrids whose major and minor edges were exchanged by the fit
-                if (flipped) N_cls = classesof(N);
+                if (fi.flipped) N_cls = classesof(N);
                 CFdeltas.clear();
                 stats.accepted[mname] += 1;
                 stats.dPL[mname].push_back(Nprime_logPL - current_logPL);
@@ -369,16 +463,27 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
                 unchanged_iters = 0;
                 moves_attempted.clear();
                 accepted = true;
+                ++epoch;
+                // a topology that was the current network is never fitted again
+                if (havesig) record(sig, current_logPL, true);
             } else {
                 unchanged_iters += 1;
                 logtext(logfile, prefix() + " REJECTED " + mname + " (" + round3(Nprime_logPL) + " < " +
                                      round3(current_logPL) + ")");
+                if (havesig) record(sig, Nprime_logPL, fi.converged);
             }
             return true;
         };
         bool completed = body();
-        if (!accepted) moves_attempted.push_back(snapshot_attempt(Nprime, prop_move, prop_params));
+        // (duplicates are not recorded: the list would grow without bound, and
+        // the search stops anyway after 1000 duplicates in a row)
+        if (!accepted && !duplicate) moves_attempted.push_back(snapshot_attempt(Nprime, prop_move, prop_params));
         if (completed && unchanged_iters > maxequivPLs) break;
+        if (dupskips >= 1000) {
+            logtext(logfile, "Iteration " + std::to_string(j) +
+                                 ": 1000 proposals in a row were topologies already evaluated, stopping.");
+            break;
+        }
     }
     if (o.verbose) {
         std::lock_guard<std::mutex> g(g_stdout_mutex);
@@ -600,6 +705,10 @@ std::vector<Network> multisearch(std::vector<Network> N, bool single_input, cons
     std::vector<Network> all_nets(static_cast<size_t>(runs));
     const int concurrent = std::min(runs, nthreads_total);
     const int inner = std::max(1, nthreads_total / concurrent);
+    // With propQuartets = 1 every run fits to the same quartets, so a topology
+    // fitted by one run need not be fitted again by another.
+    SearchShared sharedscores;
+    SearchShared* sharedptr = (o.dedup && o.propQuartets == 1.0) ? &sharedscores : nullptr;
     std::atomic<int> next{0};
     std::exception_ptr err = nullptr;
     std::mutex errm;
@@ -616,7 +725,7 @@ std::vector<Network> multisearch(std::vector<Network> N, bool single_input, cons
                 std::string logfile = o.logprefix.empty() ? "" : o.logprefix + std::to_string(j + 1);
                 all_nets[static_cast<size_t>(j)] =
                     search(start.clone(), q, hmax, o, run_seeds[static_cast<size_t>(j)], propQuartetsFinal, logfile,
-                           filenames[static_cast<size_t>(j)], inner);
+                           filenames[static_cast<size_t>(j)], inner, sharedptr);
             } catch (...) {
                 std::lock_guard<std::mutex> g(errm);
                 if (!err) err = std::current_exception();

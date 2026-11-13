@@ -110,10 +110,12 @@ struct ClassObjective {
     double alpha;
     LossWorkspace ws;
     int nthreads;
+    int evals = 0;
 };
 
 double classobjective(unsigned n, const double* x, double* grad, void* data) {
     auto* d = static_cast<ClassObjective*>(data);
+    ++d->evals;
     const std::vector<int>& pidof = *d->pidof;
     for (unsigned j = 0; j < n; ++j) d->params[static_cast<size_t>(pidof[j])] = x[j];
     const double f = evalclasses(*d->batch, d->params.data(), d->grad.data(), d->alpha, d->ws, d->nthreads);
@@ -125,9 +127,10 @@ double classobjective(unsigned n, const double* x, double* grad, void* data) {
 }  // namespace
 
 double fitclasses(Network& net, const QuartetClasses& cls, double rho, const FitOptions& fo, int nthreads,
-                  bool* flipped) {
+                  FitInfo* fitinfo) {
     if (!(rho >= 0 && rho <= 1)) throw SnaqError("ρ must be in range [0, 1]");
     if (cls.npid != net.next_pid) throw SnaqError("fitclasses: the classes were built for another network");
+    if (!cls.complete()) throw SnaqError("fitclasses: finishclasses must be called first");
     for (EdgeId e : net.edge) {
         Edge& ed = net.E(e);
         if (std::isnan(ed.length)) ed.length = 0.0;
@@ -152,6 +155,7 @@ double fitclasses(Network& net, const QuartetClasses& cls, double rho, const Fit
     ClassObjective data{&cls.batch, &pidof, pidparams(net, cls.npid),
                         std::vector<double>(static_cast<size_t>(cls.npid)), rhotoalpha(rho), {}, nthreads};
     double maxf = std::numeric_limits<double>::quiet_NaN();
+    bool converged = false;
     {
         NloptHandle h(narg);
         nlopt_set_maxeval(h.o, maxeval);
@@ -166,7 +170,8 @@ double fitclasses(Network& net, const QuartetClasses& cls, double rho, const Fit
         }
         nlopt_set_max_objective(h.o, classobjective, &data);
         // NLopt.jl ignores the return code (except forced stops from callbacks).
-        nlopt_optimize(h.o, x.data(), &maxf);
+        const nlopt_result ret = nlopt_optimize(h.o, x.data(), &maxf);
+        converged = ret > 0 && ret != NLOPT_MAXEVAL_REACHED;
     }
     setX(net, x.data(), info.idx_obj);
     if (maxf == -std::numeric_limits<double>::infinity()) throw SnaqError("Optimization error: maxf == -Inf");
@@ -186,7 +191,11 @@ double fitclasses(Network& net, const QuartetClasses& cls, double rho, const Fit
         }
         anyflip |= was != net.E(e1).ismajor;
     }
-    if (flipped) *flipped = anyflip;
+    if (fitinfo) {
+        fitinfo->flipped = anyflip;
+        fitinfo->converged = converged;
+        fitinfo->evals = data.evals;
+    }
     net.fscore = maxf;
     return maxf;
 }

@@ -7,7 +7,8 @@ add_executable(csnaq_tests
     test_search_api.cpp
     test_propquartets_lazy_bugs.cpp
     test_newick_and_cli.cpp
-    test_classes.cpp)
+    test_classes.cpp
+    test_search_shortcuts.cpp)
 target_link_libraries(csnaq_tests PRIVATE csnaq_core GTest::gtest_main)
 target_include_directories(csnaq_tests PRIVATE ${CMAKE_SOURCE_DIR}/apps ${CMAKE_SOURCE_DIR}/tools)
 target_sources(csnaq_tests PRIVATE ${CMAKE_SOURCE_DIR}/apps/cli.cpp)

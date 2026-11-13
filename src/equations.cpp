@@ -829,13 +829,15 @@ QuartetData findquartetequations4taxa(const TreeQuartetContext& ctx, const std::
 
 Chain treelikechain(const Network& net, NodeId node) { return make_chain(net, treelikeancestorchain(net, node)); }
 
-RecursiveCFEquation portquartetequation(const Network& net, const std::vector<int>& nodepos,
-                                        const std::vector<int>& edgepos, const std::array<NodeId, 4>& ports,
-                                        const std::array<const Chain*, 4>& chains, const ParamMap& pm, NodeId top) {
-    RecursiveCFEquation eqn;
-    if (treelikequartetdata<ParamList>(net, *chains[0], *chains[1], *chains[2], *chains[3], pm, true, tl_scratch, eqn,
-                                       nullptr))
-        return eqn;
+bool porttreelikeequation(const Network& net, const std::array<const Chain*, 4>& chains, const ParamMap& pm,
+                          RecursiveCFEquation& eqn) {
+    return treelikequartetdata<ParamList>(net, *chains[0], *chains[1], *chains[2], *chains[3], pm, true, tl_scratch,
+                                          eqn, nullptr);
+}
+
+RecursiveCFEquation portreticulateequation(const Network& net, const std::vector<int>& nodepos,
+                                           const std::vector<int>& edgepos, const std::array<NodeId, 4>& ports,
+                                           const ParamMap& pm, NodeId top) {
     static const std::array<std::string, 4> names{"1", "2", "3", "4"};
     // Nothing above `top` can affect the quartet: if the four lineages get
     // there without having coalesced, they are exchangeable from then on.

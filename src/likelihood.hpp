@@ -97,10 +97,13 @@ double evalclasses(const ClassBatch& batch, const double* params, double* grad, 
 // Expected CFs (in the class's column order) of one class.
 std::array<double, 3> classexpectedCF(const ClassEqn& ce, const double* params, int npid, double alpha);
 
-// An upper bound of the loss of `batch` over all parameter values: each class
-// is given the parameter values that suit it best, ignoring that classes
-// share parameters.
-double classscoreupperbound(const ClassBatch& batch);
+// Upper bounds of one class's term of the loss, over all parameter values
+// (the class is given the values that suit it best, whatever the other
+// classes need). Tree-like class: `qres` is the summed observed CF of the
+// split the network displays, `qoth` of the other two, and `hasparams` tells
+// whether its path carries any parameter. General class: summed observed CFs.
+double treeclassbound(double qres, double qoth, bool hasparams);
+double generalclassbound(const std::array<double, 3>& Q);
 
 // computelossandgradient!(batch, qdata, params, grad, q, α)
 double computelossandgradient(const TreeQuartetBatch& batch, const std::vector<QuartetData>& qdata,

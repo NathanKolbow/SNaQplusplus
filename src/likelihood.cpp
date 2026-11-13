@@ -632,33 +632,22 @@ std::array<double, 3> classexpectedCF(const ClassEqn& ce, const double* params, 
     return {r[0], r[1], 1.0 - r[0] - r[1]};
 }
 
-double classscoreupperbound(const ClassBatch& batch) {
-    double ub = -batch.qlogq;
-    const double log3 = std::log(3.0), logfloor = std::log(1e-9);
-    for (size_t j = 0; j < batch.qres.size(); ++j) {
-        const double qr = batch.qres[j], qo = batch.qoth[j];
-        if (batch.off[j] == batch.off[j + 1]) {  // no parameter: the path length is 0
-            ub += -(qr + qo) * log3;
-            continue;
-        }
-        // maximize qr log(1 - 2z/3) + qo log(z/3) over z = exp(-s) in (0, 1]
-        double best;
-        if (qo <= 0.0) {
-            best = 0.0;
-        } else {
-            const double z = 3.0 * qo / (2.0 * (qr + qo));
-            best = z >= 1.0 ? -(qr + qo) * log3 : qr * std::log(1.0 - 2.0 * z / 3.0) + qo * std::log(z / 3.0);
-            best = std::max(best, qo * logfloor);  // the loss floors expected CFs at 1e-9
-        }
-        ub += best;
-    }
-    for (size_t g = 0; g < batch.genQ.size(); ++g) {
-        const auto& Q = batch.genQ[g];
-        const double n = Q[0] + Q[1] + Q[2];
-        for (int k = 0; k < 3; ++k)
-            if (Q[k] > 0.0) ub += Q[k] * std::max(std::log(Q[k] / n), logfloor);
-        ub += 4e-9 * n;  // expected CFs floored at 1e-9 can sum to slightly more than 1
-    }
+double treeclassbound(double qr, double qo, bool hasparams) {
+    static const double log3 = std::log(3.0), logfloor = std::log(1e-9);
+    if (!hasparams) return -(qr + qo) * log3;  // the path length is 0
+    // maximize qr log(1 - 2z/3) + qo log(z/3) over z = exp(-s) in (0, 1]
+    if (qo <= 0.0) return 0.0;
+    const double z = 3.0 * qo / (2.0 * (qr + qo));
+    const double best = z >= 1.0 ? -(qr + qo) * log3 : qr * std::log(1.0 - 2.0 * z / 3.0) + qo * std::log(z / 3.0);
+    return std::max(best, qo * logfloor);  // the loss floors expected CFs at 1e-9
+}
+
+double generalclassbound(const std::array<double, 3>& Q) {
+    static const double logfloor = std::log(1e-9);
+    const double n = Q[0] + Q[1] + Q[2];
+    double ub = 4e-9 * n;  // expected CFs floored at 1e-9 can sum to slightly more than 1
+    for (int k = 0; k < 3; ++k)
+        if (Q[k] > 0.0) ub += Q[k] * std::max(std::log(Q[k] / n), logfloor);
     return ub;
 }
 

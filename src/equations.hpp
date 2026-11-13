@@ -130,18 +130,24 @@ QuartetData findquartetequations4taxa(const TreeQuartetContext& ctx, const std::
 // The tree-like ancestor chain of any node (it stops below a hybrid node).
 Chain treelikechain(const Network& net, NodeId node);
 
-// Expected-CF equation of four lineages that enter the network at the nodes
-// `ports`, in the order (1, 2, 3, 4): which_coal = 1 means 12|34, 2 means
+// Expected-CF equation of four lineages that enter the network at four nodes
+// ("ports"), in the order (1, 2, 3, 4): which_coal = 1 means 12|34, 2 means
 // 13|24, 3 means 14|23. Each port must be the child node of a cut edge, and no
-// port an ancestor of another. `chains[k]` is treelikechain(net, ports[k]);
-// `nodepos` / `edgepos` give the position of each node / edge in net.node /
-// net.edge; `pm` maps the number of every edge and hybrid node to the
-// parameter id used in the equation. `top` is a node that every path from
-// the root to a port goes through: the equation only depends on the part of
-// the network between `top` and the ports.
-RecursiveCFEquation portquartetequation(const Network& net, const std::vector<int>& nodepos,
-                                        const std::vector<int>& edgepos, const std::array<NodeId, 4>& ports,
-                                        const std::array<const Chain*, 4>& chains, const ParamMap& pm, NodeId top);
+// port an ancestor of another. `pm` maps the number of every edge and hybrid
+// node to the parameter id used in the equation.
+//
+// porttreelikeequation: `chains[k]` is treelikechain(net, port k). Returns
+// false if the four lineages do not meet along tree-like paths; the equation
+// then comes from portreticulateequation.
+bool porttreelikeequation(const Network& net, const std::array<const Chain*, 4>& chains, const ParamMap& pm,
+                          RecursiveCFEquation& eqn);
+// portreticulateequation: `nodepos` / `edgepos` give the position of each
+// node / edge in net.node / net.edge. `top` is a node that every path from the
+// root to a port goes through: the equation only depends on the part of the
+// network between `top` and the ports.
+RecursiveCFEquation portreticulateequation(const Network& net, const std::vector<int>& nodepos,
+                                           const std::vector<int>& edgepos, const std::array<NodeId, 4>& ports,
+                                           const ParamMap& pm, NodeId top);
 
 // In-place updates after rNNI(1) / rNNI(2) moves (inplace_updates.jl).
 void applyrNNI1update(Network& Nprime, const std::vector<QuartetData>& old_q, std::vector<QuartetData>& new_q,

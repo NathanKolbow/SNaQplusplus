@@ -107,6 +107,13 @@ advanced (keyword arguments snaq! passes to each search):
   --opt_maxeval INT         max. evaluations when fitting a proposed network (default: max(30, #taxa))
   --logprefix PATH          write a detailed per-run log to PATH<run number>
 
+search shortcuts (not in SNaQ.jl; each can be turned off with "false"):
+  --boundPrune [BOOL]       reject a proposed network without fitting it when an upper bound of
+                            its score shows it cannot be accepted (default: true)
+  --dedup [BOOL]            do not fit again a topology that was already fitted (default: true)
+  --dedupCounts [BOOL]      count such repeated topologies as failed proposals, towards --Nfail
+                            (default: false: another proposal is drawn instead)
+
 other:
   --lazy                    compute observed CFs on demand (like DataCF(trees; lazy=true));
                             requires --propQuartets < 1
@@ -180,6 +187,9 @@ CliArgs parse_cli(const std::vector<std::string>& args) {
     num("--liktolRel", &o.liktolRel);
     integer("--opt_maxeval", &o.opt_maxeval);
     str("--logprefix", &o.logprefix);
+    boolean("--boundPrune", &o.boundPrune);
+    boolean("--dedup", &o.dedup);
+    boolean("--dedupCounts", &o.dedupCounts);
     boolean("--lazy", &o.lazy);
     integer("--threads", &o.threads);
     // hyphenated aliases for the restriction / advanced flags
