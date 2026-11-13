@@ -1,28 +1,27 @@
 {
   "quick": {
-    "description": "A few minutes: three snaq cases from 10 to 50 taxa, for checking an experimental change quickly. Each case uses about 1000 quartets, as in the standard suite.",
+    "description": "Three snaq cases from 10 to 50 taxa, with the settings of the standard suite (100 runs, about 1000 quartets, --lazy from 20 taxa).",
     "kind": "snaq",
     "nquartets": 1000,
     "cases": [
       {"name": "n10_h1", "dataset": "n10_h1", "hmax": 1, "runs": 100, "Nfail": 40},
-      {"name": "n20_h2", "dataset": "n20_h2", "hmax": 2, "runs": 100, "Nfail": 40},
-      {"name": "n50_h2", "dataset": "n50_h2", "hmax": 2, "runs": 100, "Nfail": 40}
+      {"name": "n20_h2", "dataset": "n20_h2", "hmax": 2, "runs": 100, "Nfail": 40, "lazy": true},
+      {"name": "n50_h2", "dataset": "n50_h2", "hmax": 2, "runs": 100, "Nfail": 40, "lazy": true}
     ]
   },
   "standard": {
-    "description": "End-to-end snaq runs on simulated data from 10 to 50 taxa and 1 to 3 reticulations. Each case uses about 1000 quartets: propQuartets = propQuartetsFinal = min(1, 1000 / binomial(ntaxa, 4)).",
+    "description": "End-to-end snaq runs on simulated data from 10 to 50 taxa and 1 to 3 reticulations, 100 runs each. Each case uses about 1000 quartets: propQuartets = propQuartetsFinal = min(1, 1000 / binomial(ntaxa, 4)). Cases with 20 or more taxa use --lazy (observed CFs computed on demand).",
     "kind": "snaq",
     "nquartets": 1000,
     "cases": [
       {"name": "n10_h1", "dataset": "n10_h1", "hmax": 1, "runs": 100, "Nfail": 40},
       {"name": "n15_h1", "dataset": "n15_h1", "hmax": 1, "runs": 100, "Nfail": 40},
-      {"name": "n20_h2", "dataset": "n20_h2", "hmax": 2, "runs": 100, "Nfail": 40},
-      {"name": "n25_h1", "dataset": "n25_h1", "hmax": 1, "runs": 100, "Nfail": 40},
-      {"name": "n25_h3", "dataset": "n25_h3", "hmax": 3, "runs": 100, "Nfail": 40},
-      {"name": "n30_h2", "dataset": "n30_h2", "hmax": 2, "runs": 100, "Nfail": 40},
-      {"name": "n40_h1", "dataset": "n40_h1", "hmax": 1, "runs": 100, "Nfail": 40},
-      {"name": "n50_h2", "dataset": "n50_h2", "hmax": 2, "runs": 100, "Nfail": 40},
-      {"name": "n50_h2_lazy", "dataset": "n50_h2", "hmax": 2, "runs": 100, "Nfail": 40, "lazy": true}
+      {"name": "n20_h2", "dataset": "n20_h2", "hmax": 2, "runs": 100, "Nfail": 40, "lazy": true},
+      {"name": "n25_h1", "dataset": "n25_h1", "hmax": 1, "runs": 100, "Nfail": 40, "lazy": true},
+      {"name": "n25_h3", "dataset": "n25_h3", "hmax": 3, "runs": 100, "Nfail": 40, "lazy": true},
+      {"name": "n30_h2", "dataset": "n30_h2", "hmax": 2, "runs": 100, "Nfail": 40, "lazy": true},
+      {"name": "n40_h1", "dataset": "n40_h1", "hmax": 1, "runs": 100, "Nfail": 40, "lazy": true},
+      {"name": "n50_h2", "dataset": "n50_h2", "hmax": 2, "runs": 100, "Nfail": 40, "lazy": true}
     ]
   },
   "fit": {

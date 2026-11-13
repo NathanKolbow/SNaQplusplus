@@ -51,8 +51,8 @@ this with its own `propQuartets` and `propQuartetsFinal`.
 
 | Suite | What it runs |
 |---|---|
-| `quick` | Three `snaq` cases, from 10 to 50 taxa. |
-| `standard` | Nine `snaq` cases: 10 to 50 taxa, 1 to 3 reticulations, one case with `--lazy`. |
+| `quick` | Three `snaq` cases, from 10 to 50 taxa, with the settings of `standard`. |
+| `standard` | Eight `snaq` cases: 10 to 50 taxa, 1 to 3 reticulations, 100 runs and `Nfail` 40 each. Cases with 20 or more taxa use `--lazy`. |
 | `fit` | Parameter optimization of the true network (`fitnumericalparameters!`, maxeval 1000), on 10 to 50 taxa. |
 
 For every case, the history records:
