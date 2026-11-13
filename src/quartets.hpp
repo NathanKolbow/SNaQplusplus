@@ -44,6 +44,9 @@ public:
     std::array<double, 3> compute(long long rank) const;
     // Fill `out` (3 doubles per rank) for the given ranks; multithreaded.
     void compute_rows(const std::vector<long long>& ranks, double* out, int nthreads) const;
+    // Proportion of the gene trees that are counted in the CFs of the quartet
+    // with this rank (they have its four taxa and, unless lazy, resolve it).
+    double genefraction(long long rank) const;
 
 private:
     std::vector<std::string> taxa_;
@@ -53,6 +56,7 @@ private:
     // -1 if a taxon of the pair is absent from that tree.
     std::vector<int16_t> lcadepth_;
     long long pairindex(int i, int j) const;  // i < j, 0-based
+    void counts(long long rank, long long n[3]) const;
 };
 
 // All taxon names appearing in a set of trees, sorted (Julia `sort`).

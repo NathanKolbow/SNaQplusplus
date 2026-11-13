@@ -266,3 +266,61 @@ TEST(HybridGuide, CandidatesPointAtTheMissingReticulation) {
     EXPECT_LT(rank, 6u) << "of " << cands.size() << " candidate pairs";
     EXPECT_GT(cands.size(), 20u);
 }
+
+TEST(GeneWeights, QuartetsWeighByTheirShareOfGeneTrees) {
+    // four gene trees; taxon f is missing from two of them
+    std::vector<Network> trees{nw("((a,b),(c,d),(e,f));"), nw("((a,c),(b,d),(e,f));"), nw("((a,b),(c,(d,e)));"),
+                               nw("(((a,b),c),(d,e));")};
+    std::vector<std::string> taxa{"a", "b", "c", "d", "e", "f"};
+    ObservedCFs obs(trees, taxa, false);
+    const long long nq = obs.nquartets();
+    CFMatrix q;
+    q.v.resize(3 * static_cast<size_t>(nq));
+    std::vector<long long> ranks;
+    std::vector<double> w;
+    for (long long r = 0; r < nq; ++r) {
+        ranks.push_back(r);
+        w.push_back(obs.genefraction(r));
+        auto t = unrank4taxa(6, r);
+        // quartets with f come from two gene trees (or fewer, if unresolved), the others from up to four
+        if (t[3] == 5) {
+            EXPECT_LE(w.back(), 0.5);
+        } else {
+            EXPECT_GT(w.back(), 0.5);
+        }
+    }
+    obs.compute_rows(ranks, q.v.data(), 1);
+    // weighted score = sum over quartets of weight * sum_k q log(e / q)
+    Network net = nw("((a:1,b:1):1,(c:1,d:1):1,(e:1,f:1):1);").deepcopynetwork();
+    semidirectnetwork(net);
+    ClassOptions co;
+    co.weights = w.data();
+    co.perquartet = true;
+    co.qlogq = obsqlogq(q, w.data());
+    QuartetClasses cls = buildclasses(net, QuartetList::allquartets(6), q, co);
+    std::vector<double> params = pidparams(net, cls.npid);
+    double want = 0.0;
+    for (size_t j = 0; j < static_cast<size_t>(nq); ++j) {
+        auto e = classexpectedCF(*cls.eqn[cls.qclass[j]], params.data(), cls.npid, rhotoalpha(0.0));
+        for (int k = 0; k < 3; ++k) {
+            const double qk = q(j, (cls.qcols[j] >> (2 * k)) & 3);
+            if (w[j] > 0 && qk > 0) want += w[j] * qk * std::log(e[static_cast<size_t>(k)] / qk);
+        }
+    }
+    EXPECT_NEAR(scoreclasses(net, cls, 0.0), want, 1e-10);
+
+    // complete gene trees: all weights are 1, and the search is unchanged
+    std::vector<Network> gts = read_trees("lazy_gts.tre");
+    Network start = read_trees("lazy_tre.tre").at(0);
+    double scores[2];
+    for (int k = 0; k < 2; ++k) {
+        SnaqOptions o = quiet_options();
+        o.threads = 1;
+        o.hmax = 1;
+        o.runs = 2;
+        o.Nfail = 10;
+        o.geneWeights = k == 1;
+        scores[k] = snaq({start}, true, gts, o).fscore;
+    }
+    EXPECT_EQ(scores[0], scores[1]);
+}

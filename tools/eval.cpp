@@ -68,6 +68,7 @@ int main(int argc, char** argv) {
         semidirectnetwork(t);
         FitOptions fo;
         fo.maxeval = 1000;
+        fo.method = FitMethod::newton;
         double s_truth = fitnumericalparameters_all(t, q, 0.0, fo, nthreads);
 
         std::printf("{\"hwcd\": %d, \"score_estimated\": %s, \"score_truth\": %s, \"nhybrids\": %d}\n", hwcd,

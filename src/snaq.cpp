@@ -59,7 +59,8 @@ Network lazysnaq(const std::vector<Network>& startnets, bool single_input, const
 
     CFSource q = CFSource::lazy(&lazyq);
     std::vector<Network> all_nets = multisearch(startnets, single_input, q, o.hmax, o, 0.0);
-    long long nusedfinal = rescoreonsharedquartets(all_nets, q, o.propQuartetsFinal, o.seed, o.rho, o.threads);
+    long long nusedfinal =
+        rescoreonsharedquartets(all_nets, q, o.propQuartetsFinal, o.seed, o.rho, o.threads, o.geneWeights);
     size_t bestidx = 0;
     for (size_t k = 1; k < all_nets.size(); ++k)
         if (all_nets[k].fscore > all_nets[bestidx].fscore) bestidx = k;
@@ -122,7 +123,12 @@ Network snaq(const std::vector<Network>& startnets, bool single_input, const std
     CFMatrix m;
     m.v.resize(3 * static_cast<size_t>(nq));
     obs.compute_rows(ranks, m.v.data(), o.threads);
-    CFSource q = CFSource::full(std::move(m), obs.taxa());
+    std::vector<double> weights;
+    if (o.geneWeights) {
+        weights.resize(static_cast<size_t>(nq));
+        for (long long r = 0; r < nq; ++r) weights[static_cast<size_t>(r)] = obs.genefraction(r);
+    }
+    CFSource q = CFSource::full(std::move(m), obs.taxa(), std::move(weights));
 
     std::vector<Network> sorted = multisearch(startnets, single_input, q, o.hmax, o, o.propQuartetsFinal);
     return finish(std::move(sorted[0]));

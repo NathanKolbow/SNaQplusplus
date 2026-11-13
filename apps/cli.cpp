@@ -108,6 +108,10 @@ advanced (keyword arguments snaq! passes to each search):
                             (default: 200 with newton, max(30, #taxa) with lbfgs)
   --logprefix PATH          write a detailed per-run log to PATH<run number>
 
+pseudolikelihood (not in SNaQ.jl):
+  --geneWeights [BOOL]      weigh each quartet by the proportion of gene trees its observed CFs
+                            come from, instead of weighing all quartets equally (default: false)
+
 parameter optimization (not in SNaQ.jl):
   --optimizer NAME          "newton": projected Newton method, run to convergence (default);
                             "lbfgs": L-BFGS limited to --opt_maxeval evaluations, as SNaQ.jl
@@ -199,6 +203,7 @@ CliArgs parse_cli(const std::vector<std::string>& args) {
     num("--liktolRel", &o.liktolRel);
     integer("--opt_maxeval", &o.opt_maxeval);
     str("--logprefix", &o.logprefix);
+    boolean("--geneWeights", &o.geneWeights);
     str("--optimizer", &o.optimizer);
     boolean("--guideHybrids", &o.guideHybrids);
     integer("--minAddHybrid", &o.minAddHybrid);

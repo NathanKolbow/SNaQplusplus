@@ -19,7 +19,8 @@ namespace csnaq {
 // or computed on demand from gene trees (lazy DataCF).
 class CFSource {
 public:
-    static CFSource full(CFMatrix m, std::vector<std::string> taxa);
+    // `weights`: one weight per quartet, or empty (all quartets weigh 1).
+    static CFSource full(CFMatrix m, std::vector<std::string> taxa, std::vector<double> weights = {});
     static CFSource lazy(const ObservedCFs* obs);
 
     bool is_lazy() const { return lazy_ != nullptr; }
@@ -29,9 +30,13 @@ public:
     CFMatrix rows(const std::vector<long long>& ranks, int nthreads) const;
     // The full matrix (non-lazy only).
     const CFMatrix& matrix() const;
+    // Weights of the quartets with the given ranks: the proportion of gene
+    // trees counted in their CFs. Empty if the source has no weights.
+    std::vector<double> weights(const std::vector<long long>& ranks) const;
 
 private:
     CFMatrix full_;
+    std::vector<double> fullweights_;
     std::vector<std::string> taxa_;
     const ObservedCFs* lazy_ = nullptr;
 };
@@ -88,6 +93,10 @@ struct SnaqOptions {
     // before this many hybrid additions have been evaluated since its last
     // accepted move. -1: Nfail. 0: no such requirement, as SNaQ.jl.
     int minAddHybrid = -1;
+    // Weigh each quartet by the proportion of gene trees that its observed
+    // CFs come from (1 for all quartets when every gene tree has every taxon),
+    // instead of weighing all quartets equally as SNaQ.jl does.
+    bool geneWeights = false;
     // How branch lengths and γ are optimized: "newton" (projected Newton on
     // the quartet classes, run to convergence) or "lbfgs" (NLopt's L-BFGS
     // limited to opt_maxeval evaluations, as SNaQ.jl).
@@ -116,7 +125,7 @@ std::vector<Network> multisearch(std::vector<Network> startnets, bool single_inp
 
 // rescoreonsharedquartets!(nets, q, propQuartetsFinal, seed, ρ)
 long long rescoreonsharedquartets(std::vector<Network>& nets, const CFSource& q, double propQuartetsFinal,
-                                  long long seed, double rho, int nthreads);
+                                  long long seed, double rho, int nthreads, bool geneweights = false);
 
 // Append `msg` and a newline to "<filename>.log" (SNaQ's logmessage).
 void logmessage(const std::string& filename, const std::string& msg);

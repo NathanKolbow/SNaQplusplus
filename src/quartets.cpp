@@ -157,6 +157,19 @@ ObservedCFs::ObservedCFs(const std::vector<Network>& trees, std::vector<std::str
 }
 
 std::array<double, 3> ObservedCFs::compute(long long rank) const {
+    long long n[3];
+    counts(rank, n);
+    double suma = static_cast<double>(n[0] + n[1] + n[2]);
+    return {static_cast<double>(n[0]) / suma, static_cast<double>(n[1]) / suma, static_cast<double>(n[2]) / suma};
+}
+
+double ObservedCFs::genefraction(long long rank) const {
+    long long n[3];
+    counts(rank, n);
+    return static_cast<double>(n[0] + n[1] + n[2]) / static_cast<double>(ntrees_);
+}
+
+void ObservedCFs::counts(long long rank, long long n[3]) const {
     std::array<int, 4> q = unrank4taxa(ntaxa(), rank);
     const int a = q[0], b = q[1], c = q[2], d = q[3];
     const int16_t* pab = &lcadepth_[static_cast<size_t>(pairindex(a, b) * ntrees_)];
@@ -192,8 +205,9 @@ std::array<double, 3> ObservedCFs::compute(long long rank) const {
                 ++n3;
         }
     }
-    double suma = static_cast<double>(n1 + n2 + n3);
-    return {static_cast<double>(n1) / suma, static_cast<double>(n2) / suma, static_cast<double>(n3) / suma};
+    n[0] = n1;
+    n[1] = n2;
+    n[2] = n3;
 }
 
 void ObservedCFs::compute_rows(const std::vector<long long>& ranks, double* out, int nthreads) const {

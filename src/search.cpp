@@ -32,8 +32,10 @@ static std::mutex g_stdout_mutex;
 // CFSource
 // ------------------------------------------------------------------------
 
-CFSource CFSource::full(CFMatrix m, std::vector<std::string> taxa) {
+CFSource CFSource::full(CFMatrix m, std::vector<std::string> taxa, std::vector<double> weights) {
     CFSource s;
+    if (!weights.empty() && weights.size() != m.nrow()) throw SnaqError("one weight is needed per quartet");
+    s.fullweights_ = std::move(weights);
     s.full_ = std::move(m);
     s.taxa_ = std::move(taxa);
     return s;
@@ -59,6 +61,18 @@ CFMatrix CFSource::rows(const std::vector<long long>& ranks, int nthreads) const
             for (int k = 0; k < 3; ++k) out(j, k) = full_(static_cast<size_t>(ranks[j]), k);
     }
     return out;
+}
+
+std::vector<double> CFSource::weights(const std::vector<long long>& ranks) const {
+    std::vector<double> w;
+    if (lazy_) {
+        w.resize(ranks.size());
+        for (size_t j = 0; j < ranks.size(); ++j) w[j] = lazy_->genefraction(ranks[j]);
+    } else if (!fullweights_.empty()) {
+        w.resize(ranks.size());
+        for (size_t j = 0; j < ranks.size(); ++j) w[j] = fullweights_[static_cast<size_t>(ranks[j])];
+    }
+    return w;
 }
 
 const CFMatrix& CFSource::matrix() const {
@@ -272,10 +286,12 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
     // The search works on quartet classes (classes.hpp): the equations of the
     // classes a move leaves untouched are taken from the current network.
     const QuartetList qlist = QuartetList::fromranks(N.numtaxa, q_idxs);
+    const std::vector<double> wsub = o.geneWeights ? q.weights(q_idxs) : std::vector<double>();
     q_idxs = std::vector<long long>();
     ClassOptions copt;
     copt.perquartet = o.probQR > 0.0;
-    copt.qlogq = obsqlogq(qsub);
+    copt.weights = wsub.empty() ? nullptr : wsub.data();
+    copt.qlogq = obsqlogq(qsub, copt.weights);
     copt.nthreads = nthreads;
     fixnegativeedges(N);
     checkgammas(N);
@@ -540,8 +556,10 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
         // QUIRK: SNaQ.jl calls fitnumericalparameters!(N, q) here, which uses ρ = 0
         // regardless of the ρ of the search.
         const CFMatrix& full = q.matrix();
+        const std::vector<double> fw = o.geneWeights ? q.weights(allranks(nqall)) : std::vector<double>();
         ClassOptions fo;
-        fo.qlogq = obsqlogq(full);
+        fo.weights = fw.empty() ? nullptr : fw.data();
+        fo.qlogq = obsqlogq(full, fo.weights);
         fo.nthreads = nthreads;
         fixnegativeedges(N);
         checkgammas(N);
@@ -556,8 +574,10 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
                                  std::to_string(nchoose4(N.numtaxa)) + " quartets (propQuartetsFinal = " +
                                  julia_float(propQuartetsFinal) + ").");
         const CFMatrix fq = q.rows(final_idxs, nthreads);
+        const std::vector<double> fw = o.geneWeights ? q.weights(final_idxs) : std::vector<double>();
         ClassOptions fo;
-        fo.qlogq = obsqlogq(fq);
+        fo.weights = fw.empty() ? nullptr : fw.data();
+        fo.qlogq = obsqlogq(fq, fo.weights);
         fo.nthreads = nthreads;
         fixnegativeedges(N);
         checkgammas(N);
@@ -663,12 +683,14 @@ static std::string abspath(const std::string& p) {
 }
 
 long long rescoreonsharedquartets(std::vector<Network>& nets, const CFSource& q, double propQuartetsFinal,
-                                  long long seed, double rho, int nthreads) {
+                                  long long seed, double rho, int nthreads, bool geneweights) {
     Rng rng(static_cast<uint64_t>(seed));
     std::vector<long long> idxs = sampleqindices(q.nrows(), propQuartetsFinal, rng);
     CFMatrix qsub = q.rows(idxs, nthreads);
+    const std::vector<double> w = geneweights ? q.weights(idxs) : std::vector<double>();
     ClassOptions co;
-    co.qlogq = obsqlogq(qsub);
+    co.weights = w.empty() ? nullptr : w.data();
+    co.qlogq = obsqlogq(qsub, co.weights);
     co.nthreads = nthreads;
     for (Network& net : nets) {
         fixnegativeedges(net);
@@ -784,7 +806,8 @@ std::vector<Network> multisearch(std::vector<Network> N, bool single_input, cons
     const std::string elapsed = time_elapsed(wall_time() - starttime);
 
     if (0 < propQuartetsFinal && propQuartetsFinal < 1) {
-        long long nused = rescoreonsharedquartets(all_nets, q, propQuartetsFinal, o.seed, o.rho, nthreads_total);
+        long long nused =
+            rescoreonsharedquartets(all_nets, q, propQuartetsFinal, o.seed, o.rho, nthreads_total, o.geneWeights);
         if (!filename.empty())
             logmessage(filename, "Re-scored the networks of all " + std::to_string(runs) + " runs on the same " +
                                      std::to_string(nused) + " quartets (propQuartetsFinal = " +
