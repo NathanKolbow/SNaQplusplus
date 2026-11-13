@@ -75,9 +75,7 @@ Network lazysnaq(const std::vector<Network>& startnets, bool single_input, const
 
 }  // namespace
 
-Network snaq(const std::vector<Network>& startnets, bool single_input, const std::vector<Network>& genetrees,
-             SnaqOptions o) {
-    if (startnets.empty()) throw SnaqError("no starting topology given");
+static void default_seed(SnaqOptions& o) {
     if (!o.seed_given) {
         // snaq!: seed::Int = rand(Int)
         std::random_device rd;
@@ -85,6 +83,25 @@ Network snaq(const std::vector<Network>& startnets, bool single_input, const std
         o.seed = static_cast<long long>(s);
         o.seed_given = true;
     }
+}
+
+Network snaq_cfs(const std::vector<Network>& startnets, bool single_input, CFMatrix cfs,
+                 std::vector<std::string> taxa, SnaqOptions o) {
+    if (startnets.empty()) throw SnaqError("no starting topology given");
+    default_seed(o);
+    o.threads = std::max(1, o.threads);
+    std::sort(taxa.begin(), taxa.end());
+    if (static_cast<long long>(cfs.nrow()) != nchoose4(static_cast<long long>(taxa.size())))
+        throw SnaqError("the CF matrix must have one row per quartet of the taxa");
+    CFSource q = CFSource::full(std::move(cfs), taxa);
+    std::vector<Network> sorted = multisearch(startnets, single_input, q, o.hmax, o, o.propQuartetsFinal);
+    return finish(std::move(sorted[0]));
+}
+
+Network snaq(const std::vector<Network>& startnets, bool single_input, const std::vector<Network>& genetrees,
+             SnaqOptions o) {
+    if (startnets.empty()) throw SnaqError("no starting topology given");
+    default_seed(o);
     o.threads = std::max(1, o.threads);
     if (o.lazy) {
         if (o.propQuartets == 1.0)

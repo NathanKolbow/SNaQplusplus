@@ -120,8 +120,23 @@ The best network and its score are also printed to standard output.
 - **Parallelism.** Independent runs execute in parallel threads.
 - **Copied quirks.** Some behaviors of SNaQ.jl are copied on purpose. Each is marked in the
   source with a `// QUIRK:` comment.
+- **Fixes.** Two errors of SNaQ.jl's search are fixed, and each fix is marked `FIX` in
+  `src/search.cpp`. The search reuses quartet equations in place after an rNNI move. It now
+  rebuilds them instead in the two cases where reuse gives equations that differ from a full
+  rebuild:
+  - the move changes which edges carry parameters;
+  - the move is an rNNI(1) in which `v` is the parent of `u`.
+
+  See `TESTS_SKIPPED.md`.
+- **Grouped quartets in the fit.** During parameter fitting, quartets whose expected CFs are
+  the same function of the parameters are merged into one term, using the sum of their
+  observed CFs. This is the case for quartets that coalesce over the same branches, or that
+  have identical reticulate equations. Scores equal SNaQ.jl's up to floating-point
+  summation order.
 - **Input.** Gene trees must be in Newick format. CF tables, NEXUS files and multiple
   alleles are not supported.
+- **Tests.** The tests that were ported, and those that were not, are listed in
+  `TESTS_SKIPPED.md`.
 
 ## Validation tools
 
@@ -130,7 +145,8 @@ The best network and its score are also printed to standard output.
 | `tools/julia/setup.jl` | sets up a Julia environment with SNaQ.jl, expected at `../SNaQ.jl` relative to the repository root |
 | `tools/csnaq_check.cpp`, `tools/julia/check_networks.jl` | compare expected CFs, SNaQ scores and gradients with SNaQ.jl on the networks of a Newick file (e.g. `checks.net`) |
 | `validation/checks_net_comparison.csv` | result of that comparison on `checks.net` |
-| `tools/bench_fit.cpp`, `tools/julia/bench_fit.jl` | time numerical parameter optimization in both implementations |
+| `tools/bench_fit.cpp`, `tools/julia/bench_fit.jl` | time numerical parameter optimization in both implementations, with peak memory |
+| `tools/julia/make_test_fixtures.jl` | regenerates the test fixtures in `tests/data/` |
 
 ## License
 

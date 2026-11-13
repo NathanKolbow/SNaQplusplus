@@ -48,15 +48,15 @@ EdgeId Network::new_edge(int number, double length, bool hyb, double gamma, bool
     return static_cast<EdgeId>(epool.size() - 1);
 }
 
-std::vector<NodeId> Network::getchildren(NodeId n) const {
-    std::vector<NodeId> out;
+NodeList Network::getchildren(NodeId n) const {
+    NodeList out;
     for (EdgeId e : N(n).edge)
         if (isparentof(n, e)) out.push_back(getchild(e));
     return out;
 }
 
-std::vector<NodeId> Network::getparents(NodeId n) const {
-    std::vector<NodeId> out;
+NodeList Network::getparents(NodeId n) const {
+    NodeList out;
     for (EdgeId e : N(n).edge)
         if (ischildof(n, e)) out.push_back(getparent(e));
     return out;
@@ -286,21 +286,20 @@ Network Network::deepcopynetwork() const {
     Network c;
     c.npool.reserve(node.size());
     c.epool.reserve(edge.size());
-    std::unordered_map<NodeId, NodeId> nmap;
-    nmap.reserve(node.size() * 2);
+    std::vector<NodeId> nmap(npool.size(), NONE);
     // QUIRK: SNaQ.jl keys its node map by node *number*; numbers are unique
     // whenever a copy is taken, so mapping by identity is equivalent.
     for (NodeId n : node) {
         const Node& src = N(n);
         NodeId id = c.new_node(src.number, src.leaf, src.hybrid);
         c.N(id).name = src.name;
-        nmap[n] = id;
+        nmap[static_cast<size_t>(n)] = id;
         c.node.push_back(id);
     }
     for (EdgeId e : edge) {
         const Edge& src = E(e);
-        NodeId n1 = nmap.at(src.nd[0]);
-        NodeId n2 = nmap.at(src.nd[1]);
+        NodeId n1 = nmap[static_cast<size_t>(src.nd[0])];
+        NodeId n2 = nmap[static_cast<size_t>(src.nd[1])];
         // Edge(number, length, hybrid, gamma, [n1, n2])
         Edge ne;
         ne.number = src.number;
@@ -319,8 +318,8 @@ Network Network::deepcopynetwork() const {
         c.N(n2).edge.push_back(id);
         c.edge.push_back(id);
     }
-    for (NodeId h : hybrid) c.hybrid.push_back(nmap.at(h));
-    for (NodeId l : leaf) c.leaf.push_back(nmap.at(l));
+    for (NodeId h : hybrid) c.hybrid.push_back(nmap[static_cast<size_t>(h)]);
+    for (NodeId l : leaf) c.leaf.push_back(nmap[static_cast<size_t>(l)]);
     c.numtaxa = numtaxa;
     c.numnodes = numnodes;
     c.numedges = numedges;

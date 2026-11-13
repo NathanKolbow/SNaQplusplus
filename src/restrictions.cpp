@@ -9,11 +9,12 @@
 namespace csnaq {
 
 bool Restrictions::any() const {
-    return max_level >= 0 || galled_tree || galled_network || rooted_tree_child || weakly_tree_child ||
+    return static_cast<bool>(custom) || max_level >= 0 || galled_tree || galled_network || rooted_tree_child || weakly_tree_child ||
            strongly_tree_child;
 }
 
 bool Restrictions::operator()(Network& net) const {
+    if (custom) return custom(net);
     if (max_level >= 0 && !(getnetworklevel(net) <= max_level)) return false;
     if (galled_tree) {
         if (!(getnetworklevel(net) <= 1)) return false;
@@ -31,6 +32,7 @@ bool Restrictions::operator()(Network& net) const {
 }
 
 std::string Restrictions::describe() const {
+    if (custom) return "user-supplied function `" + custom_name + "`";
     std::vector<std::string> parts;
     if (max_level >= 0) parts.push_back("networks of level ≤ " + std::to_string(max_level));
     if (galled_tree)

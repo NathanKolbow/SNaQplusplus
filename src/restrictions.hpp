@@ -2,6 +2,7 @@
 // `restrictionset`).
 #pragma once
 
+#include <functional>
 #include <string>
 
 #include "network.hpp"
@@ -15,6 +16,10 @@ struct Restrictions {
     bool rooted_tree_child = false;
     bool weakly_tree_child = false;
     bool strongly_tree_child = false;
+    // A user-supplied restriction function (Julia: `restrictions=f`),
+    // described as "user-supplied function `custom_name`".
+    std::function<bool(Network&)> custom;
+    std::string custom_name;
 
     // Whether `net` meets all restrictions (restrictionset semantics:
     // galled_tree takes precedence over galled_network; among tree-child

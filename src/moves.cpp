@@ -123,7 +123,10 @@ MoveParams sampleaddhybridparameters(Network& net, Rng& rng) {
 // rNNI moves (rNNI_moves.jl, rNNI_validity.jl)
 // ------------------------------------------------------------------------
 
-static bool contains_node(const std::vector<NodeId>& v, NodeId n) { return std::find(v.begin(), v.end(), n) != v.end(); }
+template <class V>
+static bool contains_node(const V& v, NodeId n) {
+    return std::find(v.begin(), v.end(), n) != v.end();
+}
 
 static EdgeId edge_with(const Network& net, NodeId a, NodeId b) {
     for (EdgeId e : net.N(a).edge)

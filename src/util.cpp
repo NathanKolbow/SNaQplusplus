@@ -7,6 +7,13 @@
 #include <iostream>
 #include <numeric>
 
+#if defined(_WIN32)
+#include <windows.h>
+#include <psapi.h>
+#else
+#include <sys/resource.h>
+#endif
+
 namespace csnaq {
 
 void warn(const std::string& msg) { std::cerr << "┌ Warning: " << msg << "\n└ @ snaq\n"; }
@@ -141,6 +148,22 @@ std::string current_timestamp() {
 double wall_time() {
     using namespace std::chrono;
     return duration<double>(steady_clock::now().time_since_epoch()).count();
+}
+
+size_t peak_rss_bytes() {
+#if defined(_WIN32)
+    PROCESS_MEMORY_COUNTERS pmc;
+    if (GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc))) return static_cast<size_t>(pmc.PeakWorkingSetSize);
+    return 0;
+#else
+    struct rusage ru;
+    if (getrusage(RUSAGE_SELF, &ru) != 0) return 0;
+#if defined(__APPLE__)
+    return static_cast<size_t>(ru.ru_maxrss);  // bytes on macOS
+#else
+    return static_cast<size_t>(ru.ru_maxrss) * 1024;  // kilobytes on Linux
+#endif
+#endif
 }
 
 // ------------------------------- RNG -------------------------------------

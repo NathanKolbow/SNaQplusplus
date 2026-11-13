@@ -15,4 +15,9 @@ namespace csnaq {
 Network snaq(const std::vector<Network>& startnets, bool single_input, const std::vector<Network>& genetrees,
              SnaqOptions o);
 
+// snaq! with observed CFs given directly (a non-lazy DataCF): `cfs` holds the
+// CFs of all quartets of the sorted `taxa`, in SNaQ's quartet order.
+Network snaq_cfs(const std::vector<Network>& startnets, bool single_input, CFMatrix cfs,
+                 std::vector<std::string> taxa, SnaqOptions o);
+
 }  // namespace csnaq

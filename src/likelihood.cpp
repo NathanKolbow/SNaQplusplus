@@ -3,8 +3,10 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <unordered_map>
 
 #include "parallel.hpp"
+#include "snaq_network.hpp"
 
 namespace csnaq {
 
@@ -121,7 +123,8 @@ inline double coalbranchsum(const RecursiveCFEquation& eqn, const double* params
     return s;
 }
 
-inline bool iscoaledge(const std::vector<int>& coal, int p) {
+template <class V>
+inline bool iscoaledge(const V& coal, int p) {
     for (int e : coal)
         if (e == p) return true;
     return false;
@@ -336,41 +339,109 @@ LossWorkspace::Impl* LossWorkspace::get(int nparam, int nthreads) {
     return impl_;
 }
 
+namespace {
+
+struct VecHash {
+    size_t operator()(const std::vector<int>& v) const {
+        uint64_t h = 1469598103934665603ULL;
+        for (int x : v) {
+            h ^= static_cast<uint64_t>(static_cast<uint32_t>(x));
+            h *= 1099511628211ULL;
+        }
+        return static_cast<size_t>(h ^ (h >> 29));
+    }
+};
+
+void serialize_eqn(const RecursiveCFEquation& e, std::vector<int>& out) {
+    out.push_back(e.can_coalesce_here ? 1 : 0);
+    out.push_back(e.which_coal);
+    out.push_back(e.division_H);
+    std::vector<int> c(e.coal_edges.begin(), e.coal_edges.end());
+    std::sort(c.begin(), c.end());
+    out.push_back(static_cast<int>(c.size()));
+    out.insert(out.end(), c.begin(), c.end());
+    out.push_back(static_cast<int>(e.divisions.size()));
+    for (const auto& d : e.divisions) serialize_eqn(d, out);
+}
+
+void eqn_params(const RecursiveCFEquation& e, std::vector<int>& out) {
+    for (int p : e.coal_edges)
+        if (std::find(out.begin(), out.end(), p) == out.end()) out.push_back(p);
+    if (e.division_H >= 0 && std::find(out.begin(), out.end(), e.division_H) == out.end())
+        out.push_back(e.division_H);
+    for (const auto& d : e.divisions) eqn_params(d, out);
+}
+
+inline double qlogq3(double q1, double q2, double q3) {
+    return ((q1 > 0) ? q1 * std::log(q1) : 0.0) + ((q2 > 0) ? q2 * std::log(q2) : 0.0) +
+           ((q3 > 0) ? q3 * std::log(q3) : 0.0);
+}
+
+}  // namespace
+
 TreeQuartetBatch treequartetbatch(const std::vector<QuartetData>& qdata, const CFMatrix& obs) {
     TreeQuartetBatch b;
-    size_t ntree = 0, total = 0;
-    for (const auto& q : qdata)
-        if (q->eqn.division_H == -1) {
-            ++ntree;
-            total += q->eqn.coal_edges.size();
-        }
-    b.coal.reserve(total);
-    b.off.reserve(ntree + 1);
-    b.qres.reserve(ntree);
-    b.qoth.reserve(ntree);
-    b.qlogq.reserve(ntree);
+    b.nquartets = qdata.size();
+    std::unordered_map<std::vector<int>, size_t, VecHash> tree_groups, gen_groups;
+    std::vector<std::vector<int>> tree_keys;
+    std::vector<int> key;
     for (size_t j = 0; j < qdata.size(); ++j) {
         const auto& eqn = qdata[j]->eqn;
-        if (eqn.division_H != -1) {
-            b.general.push_back(j);
-            continue;
+        const double q1 = obs(j, 0), q2 = obs(j, 1), q3 = obs(j, 2);
+        if (eqn.division_H == -1) {
+            key.assign(eqn.coal_edges.begin(), eqn.coal_edges.end());
+            std::sort(key.begin(), key.end());
+            auto it = tree_groups.find(key);
+            size_t g;
+            if (it == tree_groups.end()) {
+                g = b.qres.size();
+                tree_groups.emplace(key, g);
+                tree_keys.push_back(key);
+                b.qres.push_back(0.0);
+                b.qoth.push_back(0.0);
+                b.qlogq.push_back(0.0);
+            } else {
+                g = it->second;
+            }
+            const int wc = eqn.which_coal;
+            const double r = wc == 1 ? q1 : (wc == 2 ? q2 : q3);
+            b.qres[g] += r;
+            b.qoth[g] += (q1 + q2 + q3) - r;
+            b.qlogq[g] += qlogq3(q1, q2, q3);
+        } else {
+            key.clear();
+            serialize_eqn(eqn, key);
+            auto it = gen_groups.find(key);
+            size_t g;
+            if (it == gen_groups.end()) {
+                g = b.gen_rep.size();
+                gen_groups.emplace(key, g);
+                b.gen_rep.push_back(qdata[j].get());
+                b.gen_q.push_back({0.0, 0.0, 0.0});
+                b.gen_qlogq.push_back(0.0);
+                std::vector<int> ps;
+                eqn_params(eqn, ps);
+                b.gen_params.push_back(std::move(ps));
+            } else {
+                g = it->second;
+            }
+            b.gen_q[g][0] += q1;
+            b.gen_q[g][1] += q2;
+            b.gen_q[g][2] += q3;
+            b.gen_qlogq[g] += qlogq3(q1, q2, q3);
         }
+    }
+    b.off.reserve(tree_keys.size() + 1);
+    for (const auto& k : tree_keys) {
         b.off.push_back(b.coal.size());
-        for (int p : eqn.coal_edges) b.coal.push_back(p);
-        double q1 = obs(j, 0), q2 = obs(j, 1), q3 = obs(j, 2);
-        int wc = eqn.which_coal;
-        double r = wc == 1 ? q1 : (wc == 2 ? q2 : q3);
-        b.qres.push_back(r);
-        b.qoth.push_back((q1 + q2 + q3) - r);
-        b.qlogq.push_back(((q1 > 0) ? q1 * std::log(q1) : 0.0) + ((q2 > 0) ? q2 * std::log(q2) : 0.0) +
-                          ((q3 > 0) ? q3 * std::log(q3) : 0.0));
+        b.coal.insert(b.coal.end(), k.begin(), k.end());
     }
     b.off.push_back(b.coal.size());
     return b;
 }
 
-double computelossandgradient(const TreeQuartetBatch& batch, const std::vector<QuartetData>& qdata,
-                              const double* params, size_t nparam, double* grad, const CFMatrix& q, double alpha,
+double computelossandgradient(const TreeQuartetBatch& batch, const std::vector<QuartetData>& /*qdata*/,
+                              const double* params, size_t nparam, double* grad, const CFMatrix& /*q*/, double alpha,
                               LossWorkspace& ws, int nthreads) {
     const int np = static_cast<int>(nparam);
     nthreads = std::max(1, nthreads);
@@ -378,11 +449,11 @@ double computelossandgradient(const TreeQuartetBatch& batch, const std::vector<Q
     for (size_t p = 0; p < nparam; ++p) grad[p] = 0.0;
     const double log3 = std::log(3.0);
 
-    // --- tree-like quartets ---
-    const size_t nq = batch.qres.size();
+    // --- tree-like groups ---
+    const size_t ng = batch.qres.size();
     std::fill(w->tree_grad.begin(), w->tree_grad.end(), 0.0);
     std::fill(w->partial.begin(), w->partial.end(), 0.0);
-    parallel_for(nq, nthreads, [&](size_t lo, size_t hi, int tid) {
+    parallel_for(ng, nthreads, [&](size_t lo, size_t hi, int tid) {
         double* g = &w->tree_grad[static_cast<size_t>(tid) * nparam];
         double total = 0.0;
         for (size_t j = lo; j < hi; ++j) {
@@ -409,19 +480,29 @@ double computelossandgradient(const TreeQuartetBatch& batch, const std::vector<Q
         for (size_t p = 0; p < nparam; ++p) grad[p] += g[p];
     }
 
-    // --- quartets a reticulation divides ---
-    if (!batch.general.empty()) {
+    // --- reticulate groups ---
+    if (!batch.gen_rep.empty()) {
         for (int t = 0; t < nthreads; ++t) {
             auto& tg = w->scratch[static_cast<size_t>(t)].total_grad;
             std::fill(tg.begin(), tg.end(), 0.0);
             w->partial[static_cast<size_t>(t)] = 0.0;
         }
-        parallel_for(batch.general.size(), nthreads, [&](size_t lo, size_t hi, int tid) {
+        parallel_for(batch.gen_rep.size(), nthreads, [&](size_t lo, size_t hi, int tid) {
             ThreadScratch& ts = w->scratch[static_cast<size_t>(tid)];
+            double* ig = ts.quartet_grad.data();
             double tot = 0.0;
-            for (size_t i = lo; i < hi; ++i) {
-                size_t j = batch.general[i];
-                tot += quartetlossandgradient_general(*qdata[j], params, q.row(j), alpha, ts);
+            for (size_t g = lo; g < hi; ++g) {
+                const auto& ps = batch.gen_params[g];
+                ts.rg.reset();
+                for (int p : ps) ig[3 * p] = ig[3 * p + 1] = ig[3 * p + 2] = 0.0;
+                auto r = recur(batch.gen_rep[g]->eqn, params, ig, ts.rg, alpha);
+                double e1 = std::max(r[0], 1e-9), e2 = std::max(r[1], 1e-9);
+                double e3 = std::max(1.0 - r[0] - r[1], 1e-9);
+                const auto& Q = batch.gen_q[g];
+                tot += Q[0] * std::log(e1) + Q[1] * std::log(e2) + Q[2] * std::log(e3) - batch.gen_qlogq[g];
+                const double i1 = Q[0] / e1, i2 = Q[1] / e2, i3 = Q[2] / e3;
+                for (int p : ps)
+                    ts.total_grad[static_cast<size_t>(p)] += ig[3 * p] * i1 + ig[3 * p + 1] * i2 + ig[3 * p + 2] * i3;
             }
             w->partial[static_cast<size_t>(tid)] = tot;
         });
@@ -473,6 +554,34 @@ std::array<double, 2> computeexpectedCF(const QuartetDataImpl& qd, const std::ve
     std::vector<double> gs(3 * params.size() + 3, 0.0);
     RunningGradient rg(static_cast<int>(params.size()));
     return recur(qd.eqn, params.data(), gs.data(), rg, alpha);
+}
+
+}  // namespace csnaq
+
+namespace csnaq {
+
+CFMatrix computeexpectedCFmatrix(Network& net, double rho, int nthreads) {
+    EquationSet es = findquartetequations(net, nthreads);
+    CFMatrix m;
+    m.v.resize(3 * es.eqns.size());
+    parallel_for(es.eqns.size(), nthreads, [&](size_t lo, size_t hi, int) {
+        for (size_t j = lo; j < hi; ++j) {
+            auto e = computeexpectedCF(*es.eqns[j], es.info.params, rho);
+            m(j, 0) = e[0];
+            m(j, 1) = e[1];
+            m(j, 2) = 1.0 - e[0] - e[1];
+        }
+    });
+    return m;
+}
+
+double computeSNaQscore_net(Network& N, const CFMatrix& q, double rho, int nthreads) {
+    Network c = N.deepcopynetwork();
+    semidirectnetwork(c);
+    EquationSet es = findquartetequations(c, nthreads);
+    double s = computeSNaQscore(es.eqns, es.info.params, q, rho, nthreads);
+    N.fscore = s;
+    return s;
 }
 
 }  // namespace csnaq

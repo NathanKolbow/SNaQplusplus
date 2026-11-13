@@ -341,6 +341,21 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
             int Nprime_np = countoptimizationparams(Nprime);
             int N_np = countoptimizationparams(N);
             bool cannot_do_inplace = N.numhybrids != Nprime.numhybrids || N_np != Nprime_np;
+            // FIX (deviation from SNaQ.jl): SNaQ.jl's in-place equation update
+            // gives equations that differ from a full rebuild (1) when the move
+            // shifts parameter indices (e.g. a pendant edge becomes internal,
+            // keeping the same parameter count), and (2) for rNNI(1) moves in
+            // which v is the parent of u, because quartets with taxa below t
+            // are not re-derived. Those cases are rebuilt here instead
+            // (see tests/test_inplace_and_data.cpp).
+            if (!cannot_do_inplace && can_update_inplace(prop_move)) {
+                if (!sameparameterlayout(N, Nprime)) cannot_do_inplace = true;
+                if (prop_move == Move::rNNI1) {
+                    NodeId u = prop_params.p.at(2).id, v = prop_params.p.at(3).id;
+                    auto vp = Nprime.getparents(v);
+                    if (!(vp.size() == 1 && Nprime.getparent_node(v) == u)) cannot_do_inplace = true;
+                }
+            }
             std::vector<QuartetData> Nprime_eqns;
             double Nprime_logPL = optimizetopology(Nprime, N_eqns, Nprime_eqns, prop_move, prop_params, qsub,
                                                    opt_maxeval, cannot_do_inplace, rho, o, nthreads);

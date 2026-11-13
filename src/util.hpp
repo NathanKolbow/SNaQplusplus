@@ -54,6 +54,9 @@ std::string current_timestamp();
 // Wall clock in seconds.
 double wall_time();
 
+// Peak resident set size of this process, in bytes (0 if unavailable).
+size_t peak_rss_bytes();
+
 // -------------------------------------------------------------------------
 // RNG: xoshiro256++ seeded with splitmix64. SNaQ.jl results are not meant
 // to be reproduced bit-for-bit, so this does not mimic Julia's streams.

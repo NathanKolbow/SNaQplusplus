@@ -52,14 +52,21 @@ struct OptInfo {
 OptInfo gatheroptimizationinfo(Network& net, bool change_numbers = true);
 // countoptimizationparams(net)
 int countoptimizationparams(const Network& net);
+// Whether `a` and `b` (a copy of `a` after a move) have their optimized
+// parameters on the same positions of their edge and hybrid lists, so that
+// parameter indices mean the same thing in both networks.
+bool sameparameterlayout(const Network& a, const Network& b);
 // gatherparams(net, param_map)
 std::vector<double> gatherparams(const Network& net, const ParamMap& pm);
 // setX!(net, X, idx_obj_map)
 void setX(Network& net, const double* X, const std::vector<ParamObj>& idx_obj);
 
+// Short list of parameter indices, stored inline when short.
+using ParamList = SmallVec<int, 8>;
+
 struct RecursiveCFEquation {
     bool can_coalesce_here = true;
-    std::vector<int> coal_edges;  // 0-based parameter indices
+    ParamList coal_edges;  // 0-based parameter indices
     int which_coal = 0;           // 0 = NA, 1 = ab|cd, 2 = ac|bd, 3 = ad|bc
     int division_H = -1;          // γ parameter index; -1: not set
     std::vector<RecursiveCFEquation> divisions;
@@ -67,7 +74,7 @@ struct RecursiveCFEquation {
 
 struct QuartetDataImpl {
     RecursiveCFEquation eqn;
-    std::vector<int> relevant_params;
+    SmallVec<int, 12> relevant_params;
     std::array<int, 4> q_taxa;  // 0-based indices into the sorted taxon list
 };
 // Shared and immutable: unchanged quartets are reused across networks,
@@ -88,6 +95,8 @@ TreeQuartetContext treequartetcontext(const Network& net);
 
 // fixnegativeedges!(net)
 void fixnegativeedges(Network& net, bool shouldwarn = true);
+// getnegativeedges(net)
+std::vector<EdgeId> getnegativeedges(const Network& net);
 
 struct EquationSet {
     std::vector<QuartetData> eqns;

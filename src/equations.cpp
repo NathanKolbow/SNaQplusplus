@@ -61,6 +61,19 @@ int countoptimizationparams(const Network& net) {
     return n;
 }
 
+bool sameparameterlayout(const Network& a, const Network& b) {
+    if (a.edge.size() != b.edge.size() || a.hybrid.size() != b.hybrid.size()) return false;
+    for (size_t k = 0; k < a.edge.size(); ++k)
+        if (skip_edge_param(a, a.edge[k]) != skip_edge_param(b, b.edge[k])) return false;
+    // hybrids are numbered after edges, in node-list order
+    std::vector<int> ha, hb;
+    for (size_t k = 0; k < a.node.size(); ++k)
+        if (a.N(a.node[k]).hybrid) ha.push_back(static_cast<int>(k));
+    for (size_t k = 0; k < b.node.size(); ++k)
+        if (b.N(b.node[k]).hybrid) hb.push_back(static_cast<int>(k));
+    return ha == hb;
+}
+
 OptInfo gatheroptimizationinfo(Network& net, bool change_numbers) {
     OptInfo info;
     if (change_numbers) {
@@ -158,6 +171,16 @@ void fixnegativeedges(Network& net, bool shouldwarn) {
     }
 }
 
+std::vector<EdgeId> getnegativeedges(const Network& net) {
+    std::vector<EdgeId> out;
+    for (EdgeId e : net.edge) {
+        if (net.E(e).hybrid) continue;
+        if (net.N(net.getchild(e)).leaf) continue;
+        if (net.E(e).length < 0) out.push_back(e);
+    }
+    return out;
+}
+
 // ------------------------------------------------------------------------
 // ancestor paths (ancestor_paths.jl)
 // ------------------------------------------------------------------------
@@ -226,49 +249,71 @@ bool meetingpathedges(const Network& net, EdgeVec& dest, const std::vector<NodeI
     return false;
 }
 
-bool contains(const EdgeVec& v, EdgeId e) { return std::find(v.begin(), v.end(), e) != v.end(); }
-
-bool aredisjointedges(const EdgeVec& A, const EdgeVec& B) {
-    const EdgeVec& s = A.size() <= B.size() ? A : B;
-    const EdgeVec& l = A.size() <= B.size() ? B : A;
-    for (EdgeId e : s)
-        if (contains(l, e)) return false;
-    return true;
-}
-
-std::vector<int> common_params(const Network& net, const EdgeVec& A, const EdgeVec& B, const ParamMap& pm) {
-    std::vector<int> out;
-    for (EdgeId e : A)
-        if (contains(B, e)) out.push_back(pm.at(net.E(e).number));
-    return out;
-}
-
-std::vector<int> unionedgeparams(const Network& net, const EdgeVec& A, const EdgeVec& B, const ParamMap& pm) {
-    std::vector<int> out;
-    for (EdgeId e : A) {
-        int num = net.E(e).number;
-        if (!pm.has(num)) continue;
-        int p = pm.at(num);
-        if (std::find(out.begin(), out.end(), p) == out.end()) out.push_back(p);
+// Membership marks for edge sets: mark[e] == stamp means "in the set".
+// Replaces SNaQ.jl's linear `e in B` scans (same results, linear time).
+struct EdgeMarks {
+    std::vector<uint32_t> mark;
+    uint32_t stamp = 0;
+    void begin(size_t poolsize) {
+        if (mark.size() < poolsize) mark.assign(poolsize, 0);
+        if (++stamp == 0) {
+            std::fill(mark.begin(), mark.end(), 0);
+            stamp = 1;
+        }
     }
-    for (EdgeId e : B) {
-        if (contains(A, e)) continue;
-        int num = net.E(e).number;
-        if (!pm.has(num)) continue;
-        int p = pm.at(num);
-        if (std::find(out.begin(), out.end(), p) == out.end()) out.push_back(p);
+    void set(const EdgeVec& v) {
+        for (EdgeId e : v) mark[static_cast<size_t>(e)] = stamp;
     }
-    return out;
-}
+    bool has(EdgeId e) const { return mark[static_cast<size_t>(e)] == stamp; }
+};
 
 struct PathScratch {
     EdgeVec ab, cd, ac, bd;
+    EdgeMarks marks;
 };
 
+bool aredisjointedges(const Network& net, PathScratch& sc, const EdgeVec& A, const EdgeVec& B) {
+    sc.marks.begin(net.epool.size());
+    sc.marks.set(A);
+    for (EdgeId e : B)
+        if (sc.marks.has(e)) return false;
+    return true;
+}
+
+template <class Out>
+void common_params(const Network& net, PathScratch& sc, const EdgeVec& A, const EdgeVec& B, const ParamMap& pm,
+                   Out& out) {
+    out.clear();
+    sc.marks.begin(net.epool.size());
+    sc.marks.set(B);
+    for (EdgeId e : A)
+        if (sc.marks.has(e)) out.push_back(pm.at(net.E(e).number));
+}
+
+template <class Out>
+void unionedgeparams(const Network& net, PathScratch& sc, const EdgeVec& A, const EdgeVec& B, const ParamMap& pm,
+                     Out& out) {
+    // parameters of the edges in A, then of the edges of B not in A; edges
+    // of a path are distinct, so no further de-duplication is needed
+    out.clear();
+    sc.marks.begin(net.epool.size());
+    sc.marks.set(A);
+    for (EdgeId e : A) {
+        int num = net.E(e).number;
+        if (pm.has(num)) out.push_back(pm.at(num));
+    }
+    for (EdgeId e : B) {
+        if (sc.marks.has(e)) continue;
+        int num = net.E(e).number;
+        if (pm.has(num)) out.push_back(pm.at(num));
+    }
+}
+
 // treelikequartetdata: returns false when the quartet is not tree-like.
+template <class Rel>
 bool treelikequartetdata(const Network& net, const std::vector<NodeId>& ca, const std::vector<NodeId>& cb,
                          const std::vector<NodeId>& cc, const std::vector<NodeId>& cdch, const ParamMap& pm,
-                         bool hashybrids, PathScratch& sc, RecursiveCFEquation& eqn, std::vector<int>* relevant) {
+                         bool hashybrids, PathScratch& sc, RecursiveCFEquation& eqn, Rel* relevant) {
     if (hashybrids) {
         if (!meetingpathedges(net, sc.ab, ca, cb)) return false;
         if (!meetingpathedges(net, sc.cd, cc, cdch)) return false;
@@ -283,18 +328,18 @@ bool treelikequartetdata(const Network& net, const std::vector<NodeId>& ca, cons
     eqn.can_coalesce_here = true;
     eqn.division_H = -1;
     eqn.divisions.clear();
-    if (aredisjointedges(sc.ab, sc.cd)) {
-        eqn.coal_edges = common_params(net, sc.ac, sc.bd, pm);
+    if (aredisjointedges(net, sc, sc.ab, sc.cd)) {
+        common_params(net, sc, sc.ac, sc.bd, pm, eqn.coal_edges);
         eqn.which_coal = 1;
-        if (relevant) *relevant = unionedgeparams(net, sc.ac, sc.bd, pm);
-    } else if (aredisjointedges(sc.ac, sc.bd)) {
-        eqn.coal_edges = common_params(net, sc.ab, sc.cd, pm);
+        if (relevant) unionedgeparams(net, sc, sc.ac, sc.bd, pm, *relevant);
+    } else if (aredisjointedges(net, sc, sc.ac, sc.bd)) {
+        common_params(net, sc, sc.ab, sc.cd, pm, eqn.coal_edges);
         eqn.which_coal = 2;
-        if (relevant) *relevant = unionedgeparams(net, sc.ab, sc.cd, pm);
+        if (relevant) unionedgeparams(net, sc, sc.ab, sc.cd, pm, *relevant);
     } else {
-        eqn.coal_edges = common_params(net, sc.ab, sc.cd, pm);
+        common_params(net, sc, sc.ab, sc.cd, pm, eqn.coal_edges);
         eqn.which_coal = 3;
-        if (relevant) *relevant = unionedgeparams(net, sc.ab, sc.cd, pm);
+        if (relevant) unionedgeparams(net, sc, sc.ab, sc.cd, pm, *relevant);
     }
     return true;
 }
@@ -316,8 +361,8 @@ bool trytreelikequartet_names(const Network& net, const std::array<std::string, 
                             " is not a leaf of the network.");
         ch[static_cast<size_t>(k)] = hashybrids ? treelikeancestorchain(net, l) : ancestorchain(net, l);
     }
-    PathScratch sc;
-    return treelikequartetdata(net, ch[0], ch[1], ch[2], ch[3], pm, hashybrids, sc, eqn, nullptr);
+    static thread_local PathScratch sc;
+    return treelikequartetdata<ParamList>(net, ch[0], ch[1], ch[2], ch[3], pm, hashybrids, sc, eqn, nullptr);
 }
 
 // ------------------------------------------------------------------------
@@ -326,21 +371,37 @@ bool trytreelikequartet_names(const Network& net, const std::array<std::string, 
 
 Network inducedquartetnetwork(const TreeQuartetContext& ctx, const std::array<int, 4>& taxa) {
     const Network& net = *ctx.net;
-    std::unordered_set<NodeId> keep;
+    // node -> its id in the subnetwork (valid when nstamp matches)
+    static thread_local std::vector<uint32_t> nstamp, estamp;
+    static thread_local std::vector<NodeId> nmapv;
+    static thread_local uint32_t stamp = 0;
+    if (nstamp.size() < net.npool.size()) {
+        nstamp.assign(net.npool.size(), 0);
+        nmapv.assign(net.npool.size(), NONE);
+    }
+    if (estamp.size() < net.epool.size()) estamp.assign(net.epool.size(), 0);
+    if (++stamp == 0) {
+        std::fill(nstamp.begin(), nstamp.end(), 0);
+        std::fill(estamp.begin(), estamp.end(), 0);
+        stamp = 1;
+    }
+    auto kept_has = [&](NodeId n) { return nstamp[static_cast<size_t>(n)] == stamp; };
     std::vector<NodeId> stack, kept;
     for (int t : taxa) {
         NodeId l = ctx.leaf_of_taxon[static_cast<size_t>(t)];
-        if (keep.count(l)) continue;
-        keep.insert(l);
+        if (kept_has(l)) continue;
+        nstamp[static_cast<size_t>(l)] = stamp;
         stack.push_back(l);
         kept.push_back(l);
     }
     while (!stack.empty()) {
         NodeId n = stack.back();
         stack.pop_back();
-        for (NodeId p : net.getparents(n)) {
-            if (keep.count(p)) continue;
-            keep.insert(p);
+        for (EdgeId e : net.N(n).edge) {
+            if (!net.ischildof(n, e)) continue;
+            NodeId p = net.getparent(e);
+            if (kept_has(p)) continue;
+            nstamp[static_cast<size_t>(p)] = stamp;
             stack.push_back(p);
             kept.push_back(p);
         }
@@ -349,22 +410,20 @@ Network inducedquartetnetwork(const TreeQuartetContext& ctx, const std::array<in
         return ctx.nodepos[static_cast<size_t>(a)] < ctx.nodepos[static_cast<size_t>(b)];
     });
     Network sub;
-    sub.npool.reserve(kept.size());
-    std::unordered_map<NodeId, NodeId> nmap;
+    sub.npool.reserve(kept.size() + 8);
     for (NodeId n : kept) {
         const Node& src = net.N(n);
         NodeId id = sub.new_node(src.number, src.leaf, src.hybrid);
-        sub.N(id).name = src.name;
-        nmap[n] = id;
+        if (src.leaf || src.hybrid) sub.N(id).name = src.name;  // other names are never used here
+        nmapv[static_cast<size_t>(n)] = id;
         sub.node.push_back(id);
     }
     std::vector<EdgeId> edges;
-    std::unordered_set<EdgeId> seen;
     for (NodeId n : kept)
         for (EdgeId e : net.N(n).edge) {
-            if (seen.count(e)) continue;
-            if (!(keep.count(net.E(e).nd[0]) && keep.count(net.E(e).nd[1]))) continue;
-            seen.insert(e);
+            if (estamp[static_cast<size_t>(e)] == stamp) continue;
+            if (!(kept_has(net.E(e).nd[0]) && kept_has(net.E(e).nd[1]))) continue;
+            estamp[static_cast<size_t>(e)] = stamp;
             edges.push_back(e);
         }
     std::sort(edges.begin(), edges.end(), [&](EdgeId a, EdgeId b) {
@@ -373,7 +432,7 @@ Network inducedquartetnetwork(const TreeQuartetContext& ctx, const std::array<in
     sub.epool.reserve(edges.size());
     for (EdgeId e : edges) {
         const Edge& src = net.E(e);
-        NodeId c1 = nmap.at(src.nd[0]), c2 = nmap.at(src.nd[1]);
+        NodeId c1 = nmapv[static_cast<size_t>(src.nd[0])], c2 = nmapv[static_cast<size_t>(src.nd[1])];
         Edge ne;
         ne.number = src.number;
         ne.length = src.length;
@@ -396,8 +455,8 @@ Network inducedquartetnetwork(const TreeQuartetContext& ctx, const std::array<in
         if (sub.N(id).hybrid) sub.hybrid.push_back(id);
     }
     NodeId root = net.getroot();
-    if (!keep.count(root)) throw SnaqError("inducedquartetnetwork: the network root is not an ancestor of the quartet.");
-    sub.rooti = sub.index_of_node(nmap.at(root));
+    if (!kept_has(root)) throw SnaqError("inducedquartetnetwork: the network root is not an ancestor of the quartet.");
+    sub.rooti = sub.index_of_node(nmapv[static_cast<size_t>(root)]);
     sub.numtaxa = static_cast<int>(sub.leaf.size());
     sub.numnodes = static_cast<int>(sub.node.size());
     sub.numedges = static_cast<int>(sub.edge.size());
@@ -421,7 +480,8 @@ NodeId getlowesthybrid(const Network& net) {
 }
 
 int nleavesbelowlowesthybrid(const Network& net, NodeId H) {
-    std::vector<NodeId> queue = net.getchildren(H);
+    NodeList ch0 = net.getchildren(H);
+    std::vector<NodeId> queue(ch0.begin(), ch0.end());
     int found = 0;
     while (!queue.empty()) {
         NodeId curr = queue.back();
@@ -436,7 +496,7 @@ int nleavesbelowlowesthybrid(const Network& net, NodeId H) {
 
 std::vector<EdgeId> getinternaledgesbelowlowesthybrid(const Network& net, NodeId H) {
     std::vector<EdgeId> out;
-    std::vector<NodeId> c = net.getchildren(H);
+    NodeList c = net.getchildren(H);
     while (c.size() == 1) {
         out.push_back(net.getparentedge(c[0]));
         c = net.getchildren(c[0]);
@@ -769,15 +829,13 @@ static std::vector<int> paramsbelowurNNI1(const Network& net, NodeId u, const Pa
         queue.pop_back();
         int num = net.E(next_edge).number;
         if (pm.has(num)) {
-            // QUIRK: compares an edge *number* against parameter indices.
-            if (in_objs(num))
+            if (in_objs(pm.at(num)))
                 continue;
             else
                 objs_below.push_back(pm.at(num));
         }
         NodeId child = net.getchild(next_edge);
-        // QUIRK: same number-vs-index comparison as above.
-        if (net.N(child).hybrid && !in_objs(net.N(child).number)) objs_below.push_back(pm.at(net.N(child).number));
+        if (net.N(child).hybrid && !in_objs(pm.at(net.N(child).number))) objs_below.push_back(pm.at(net.N(child).number));
         for (EdgeId e : net.N(child).edge)
             if (e != next_edge && net.getchild(e) != child) queue.push_back(e);
     }

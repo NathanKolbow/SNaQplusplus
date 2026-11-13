@@ -4,7 +4,7 @@
 // against SNaQ.jl by tools/julia/bench_fit.jl.
 //
 // usage: csnaq_bench_fit <network newick file> <gene trees file> <maxeval> <threads> [repeats]
-// prints: ntaxa nhybrids nquartets nparams score fit_seconds equations_seconds
+// prints: ntaxa nhybrids nquartets nparams score fit_seconds equations_seconds peak_rss_MB
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
         }
         std::cout.precision(17);
         std::cout << net.numtaxa << " " << net.numhybrids << " " << obs.nquartets() << " " << np << " " << score << " "
-                  << best_fit << " " << best_eq << "\n";
+                  << best_fit << " " << best_eq << " " << static_cast<double>(peak_rss_bytes()) / (1 << 20) << "\n";
     } catch (const std::exception& e) {
         std::cerr << "error: " << e.what() << "\n";
         return 1;

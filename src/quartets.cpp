@@ -111,7 +111,8 @@ ObservedCFs::ObservedCFs(const std::vector<Network>& trees, std::vector<std::str
         };
         std::vector<Frame> stack;
         auto push = [&](NodeId nd, int depth, int start) {
-            Frame f{nd, depth, start, 0, tre.getchildren(nd), 0};
+            NodeList ch = tre.getchildren(nd);
+            Frame f{nd, depth, start, 0, std::vector<NodeId>(ch.begin(), ch.end()), 0};
             stack.push_back(std::move(f));
         };
         push(tre.getroot(), 0, 0);

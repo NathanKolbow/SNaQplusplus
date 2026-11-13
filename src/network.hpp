@@ -19,6 +19,9 @@ using NodeId = int;
 using EdgeId = int;
 constexpr int NONE = -1;
 
+// Small list of nodes (children / parents): no heap allocation for degree <= 4.
+using NodeList = SmallVec<int, 4>;
+
 struct Node {
     int number = -1;
     bool leaf = false;
@@ -95,8 +98,8 @@ public:
     NodeId getOtherNode(EdgeId e, NodeId n) const { return E(e).nd[0] == n ? E(e).nd[1] : E(e).nd[0]; }
     bool isparentof(NodeId n, EdgeId e) const { return n == getparent(e); }
     bool ischildof(NodeId n, EdgeId e) const { return n == getchild(e); }
-    std::vector<NodeId> getchildren(NodeId n) const;
-    std::vector<NodeId> getparents(NodeId n) const;
+    NodeList getchildren(NodeId n) const;
+    NodeList getparents(NodeId n) const;
     NodeId getparent_node(NodeId n) const;  // major parent node
     EdgeId getparentedge(NodeId n) const;   // major parent edge
     EdgeId getparentedgeminor(NodeId n) const;

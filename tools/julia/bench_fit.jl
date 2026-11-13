@@ -8,6 +8,8 @@
 
 using SNaQ, PhyloNetworks, Printf
 
+fit_alloc = 0
+
 function juliafit(netfile, gtfile, maxeval; repeats=3)
     net0 = readnewick(readlines(netfile)[1])
     trees = readmultinewick(gtfile)
@@ -27,11 +29,13 @@ function juliafit(netfile, gtfile, maxeval; repeats=3)
             getparentedgeminor(h).gamma = 0.3
         end
         teq = @elapsed eqns = SNaQ.findquartetequations(net)[1]
-        tfit = @elapsed score = SNaQ.fitnumericalparameters!(net, eqns, q, 0.0; maxeval=maxeval)
+        alloc = @allocated (tfit = @elapsed score = SNaQ.fitnumericalparameters!(net, eqns, q, 0.0; maxeval=maxeval))
+        global fit_alloc = alloc
         best_fit = min(best_fit, tfit); best_eq = min(best_eq, teq)
         np = SNaQ.countoptimizationparams(net)
     end
-    return (; ntaxa=net.numtaxa, nhyb=net.numhybrids, nq=size(q, 1), np, score, best_fit, best_eq)
+    return (; ntaxa=net.numtaxa, nhyb=net.numhybrids, nq=size(q, 1), np, score, best_fit, best_eq,
+             maxrss=Sys.maxrss() / 2^20, alloc=fit_alloc / 2^20)
 end
 
 function main(args)
@@ -39,16 +43,16 @@ function main(args)
     maxeval = length(args) >= 4 ? parse(Int, args[4]) : 1000
     nthreads = Threads.nthreads()
     open(outcsv, "w") do out
-        println(out, "network,ntaxa,nhybrids,nquartets,nparams,maxeval,threads,julia_score,cpp_score,abs_score_diff,julia_fit_s,cpp_fit_s,speedup_fit,julia_eqns_s,cpp_eqns_s,speedup_eqns")
+        println(out, "network,ntaxa,nhybrids,nquartets,nparams,maxeval,threads,julia_score,cpp_score,abs_score_diff,julia_fit_s,cpp_fit_s,speedup_fit,julia_eqns_s,cpp_eqns_s,speedup_eqns,julia_maxrss_MB,julia_fit_alloc_MB,cpp_maxrss_MB")
         for line in readlines(cases)
             isempty(strip(line)) && continue
             netfile, gtfile = split(line)
             j = juliafit(netfile, gtfile, maxeval)
             c = split(readchomp(`$bench $netfile $gtfile $maxeval $nthreads`))
-            cs = parse(Float64, c[5]); cfit = parse(Float64, c[6]); ceq = parse(Float64, c[7])
-            row = @sprintf("%s,%d,%d,%d,%d,%d,%d,%.12f,%.12f,%.3e,%.4f,%.4f,%.1f,%.4f,%.4f,%.1f",
+            cs = parse(Float64, c[5]); cfit = parse(Float64, c[6]); ceq = parse(Float64, c[7]); crss = parse(Float64, c[8])
+            row = @sprintf("%s,%d,%d,%d,%d,%d,%d,%.12f,%.12f,%.3e,%.4f,%.4f,%.1f,%.4f,%.4f,%.1f,%.1f,%.1f,%.1f",
                 basename(netfile), j.ntaxa, j.nhyb, j.nq, j.np, maxeval, nthreads, j.score, cs, abs(j.score - cs),
-                j.best_fit, cfit, j.best_fit / cfit, j.best_eq, ceq, j.best_eq / ceq)
+                j.best_fit, cfit, j.best_fit / cfit, j.best_eq, ceq, j.best_eq / ceq, j.maxrss, j.alloc, crss)
             println(out, row); flush(out)
             println(row)
         end
