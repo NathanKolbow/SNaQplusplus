@@ -176,17 +176,21 @@ double newtonfit(const ClassBatch& batch, const std::vector<int>& pidof, std::ve
     const size_t n = x.size();
     std::vector<int> dense(static_cast<size_t>(batch.npid), -1);
     for (size_t j = 0; j < n; ++j) dense[static_cast<size_t>(pidof[j])] = static_cast<int>(j);
-    std::vector<double> gpid(static_cast<size_t>(batch.npid)), g(n), B(n * n), gt(n), Bt(n * n), xt(n), L, d;
+    std::vector<double> gpid(static_cast<size_t>(batch.npid)), g(n), B(n * n), xt(n), L, d;
     LossWorkspace ws;
-    auto eval = [&](const std::vector<double>& at, std::vector<double>& grad, std::vector<double>& curv) {
+    // The score at a point; then, only if the point is kept, its gradient and
+    // curvature (a rejected trial step needs neither).
+    auto score = [&](const std::vector<double>& at) {
         for (size_t j = 0; j < n; ++j) params[static_cast<size_t>(pidof[j])] = at[j];
-        const double f = evalclasses(batch, params.data(), gpid.data(), alpha, ws, 1, dense.data(),
-                                     static_cast<int>(n), curv.data());
-        for (size_t j = 0; j < n; ++j) grad[j] = gpid[static_cast<size_t>(pidof[j])];
         ++evals;
-        return f;
+        return evalclassvalues(batch, params.data(), alpha, ws, 1);
     };
-    double f = eval(x, g, B);
+    auto derivatives = [&](std::vector<double>& grad, std::vector<double>& curv) {  // at the last point scored
+        evalclassderivatives(batch, params.data(), gpid.data(), alpha, ws, 1, dense.data(), static_cast<int>(n),
+                             curv.data());
+        for (size_t j = 0; j < n; ++j) grad[j] = gpid[static_cast<size_t>(pidof[j])];
+    };
+    double f = score(x);
     converged = false;
     if (n == 0 || !std::isfinite(f)) {
         converged = n == 0;
@@ -197,6 +201,7 @@ double newtonfit(const ClassBatch& batch, const std::vector<int>& pidof, std::ve
     std::vector<int> freeidx;
     std::vector<double> step(n);
     while (evals < maxeval) {
+        derivatives(g, B);  // x is the last point scored
         // free variables: not held at a bound by the gradient
         freeidx.clear();
         double maxdiag = 0.0, pg = 0.0;
@@ -251,7 +256,7 @@ double newtonfit(const ClassBatch& batch, const std::vector<int>& pidof, std::ve
                 quad += step[j] * row;
             }
             const double predicted = linear - 0.5 * quad;
-            fnew = eval(xt, gt, Bt);
+            fnew = score(xt);
             usedlambda = lambda;
             const double ratio = (std::isfinite(fnew) && predicted > 0.0) ? (fnew - f) / predicted : -1.0;
             if (std::isfinite(fnew) && fnew > f) {
@@ -276,8 +281,6 @@ double newtonfit(const ClassBatch& batch, const std::vector<int>& pidof, std::ve
         }
         const double gain = fnew - f;
         x.swap(xt);
-        g.swap(gt);
-        B.swap(Bt);
         f = fnew;
         // A small gain means convergence only if the step was close to a full
         // Newton step; heavily damped steps are small whatever the distance to

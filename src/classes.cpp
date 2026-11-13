@@ -433,6 +433,7 @@ void finishclasses(const Network& net, QuartetClasses& cls, int nthreads) {
                                   : portreticulateequation(net, pend.nodepos, pend.edgepos, pend.ports[t], pend.pm,
                                                            pend.top[t]);
                 collectparams(ce->eqn, ce->params);
+                if (ce->eqn.division_H != -1) ce->hash = hashequation(ce->eqn);
                 cls.eqn[pend.classes[t]] = std::move(ce);
             }
         });
@@ -465,6 +466,7 @@ void finishclasses(const Network& net, QuartetClasses& cls, int nthreads) {
             b.genQ.push_back(Q);
         }
     }
+    preparebatch(b);
 }
 
 double classupperbound(const QuartetClasses& cls) {
@@ -535,9 +537,9 @@ std::vector<double> pidparams(const Network& net, int npid) {
 }
 
 double scoreclasses(const Network& net, const QuartetClasses& cls, double rho, int nthreads) {
-    std::vector<double> params = pidparams(net, cls.npid), grad(static_cast<size_t>(cls.npid));
+    std::vector<double> params = pidparams(net, cls.npid);
     LossWorkspace ws;
-    return evalclasses(cls.batch, params.data(), grad.data(), rhotoalpha(rho), ws, nthreads);
+    return evalclassvalues(cls.batch, params.data(), rhotoalpha(rho), ws, nthreads);
 }
 
 }  // namespace csnaq

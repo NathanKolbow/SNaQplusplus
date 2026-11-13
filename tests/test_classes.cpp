@@ -311,3 +311,84 @@ TEST(Classes, EquationBuilderMatchesReference) {
     EXPECT_GE(maxh, 3);
     EXPECT_GT(reticulate, 5000u);
 }
+
+TEST(Classes, SharedSubEquationsMatchRecursion) {
+    // evalclasses (every distinct sub-equation of the network evaluated once,
+    // see eqndag.hpp) against evalclasses_reference (one recursion per class):
+    // same score, gradient and curvature.
+    Rng rng(37);
+    size_t treenodes = 0, dagnodes = 0;
+    auto compare = [&](Network& net, const CFMatrix& q, const std::string& what) {
+        ClassOptions co;
+        co.qlogq = obsqlogq(q);
+        Network a = net.deepcopynetwork();
+        QuartetClasses cls = buildclasses(a, QuartetList::allquartets(a.numtaxa), q, co);
+        const size_t np = static_cast<size_t>(cls.npid);
+        std::vector<double> params = pidparams(a, cls.npid);
+        // curvature over a subset of the parameters, in another order
+        std::vector<int> dense(np, -1);
+        int nd = 0;
+        for (size_t j = np; j-- > 0;)
+            if (j % 5 != 0) dense[j] = nd++;
+        const size_t n = static_cast<size_t>(nd);
+        std::vector<double> g1(np), g2(np), g3(np), h1(n * n), h2(n * n);
+        LossWorkspace ws;
+        auto near = [&](double x, double y) { return std::abs(x - y) <= 1e-9 * std::max(1.0, std::abs(y)); };
+        for (double rho : {0.0, 0.5}) {
+            const double al = rhotoalpha(rho);
+            const double s1 = evalclasses(cls.batch, params.data(), g1.data(), al, ws, 1, dense.data(), nd, h1.data());
+            const double s2 =
+                evalclasses_reference(cls.batch, params.data(), g2.data(), al, ws, 1, dense.data(), nd, h2.data());
+            ASSERT_TRUE(near(s1, s2)) << what << ": " << s1 << " vs " << s2;
+            for (size_t j = 0; j < np; ++j) ASSERT_TRUE(near(g1[j], g2[j])) << what << ", gradient " << j;
+            for (size_t j = 0; j < n * n; ++j) ASSERT_TRUE(near(h1[j], h2[j])) << what << ", curvature " << j;
+            // the two halves, without curvature
+            const double s3 = evalclassvalues(cls.batch, params.data(), al, ws, 1);
+            ASSERT_EQ(s3, s1) << what;
+            evalclassderivatives(cls.batch, params.data(), g3.data(), al, ws, 1);
+            for (size_t j = 0; j < np; ++j) ASSERT_EQ(g3[j], g1[j]) << what << ", gradient " << j;
+        }
+        for (const ClassEqn* ce : cls.batch.gen) treenodes += equationsize(ce->eqn);
+        dagnodes += cls.batch.dag.node.size();
+    };
+    int nfix = 0;
+    for (Network& net : fixture_networks()) {
+        randomize_parameters(net, rng);
+        CFMatrix q = random_cfs(static_cast<size_t>(nchoose4(net.numtaxa)), rng);
+        compare(net, q, "fixture " + std::to_string(nfix++));
+    }
+    Network N = random_tree(10, rng).deepcopynetwork();
+    semidirectnetwork(N);
+    N.compact_pids();
+    CFMatrix q = random_cfs(static_cast<size_t>(nchoose4(N.numtaxa)), rng);
+    std::vector<AttemptedMove> none;
+    std::vector<double> deltas;
+    CFMatrix emptyQ;
+    int compared = 0, maxh = 0;
+    for (int it = 0; it < 300; ++it) {
+        Network P = N.deepcopynetwork();
+        try {
+            auto mp = generatemoveproposal(P, nullptr, none, 4, 0.0, emptyQ, deltas, rng, 0.0);
+            if (mp.first == Move::none) continue;
+            applymove(P, mp.first, mp.second, rng);
+            removedegree2nodes(P);
+            while (shrink3cycles(P)) {
+            }
+            while (shrink2cycles(P)) {
+            }
+            semidirectnetwork(P);
+        } catch (const std::exception&) {
+            continue;
+        }
+        randomize_parameters(P, rng);
+        compare(P, q, "move " + std::to_string(it));
+        if (::testing::Test::HasFatalFailure()) return;
+        ++compared;
+        maxh = std::max(maxh, P.numhybrids);
+        N = std::move(P);
+    }
+    EXPECT_GT(compared, 150);
+    EXPECT_GE(maxh, 3);
+    EXPECT_GT(treenodes, 20000u);
+    EXPECT_LT(2 * dagnodes, treenodes);  // sub-equations are shared
+}

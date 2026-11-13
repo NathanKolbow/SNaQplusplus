@@ -5,6 +5,7 @@
 #include <array>
 #include <vector>
 
+#include "eqndag.hpp"
 #include "equations.hpp"
 
 namespace csnaq {
@@ -69,8 +70,9 @@ private:
 // they stay valid in copies of the network and after topology moves.
 
 struct ClassEqn {
-    RecursiveCFEquation eqn;  // parameters are pids
-    std::vector<int> params;  // the distinct pids of the equation tree
+    RecursiveCFEquation eqn;    // parameters are pids
+    std::vector<int> params;    // the distinct pids of the equation tree
+    std::vector<EqnHash> hash;  // hashequation(eqn), for reticulate classes
 };
 
 // The classes of a network, prepared for repeated loss/gradient evaluation.
@@ -83,8 +85,11 @@ struct ClassBatch {
     // reticulate classes
     std::vector<const ClassEqn*> gen;
     std::vector<std::array<double, 3>> genQ;  // summed observed CFs, in the class's column order
+    EqnDag dag;                               // the equations of `gen` (see preparebatch)
     double qlogq = 0.0;                       // sum over all quartets of q log q
 };
+// Fills batch.dag from batch.gen.
+void preparebatch(ClassBatch& batch);
 
 // Loss and its gradient with respect to every pid (`params` and `grad` have
 // `npid` entries). If `hess` is given, it receives a positive semidefinite
@@ -93,6 +98,25 @@ struct ClassBatch {
 // reticulate classes.
 double evalclasses(const ClassBatch& batch, const double* params, double* grad, double alpha, LossWorkspace& ws,
                    int nthreads, const int* dense = nullptr, int ndense = 0, double* hess = nullptr);
+// The two halves of evalclasses. evalclassvalues returns the loss and keeps
+// what the derivatives need in `ws`; evalclassderivatives must follow a call
+// of evalclassvalues with the same batch, params, alpha and ws.
+double evalclassvalues(const ClassBatch& batch, const double* params, double alpha, LossWorkspace& ws,
+                       int nthreads);
+void evalclassderivatives(const ClassBatch& batch, const double* params, double* grad, double alpha,
+                          LossWorkspace& ws, int nthreads, const int* dense = nullptr, int ndense = 0,
+                          double* hess = nullptr);
+// evalclasses with each reticulate class evaluated on its own, by recursion on
+// its equation tree, and the curvature summed term by term: for validation.
+double evalclasses_reference(const ClassBatch& batch, const double* params, double* grad, double alpha,
+                             LossWorkspace& ws, int nthreads, const int* dense = nullptr, int ndense = 0,
+                             double* hess = nullptr);
+
+// Probability that two lineages at a hybrid node with minor γ `g` both take
+// the minor edge (type 1), both the major edge (2), or one each (3, 4), with
+// inheritance correlation 1 / (1 + a); and its derivative in g.
+double quadsplitprobability(int type, double g, double a);
+double quadsplitprobabilitygradient(int type, double g, double a);
 
 // Expected CFs (in the class's column order) of one class.
 std::array<double, 3> classexpectedCF(const ClassEqn& ce, const double* params, int npid, double alpha);

@@ -23,6 +23,8 @@ inline double coalbranchsum(const RecursiveCFEquation& eqn, const double* params
     return s;
 }
 
+}  // namespace
+
 double quadsplitprobability(int type, double g, double a) {
     if (std::isinf(a)) {
         if (type == 1) return g * g;
@@ -54,6 +56,8 @@ double quadsplitprobabilitygradient(int type, double g, double a) {
     if (type == 3 || type == 4) return (a / (a + 1)) * (1 - 2 * g);
     throw SnaqError("Found impossible type");
 }
+
+namespace {
 
 // Expected CFs (e1, e2, e3) of an equation. If `gs` is given (nparam x 3,
 // row-major), w * d e_k / d p is added to gs[3*p + k] for every parameter p of
@@ -188,6 +192,11 @@ struct LossWorkspace::Impl {
     std::vector<ThreadScratch> scratch;
     std::vector<double> tree_grad;  // nthreads x nparam
     std::vector<double> partial;    // per-thread partial losses
+    // evalclassvalues -> evalclassderivatives
+    std::vector<double> treeE;      // per tree-like class: exp(-path length)
+    EqnDag::Work dag;
+    std::vector<double> j1, j2, u1, u2;  // curvature of one class
+    std::vector<int> jidx;
 };
 
 LossWorkspace::~LossWorkspace() { delete impl_; }
@@ -379,8 +388,160 @@ double computelossandgradient(const TreeQuartetBatch& batch, const std::vector<Q
     return total;
 }
 
+void preparebatch(ClassBatch& batch) { batch.dag.build(batch.gen); }
+
+double evalclassvalues(const ClassBatch& batch, const double* params, double alpha, LossWorkspace& ws,
+                       int nthreads) {
+    nthreads = std::max(1, nthreads);
+    LossWorkspace::Impl* w = ws.get(batch.npid, nthreads);
+    const double log3 = std::log(3.0);
+
+    // --- tree-like classes ---
+    const size_t ng = batch.qres.size();
+    w->treeE.resize(ng);
+    std::fill(w->partial.begin(), w->partial.end(), 0.0);
+    parallel_for(ng, nthreads, [&](size_t lo, size_t hi, int tid) {
+        double total = 0.0;
+        for (size_t j = lo; j < hi; ++j) {
+            const size_t a = batch.off[j], b = batch.off[j + 1];
+            double branchsum = 0.0;
+            for (size_t k = a; k < b; ++k) branchsum += params[batch.coal[k]];
+            const double E = std::exp(-branchsum);
+            w->treeE[j] = E;
+            const double res = 1.0 - (2.0 / 3.0) * E;
+            const double oth = E / 3.0;
+            const double logoth = (oth >= 1e-9) ? (-branchsum - log3) : std::log(1e-9);
+            total += batch.qres[j] * std::log(std::max(res, 1e-9)) + batch.qoth[j] * logoth;
+        }
+        w->partial[static_cast<size_t>(tid)] += total;
+    });
+    double total = -batch.qlogq;
+    for (int t = 0; t < nthreads; ++t) total += w->partial[static_cast<size_t>(t)];
+
+    // --- reticulate classes ---
+    if (!batch.gen.empty()) {
+        if (batch.dag.root.size() != batch.gen.size()) throw SnaqError("evalclasses: preparebatch was not called");
+        batch.dag.values(params, alpha, w->dag);
+        const double* val = w->dag.val.data();
+        for (size_t g = 0; g < batch.gen.size(); ++g) {
+            const double* v = val + 2 * static_cast<size_t>(batch.dag.root[g]);
+            const double e1 = std::max(v[0], 1e-9), e2 = std::max(v[1], 1e-9);
+            const double e3 = std::max(1.0 - v[0] - v[1], 1e-9);
+            const auto& Q = batch.genQ[g];
+            total += Q[0] * std::log(e1) + Q[1] * std::log(e2) + Q[2] * std::log(e3);
+        }
+    }
+    return total;
+}
+
+void evalclassderivatives(const ClassBatch& batch, const double* params, double* grad, double alpha,
+                          LossWorkspace& ws, int nthreads, const int* dense, int ndense, double* hess) {
+    const size_t nparam = static_cast<size_t>(batch.npid);
+    nthreads = hess ? 1 : std::max(1, nthreads);
+    LossWorkspace::Impl* w = ws.get(batch.npid, nthreads);
+    for (size_t p = 0; p < nparam; ++p) grad[p] = 0.0;
+    const size_t nd = static_cast<size_t>(ndense);
+    // The curvature is symmetric: each pair of parameters is added once, on
+    // one side of the diagonal, and the two sides are summed at the end.
+    if (hess) std::fill(hess, hess + nd * nd, 0.0);
+
+    // --- tree-like classes ---
+    const size_t ng = batch.qres.size();
+    if (w->treeE.size() != ng) throw SnaqError("evalclassderivatives: evalclassvalues was not called");
+    std::fill(w->tree_grad.begin(), w->tree_grad.end(), 0.0);
+    parallel_for(ng, nthreads, [&](size_t lo, size_t hi, int tid) {
+        double* g = &w->tree_grad[static_cast<size_t>(tid) * nparam];
+        for (size_t j = lo; j < hi; ++j) {
+            const size_t a = batch.off[j], b = batch.off[j + 1];
+            const double E = w->treeE[j];
+            const double res_c = std::max(1.0 - (2.0 / 3.0) * E, 1e-9);
+            const double oth_c = std::max(E / 3.0, 1e-9);
+            const double qr = batch.qres[j], qo = batch.qoth[j];
+            const double gc = qr * ((2.0 / 3.0) * E) / res_c - qo * ((1.0 / 3.0) * E) / oth_c;
+            for (size_t k = a; k < b; ++k) g[batch.coal[k]] += gc;
+            if (hess) {
+                const double curv = qr * ((2.0 / 3.0) * E) / (res_c * res_c);
+                for (size_t k = a; k < b; ++k) {
+                    const int dk = dense[batch.coal[k]];
+                    if (dk < 0) continue;
+                    double* row = hess + static_cast<size_t>(dk) * nd;
+                    for (size_t l = a; l <= k; ++l) {
+                        const int dl = dense[batch.coal[l]];
+                        if (dl >= 0) row[dl] += curv;
+                    }
+                }
+            }
+        }
+    });
+    for (int t = 0; t < nthreads; ++t) {
+        const double* g = &w->tree_grad[static_cast<size_t>(t) * nparam];
+        for (size_t p = 0; p < nparam; ++p) grad[p] += g[p];
+    }
+
+    // --- reticulate classes ---
+    if (!batch.gen.empty()) {
+        const EqnDag& dag = batch.dag;
+        dag.derivatives(params, alpha, w->dag);
+        const double* val = w->dag.val.data();
+        const double* jac = w->dag.jac.data();
+        for (size_t g = 0; g < batch.gen.size(); ++g) {
+            const EqnDag::Node& n = dag.node[dag.root[g]];
+            const double* v = val + 2 * static_cast<size_t>(dag.root[g]);
+            const double e1 = std::max(v[0], 1e-9), e2 = std::max(v[1], 1e-9);
+            const double e3 = std::max(1.0 - v[0] - v[1], 1e-9);
+            const auto& Q = batch.genQ[g];
+            const double i1 = Q[0] / e1, i2 = Q[1] / e2, i3 = Q[2] / e3;
+            // d e3 = -(d e1 + d e2)
+            const double a1 = i1 - i3, a2 = i2 - i3;
+            const double* J = jac + 2 * n.poff;
+            const int* ps = dag.pid.data() + n.poff;
+            for (uint32_t t = 0; t < n.np; ++t) grad[ps[t]] += a1 * J[2 * t] + a2 * J[2 * t + 1];
+            if (hess) {
+                // sum over k of (Q_k / e_k^2) d e_k d e_k', as a quadratic form in (d e1, d e2)
+                const double c3 = i3 / e3, m11 = i1 / e1 + c3, m22 = i2 / e2 + c3;
+                if (w->jidx.size() < n.np) {
+                    w->jidx.resize(n.np);
+                    for (auto* x : {&w->j1, &w->j2, &w->u1, &w->u2}) x->resize(n.np);
+                }
+                int* idx = w->jidx.data();
+                double *j1 = w->j1.data(), *j2 = w->j2.data(), *u1 = w->u1.data(), *u2 = w->u2.data();
+                uint32_t m = 0;
+                for (uint32_t t = 0; t < n.np; ++t) {
+                    const int d = dense[ps[t]];
+                    if (d < 0) continue;
+                    idx[m] = d;
+                    j1[m] = J[2 * t];
+                    j2[m] = J[2 * t + 1];
+                    u1[m] = m11 * j1[m] + c3 * j2[m];
+                    u2[m] = c3 * j1[m] + m22 * j2[m];
+                    ++m;
+                }
+                for (uint32_t a = 0; a < m; ++a) {
+                    double* row = hess + static_cast<size_t>(idx[a]) * nd;
+                    const double x1 = j1[a], x2 = j2[a];
+                    for (uint32_t b = 0; b <= a; ++b) row[idx[b]] += x1 * u1[b] + x2 * u2[b];
+                }
+            }
+        }
+    }
+    if (hess) {
+        for (size_t a = 0; a < nd; ++a)
+            for (size_t b = 0; b < a; ++b) {
+                const double sum = hess[a * nd + b] + hess[b * nd + a];
+                hess[a * nd + b] = hess[b * nd + a] = sum;
+            }
+    }
+}
+
 double evalclasses(const ClassBatch& batch, const double* params, double* grad, double alpha, LossWorkspace& ws,
                    int nthreads, const int* dense, int ndense, double* hess) {
+    const double f = evalclassvalues(batch, params, alpha, ws, nthreads);
+    evalclassderivatives(batch, params, grad, alpha, ws, nthreads, dense, ndense, hess);
+    return f;
+}
+
+double evalclasses_reference(const ClassBatch& batch, const double* params, double* grad, double alpha,
+                             LossWorkspace& ws, int nthreads, const int* dense, int ndense, double* hess) {
     const int np = batch.npid;
     const size_t nparam = static_cast<size_t>(np);
     nthreads = hess ? 1 : std::max(1, nthreads);

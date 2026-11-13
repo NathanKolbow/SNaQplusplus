@@ -9,7 +9,9 @@
 // usage: csnaq_classcheck <networks file> [max quartets per network] [first line] [last line]
 //                         [brute-force quartets per network]
 // prints one line per network and a summary; exits with 1 if a class's expected CFs differ from
-// the brute-force values, or if the equations of the two builders (porteqn.hpp) differ in value. (Scores can differ between the two likelihoods: see the summary.)
+// the brute-force values, if the equations of the two builders (porteqn.hpp) differ in value, or
+// if the evaluation with shared sub-equations (eqndag.hpp) differs from one recursion per class.
+// (Scores can differ between the two likelihoods: see the summary.)
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -52,15 +54,16 @@ int main(int argc, char** argv) {
     std::string s;
     long line = 0, checked = 0, bad = 0, errors = 0, tot_ochecked = 0, tot_obad_old = 0, tot_obad_new = 0;
     const long noracle = argc > 5 ? std::stol(argv[5]) : 200;
-    double worst = 0.0, worstref = 0.0;
-    long refbad = 0;
-    size_t tot_size_new = 0, tot_size_ref = 0;
+    double worst = 0.0, worstref = 0.0, worsteval = 0.0;
+    long refbad = 0, evalbad = 0;
+    size_t tot_size_new = 0, tot_size_ref = 0, tot_dagnodes = 0;
     while (std::getline(in, s)) {
         ++line;
         if (line < first || line > last || s.find('(') == std::string::npos) continue;
         std::string olderr, newerr;
         long obad_old = 0, obad_new = 0, ochecked = 0;
-        double sold[2] = {0, 0}, snew[2] = {0, 0}, gdiff = 0.0, refdiff = 0.0;
+        double sold[2] = {0, 0}, snew[2] = {0, 0}, gdiff = 0.0, refdiff = 0.0, evaldiff = 0.0;
+        size_t dagnodes = 0;
         size_t size_new = 0, size_ref = 0;
         size_t nclass = 0, nq = 0;
         int ntaxa = 0, nhyb = 0;
@@ -103,6 +106,25 @@ int main(int argc, char** argv) {
                 for (int k = 0; k < 2; ++k) {
                     snew[k] = evalclasses(cls.batch, params.data(), g.data(), rhotoalpha(k ? 0.5 : 0.0), ws, 1);
                     gnew[k] = g;
+                }
+                // shared sub-equations against each class evaluated on its own: score, gradient, curvature
+                {
+                    const size_t np = static_cast<size_t>(cls.npid);
+                    std::vector<int> dense(np);
+                    for (size_t j = 0; j < np; ++j) dense[j] = static_cast<int>(j);
+                    std::vector<double> g1(np), g2(np), h1(np * np), h2(np * np);
+                    auto rel = [&](double x, double y) { return std::abs(x - y) / std::max(1.0, std::abs(y)); };
+                    for (int k = 0; k < 2; ++k) {
+                        const double al = rhotoalpha(k ? 0.5 : 0.0);
+                        const double s1 = evalclasses(cls.batch, params.data(), g1.data(), al, ws, 1, dense.data(),
+                                                      static_cast<int>(np), h1.data());
+                        const double s2 = evalclasses_reference(cls.batch, params.data(), g2.data(), al, ws, 1,
+                                                                dense.data(), static_cast<int>(np), h2.data());
+                        evaldiff = std::max(evaldiff, rel(s1, s2));
+                        for (size_t j = 0; j < np; ++j) evaldiff = std::max(evaldiff, rel(g1[j], g2[j]));
+                        for (size_t j = 0; j < np * np; ++j) evaldiff = std::max(evaldiff, rel(h1[j], h2[j]));
+                    }
+                    dagnodes = cls.batch.dag.node.size();
                 }
                 // the same classes with the reference equation builder: same score and gradient
                 {
@@ -201,6 +223,12 @@ int main(int argc, char** argv) {
             ++refbad;
             std::cout << line << " REFERENCE MISMATCH reldiff=" << refdiff << " ";
         }
+        worsteval = std::max(worsteval, evaldiff);
+        tot_dagnodes += dagnodes;
+        if (evaldiff > 1e-9) {
+            ++evalbad;
+            std::cout << line << " EVALUATION MISMATCH reldiff=" << evaldiff << " ";
+        }
         if (d > 1e-8) {
             ++bad;
             std::cout << line << " MISMATCH ";
@@ -218,6 +246,10 @@ int main(int argc, char** argv) {
               << " wrong with per-quartet equations, " << tot_obad_new << " wrong with quartet classes\n"
               << "equation builder against the reference builder (score and gradient, rho = 0 and 0.5): " << refbad
               << " network(s) differ; worst relative difference " << worstref << "; equation nodes " << tot_size_new
-              << " (reference: " << tot_size_ref << ")\n";
-    return (tot_obad_new || refbad) ? 1 : 0;
+              << " (reference: " << tot_size_ref << ")\n"
+              << "shared sub-equations against one recursion per class (score, gradient and curvature, rho = 0 and "
+                 "0.5): "
+              << evalbad << " network(s) differ; worst relative difference " << worsteval
+              << "; distinct sub-equations " << tot_dagnodes << "\n";
+    return (tot_obad_new || refbad || evalbad) ? 1 : 0;
 }
