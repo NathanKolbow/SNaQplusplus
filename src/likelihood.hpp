@@ -106,13 +106,11 @@ double evalclasses(const ClassBatch& batch, const double* params, double* grad, 
 // The two halves of evalclasses. evalclassvalues returns the loss and keeps
 // what the derivatives need in `ws`; evalclassderivatives must follow a call
 // of evalclassvalues with the same batch, params, alpha and ws.
-// With `plan` (EqnDag::shallowplan of batch.dag; the same in both calls): the
-// approximate evaluation it describes.
 double evalclassvalues(const ClassBatch& batch, const double* params, double alpha, LossWorkspace& ws,
-                       int nthreads, const EqnDag::Plan* plan = nullptr);
+                       int nthreads);
 void evalclassderivatives(const ClassBatch& batch, const double* params, double* grad, double alpha,
                           LossWorkspace& ws, int nthreads, const int* dense = nullptr, int ndense = 0,
-                          double* hess = nullptr, const EqnDag::Plan* plan = nullptr);
+                          double* hess = nullptr);
 // evalclasses with each reticulate class evaluated on its own, by recursion on
 // its equation tree, and the curvature summed term by term: for validation.
 double evalclasses_reference(const ClassBatch& batch, const double* params, double* grad, double alpha,

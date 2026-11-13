@@ -131,9 +131,6 @@ struct FitInfo {
     bool flipped = false;    // a hybrid node's major and minor edges were exchanged
     bool converged = false;  // the optimizer stopped on a tolerance, not on its evaluation limit
     int evals = 0;           // evaluations of the score
-    // FitOptions::shallow: division nodes of the shared sub-equations that were
-    // approximated, that were not evaluated at all, and their total number
-    size_t shallow = 0, skipped = 0, divisions = 0;
 };
 
 // fitnumericalparameters! on the classes of `net`.

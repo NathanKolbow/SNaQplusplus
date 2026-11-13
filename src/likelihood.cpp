@@ -407,7 +407,7 @@ void preparebatch(ClassBatch& batch) {
 }
 
 double evalclassvalues(const ClassBatch& batch, const double* params, double alpha, LossWorkspace& ws,
-                       int nthreads, const EqnDag::Plan* plan) {
+                       int nthreads) {
     nthreads = std::max(1, nthreads);
     LossWorkspace::Impl* w = ws.get(batch.npid, nthreads);
     const double log3 = std::log(3.0);
@@ -437,7 +437,7 @@ double evalclassvalues(const ClassBatch& batch, const double* params, double alp
     // --- reticulate classes ---
     if (!batch.gen.empty()) {
         if (batch.dag.root.size() != batch.gen.size()) throw SnaqError("evalclasses: preparebatch was not called");
-        batch.dag.values(params, alpha, w->dag, plan);
+        batch.dag.values(params, alpha, w->dag);
         const double* val = w->dag.val.data();
         for (size_t g = 0; g < batch.root.size(); ++g) {
             const double* v = val + 2 * static_cast<size_t>(batch.root[g]);
@@ -451,8 +451,7 @@ double evalclassvalues(const ClassBatch& batch, const double* params, double alp
 }
 
 void evalclassderivatives(const ClassBatch& batch, const double* params, double* grad, double alpha,
-                          LossWorkspace& ws, int nthreads, const int* dense, int ndense, double* hess,
-                          const EqnDag::Plan* plan) {
+                          LossWorkspace& ws, int nthreads, const int* dense, int ndense, double* hess) {
     const size_t nparam = static_cast<size_t>(batch.npid);
     nthreads = hess ? 1 : std::max(1, nthreads);
     LossWorkspace::Impl* w = ws.get(batch.npid, nthreads);
@@ -498,7 +497,7 @@ void evalclassderivatives(const ClassBatch& batch, const double* params, double*
     // --- reticulate classes ---
     if (!batch.gen.empty()) {
         const EqnDag& dag = batch.dag;
-        dag.derivatives(params, alpha, w->dag, plan);
+        dag.derivatives(params, alpha, w->dag);
         const double* val = w->dag.val.data();
         const double* jac = w->dag.jac.data();
         for (size_t g = 0; g < batch.root.size(); ++g) {

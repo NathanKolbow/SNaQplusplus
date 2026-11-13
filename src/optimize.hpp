@@ -24,13 +24,6 @@ struct FitOptions {
     double xtolRel = 1e-12;
     double xtolAbs = 1e-12;
     FitMethod method = FitMethod::lbfgs;
-    // Shallow evaluation of reticulate classes during the fit (fitclasses
-    // only; 0: exact). Sub-equations whose weight at the starting parameters
-    // is below `shallow` are approximated as `shallowmode` says (see
-    // EqnDag::shallowplan). The score returned is the exact score at the
-    // fitted parameters.
-    double shallow = 0.0;
-    ShallowMode shallowmode = ShallowMode::path;
 };
 
 // fitnumericalparameters!(net, eqns, observed_CFs, ρ; maxeval, ftolRel, ...)

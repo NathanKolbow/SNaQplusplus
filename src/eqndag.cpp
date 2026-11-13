@@ -291,60 +291,26 @@ void EqnDag::build(const std::vector<const ClassEqn*>& classes) {
     }
 }
 
-namespace {
-
-template <bool SHALLOW>
-void valuesimpl(const EqnDag& dag, const double* params, double alpha, EqnDag::Work& w, const EqnDag::Plan* plan) {
-    using Plan = EqnDag::Plan;
-    const size_t ns = dag.setoff.size() - 1, nn = dag.node.size();
+void EqnDag::values(const double* params, double alpha, Work& w) const {
+    const size_t ns = setoff.size() - 1, nn = node.size();
     w.ex.resize(ns);
     w.val.resize(2 * nn);
     for (size_t s = 0; s < ns; ++s) {
         double sum = 0.0;
-        for (uint32_t k = dag.setoff[s]; k < dag.setoff[s + 1]; ++k) sum += params[dag.setpid[k]];
+        for (uint32_t k = setoff[s]; k < setoff[s + 1]; ++k) sum += params[setpid[k]];
         w.ex[s] = std::exp(-sum);
     }
     double* val = w.val.data();
     double sp[4], sg[4];
     for (size_t i = 0; i < nn; ++i) {
-        const EqnDag::Node& n = dag.node[i];
+        const Node& n = node[i];
         double* v = val + 2 * i;
         if (n.kind == 0) {
             const double E = n.set < 0 ? 1.0 : w.ex[static_cast<size_t>(n.set)];
             const double res = 1 - 2.0 / 3.0 * E, oth = 1.0 / 3.0 * E;
             v[0] = n.wc == 1 ? res : oth;
             v[1] = n.wc == 2 ? res : oth;
-            continue;
-        }
-        if (SHALLOW && plan->act[i] != Plan::exact) {
-            const uint8_t act = plan->act[i];
-            if (act == Plan::frozen) {
-                v[0] = plan->frozenval[2 * i];
-                v[1] = plan->frozenval[2 * i + 1];
-            } else if (act == Plan::path) {
-                const double* c = val + 2 * n.child[plan->way[i]];
-                if (n.kind == 2) {
-                    v[0] = c[0];
-                    v[1] = c[1];
-                } else {
-                    const double early = std::max(n.set < 0 ? 1.0 : w.ex[static_cast<size_t>(n.set)], 1e-9);
-                    v[0] = early * c[0] + (n.wc == 1 ? 1 - early : 0.0);
-                    v[1] = early * c[1] + (n.wc == 2 ? 1 - early : 0.0);
-                }
-            } else if (act == Plan::average) {
-                const uint32_t* leaf = plan->avgleaf.data() + plan->avgoff[i];
-                const uint32_t cnt = plan->avgcnt[i];
-                double e0 = 0.0, e1 = 0.0;
-                for (uint32_t t = 0; t < cnt; ++t) {
-                    e0 += val[2 * leaf[t]];
-                    e1 += val[2 * leaf[t] + 1];
-                }
-                v[0] = e0 / cnt;
-                v[1] = e1 / cnt;
-            }
-            continue;  // (skip: not needed)
-        }
-        if (n.kind == 2) {
+        } else if (n.kind == 2) {
             const double g = std::min(1.0 - 1e-9, std::max(1e-9, params[n.H]));
             const double *a = val + 2 * n.child[0], *b = val + 2 * n.child[1];
             v[0] = g * a[0] + (1 - g) * b[0];
@@ -367,26 +333,21 @@ void valuesimpl(const EqnDag& dag, const double* params, double alpha, EqnDag::W
     }
 }
 
-template <bool SHALLOW>
-void derivativesimpl(const EqnDag& dag, const double* params, double alpha, EqnDag::Work& w,
-                     const EqnDag::Plan* plan) {
-    using Plan = EqnDag::Plan;
-    const size_t nn = dag.node.size();
-    w.jac.resize(2 * dag.pid.size());
+void EqnDag::derivatives(const double* params, double alpha, Work& w) const {
+    const size_t nn = node.size();
+    w.jac.resize(2 * pid.size());
     const double* val = w.val.data();
     double* jac = w.jac.data();
     double sp[4], sg[4];
     for (size_t i = 0; i < nn; ++i) {
-        const EqnDag::Node& n = dag.node[i];
+        const Node& n = node[i];
         if (n.kind == 0) continue;
-        const uint8_t act = SHALLOW ? plan->act[i] : static_cast<uint8_t>(Plan::exact);
-        if (act == Plan::skip || act == Plan::frozen) continue;
         double* J = jac + 2 * n.poff;
         std::fill(J, J + 2 * n.np, 0.0);
-        const uint32_t* m = dag.map.data() + n.moff;
+        const uint32_t* m = map.data() + n.moff;
         // adds f * (derivatives of child c)
         auto addchild = [&](uint32_t c, double f) {
-            const EqnDag::Node& ch = dag.node[c];
+            const Node& ch = node[c];
             if (ch.kind == 0) {
                 if (ch.set < 0) return;
                 const double oth = f * (1.0 / 3.0 * w.ex[static_cast<size_t>(ch.set)]);
@@ -395,7 +356,7 @@ void derivativesimpl(const EqnDag& dag, const double* params, double alpha, EqnD
                     J[2 * m[t]] += d0;
                     J[2 * m[t] + 1] += d1;
                 }
-            } else if (!SHALLOW || plan->act[c] != Plan::frozen) {
+            } else {
                 const double* Jc = jac + 2 * ch.poff;
                 for (uint32_t t = 0; t < ch.np; ++t) {
                     J[2 * m[t]] += f * Jc[2 * t];
@@ -404,40 +365,7 @@ void derivativesimpl(const EqnDag& dag, const double* params, double alpha, EqnD
             }
             m += ch.np;
         };
-        const uint32_t ns = n.set < 0 ? 0 : dag.setoff[static_cast<size_t>(n.set) + 1] - dag.setoff[static_cast<size_t>(n.set)];
-        if (act == Plan::path) {
-            const int way = plan->way[i];
-            for (int k = 0; k < way; ++k) m += dag.node[n.child[k]].np;
-            if (n.kind == 2) {
-                addchild(n.child[way], 1.0);
-            } else {
-                const double early = std::max(n.set < 0 ? 1.0 : w.ex[static_cast<size_t>(n.set)], 1e-9);
-                addchild(n.child[way], early);
-                for (int k = way + 1; k < 4; ++k) m += dag.node[n.child[k]].np;
-                const double* c = val + 2 * n.child[way];
-                const double h0 = (n.wc == 1 ? early : 0.0) - early * c[0];
-                const double h1 = (n.wc == 2 ? early : 0.0) - early * c[1];
-                for (uint32_t t = 0; t < ns; ++t) {
-                    J[2 * m[t]] += h0;
-                    J[2 * m[t] + 1] += h1;
-                }
-            }
-        } else if (act == Plan::average) {
-            const uint32_t* leaf = plan->avgleaf.data() + plan->avgoff[i];
-            const uint32_t* pos = plan->avgpos.data() + plan->avgposoff[i];
-            const uint32_t cnt = plan->avgcnt[i];
-            for (uint32_t t = 0; t < cnt; ++t) {
-                const EqnDag::Node& lf = dag.node[leaf[t]];
-                if (lf.set < 0) continue;
-                const double oth = (1.0 / 3.0 * w.ex[static_cast<size_t>(lf.set)]) / cnt;
-                const double d0 = lf.wc == 1 ? 2.0 * oth : -oth, d1 = lf.wc == 2 ? 2.0 * oth : -oth;
-                for (uint32_t q = 0; q < lf.np; ++q) {
-                    J[2 * pos[q]] += d0;
-                    J[2 * pos[q] + 1] += d1;
-                }
-                pos += lf.np;
-            }
-        } else if (n.kind == 2) {
+        if (n.kind == 2) {
             const double g = std::min(1.0 - 1e-9, std::max(1e-9, params[n.H]));
             addchild(n.child[0], g);
             addchild(n.child[1], 1 - g);
@@ -459,121 +387,16 @@ void derivativesimpl(const EqnDag& dag, const double* params, double alpha, EqnD
             }
             J[2 * n.hpos] += early * dg0;
             J[2 * n.hpos + 1] += early * dg1;
-            const double h0 = (n.wc == 1 ? early : 0.0) - below0, h1 = (n.wc == 2 ? early : 0.0) - below1;
-            for (uint32_t t = 0; t < ns; ++t) {
-                J[2 * m[t]] += h0;
-                J[2 * m[t] + 1] += h1;
-            }
-        }
-    }
-}
-
-}  // namespace
-
-void EqnDag::values(const double* params, double alpha, Work& w, const Plan* plan) const {
-    if (plan)
-        valuesimpl<true>(*this, params, alpha, w, plan);
-    else
-        valuesimpl<false>(*this, params, alpha, w, nullptr);
-}
-
-void EqnDag::derivatives(const double* params, double alpha, Work& w, const Plan* plan) const {
-    if (plan)
-        derivativesimpl<true>(*this, params, alpha, w, plan);
-    else
-        derivativesimpl<false>(*this, params, alpha, w, nullptr);
-}
-
-EqnDag::Plan EqnDag::shallowplan(const double* params, double alpha, double eps, ShallowMode mode, Work& w) const {
-    const size_t nn = node.size();
-    values(params, alpha, w);
-    Plan plan;
-    plan.act.assign(nn, Plan::exact);
-    plan.way.assign(nn, 0);
-    if (mode == ShallowMode::freeze) plan.frozenval.assign(2 * nn, 0.0);
-    if (mode == ShallowMode::average) {
-        plan.avgoff.assign(nn, 0);
-        plan.avgcnt.assign(nn, 0);
-        plan.avgposoff.assign(nn, 0);
-    }
-    std::vector<double> weight(nn, 0.0);
-    std::vector<char> needed(nn, 0);
-    for (uint32_t r : root) weight[r] = 1.0, needed[r] = 1;
-    std::vector<uint32_t> seen(mode == ShallowMode::average ? nn : 0, 0), stack;
-    double sp[4], sg[4];
-    for (size_t i = nn; i-- > 0;) {
-        const Node& n = node[i];
-        if (n.kind == 0) continue;
-        ++plan.ndivisions;
-        if (!needed[i]) {
-            plan.act[i] = Plan::skip;
-            ++plan.nskipped;
-            continue;
-        }
-        // probability of each division
-        double f[4];
-        if (n.kind == 2) {
-            const double g = std::min(1.0 - 1e-9, std::max(1e-9, params[n.H]));
-            f[0] = g;
-            f[1] = 1 - g;
-        } else {
-            const double early = std::max(n.set < 0 ? 1.0 : w.ex[static_cast<size_t>(n.set)], 1e-9);
-            splitprobabilities(params[n.H], alpha, sp, sg);
-            for (int k = 0; k < 4; ++k) f[k] = early * sp[k];
-        }
-        if (weight[i] >= eps) {
-            for (int k = 0; k < n.kind; ++k) {
-                const uint32_t c = n.child[k];
-                weight[c] = std::max(weight[c], weight[i] * f[k]);
-                needed[c] = 1;
-            }
-            continue;
-        }
-        ++plan.nshallow;
-        if (mode == ShallowMode::freeze) {
-            plan.act[i] = Plan::frozen;
-            plan.frozenval[2 * i] = w.val[2 * i];
-            plan.frozenval[2 * i + 1] = w.val[2 * i + 1];
-        } else if (mode == ShallowMode::path) {
-            plan.act[i] = Plan::path;
-            int way = 0;
-            for (int k = 1; k < n.kind; ++k)
-                if (f[k] > f[way]) way = k;
-            plan.way[i] = static_cast<uint8_t>(way);
-            // what is below stays below the threshold
-            const uint32_t c = n.child[way];
-            weight[c] = std::max(weight[c], weight[i]);
-            needed[c] = 1;
-        } else {
-            plan.act[i] = Plan::average;
-            plan.avgoff[i] = static_cast<uint32_t>(plan.avgleaf.size());
-            plan.avgposoff[i] = static_cast<uint32_t>(plan.avgpos.size());
-            const uint32_t stamp = static_cast<uint32_t>(i) + 1;
-            stack.assign(1, static_cast<uint32_t>(i));
-            const int* ps = pid.data() + n.poff;
-            while (!stack.empty()) {
-                const Node& x = node[stack.back()];
-                stack.pop_back();
-                for (int k = 0; k < x.kind; ++k) {
-                    const uint32_t c = x.child[k];
-                    if (seen[c] == stamp) continue;
-                    seen[c] = stamp;
-                    const Node& ch = node[c];
-                    if (ch.kind != 0) {
-                        stack.push_back(c);
-                        continue;
-                    }
-                    plan.avgleaf.push_back(c);
-                    if (ch.set < 0) continue;
-                    for (uint32_t t = setoff[static_cast<size_t>(ch.set)]; t < setoff[static_cast<size_t>(ch.set) + 1]; ++t)
-                        plan.avgpos.push_back(
-                            static_cast<uint32_t>(std::lower_bound(ps, ps + n.np, setpid[t]) - ps));
+            if (n.set >= 0) {
+                const uint32_t ns = setoff[static_cast<size_t>(n.set) + 1] - setoff[static_cast<size_t>(n.set)];
+                const double h0 = (n.wc == 1 ? early : 0.0) - below0, h1 = (n.wc == 2 ? early : 0.0) - below1;
+                for (uint32_t t = 0; t < ns; ++t) {
+                    J[2 * m[t]] += h0;
+                    J[2 * m[t] + 1] += h1;
                 }
             }
-            plan.avgcnt[i] = static_cast<uint32_t>(plan.avgleaf.size()) - plan.avgoff[i];
         }
     }
-    return plan;
 }
 
 }  // namespace csnaq

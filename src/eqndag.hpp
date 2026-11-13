@@ -38,14 +38,6 @@ struct EqnHash {
 // the minor edge and the other the major edge, do not count).
 std::vector<EqnHash> hashequation(const RecursiveCFEquation& eqn);
 
-// What replaces a sub-equation of low weight in a shallow evaluation
-// (EqnDag::shallowplan).
-enum class ShallowMode {
-    path,     // a single way: the lineages take the edge of largest γ
-    average,  // the average of the tree-like equations it leads to
-    freeze,   // its value at the parameters the plan was made at
-};
-
 class EqnDag {
 public:
     struct Node {
@@ -70,39 +62,13 @@ public:
         std::vector<double> jac;  // per parameter of each division node (as in pid): d e1, d e2
     };
 
-    // An approximate ("shallow") evaluation: what to do with each node.
-    struct Plan {
-        enum : uint8_t { exact = 0, skip = 1, path = 2, average = 3, frozen = 4 };
-        std::vector<uint8_t> act;
-        std::vector<uint8_t> way;       // path: the division that is followed
-        std::vector<double> frozenval;  // frozen: e1, e2
-        // average: the leaves under node i are avgleaf[avgoff[i] .. avgoff[i] + avgcnt[i]);
-        // avgpos lists, for each of them in turn, the position of each of its
-        // edges among the parameters of node i, from avgposoff[i]
-        std::vector<uint32_t> avgoff, avgcnt, avgposoff, avgleaf, avgpos;
-        size_t nshallow = 0;  // division nodes that are approximated
-        size_t nskipped = 0;  // division nodes that are not evaluated at all
-        size_t ndivisions = 0;
-    };
-
     // Stores the sub-equations of `classes`; root[c] is the node of classes[c].
     void build(const std::vector<const ClassEqn*>& classes);
     bool empty() const { return node.empty(); }
 
-    // With a plan: the approximate evaluation it describes.
-    void values(const double* params, double alpha, Work& w, const Plan* plan = nullptr) const;
-    // After values(params, alpha, w, plan).
-    void derivatives(const double* params, double alpha, Work& w, const Plan* plan = nullptr) const;
-
-    // The weight of a node is the largest product, over the ways from the root
-    // of a class down to it, of the probabilities on the way (γ, 1 - γ, the
-    // probability of not coalescing before a hybrid node, ...), at `params`:
-    // an upper bound of what the node contributes to any expected CF.
-    // The plan approximates the division nodes of weight below `eps` as `mode`
-    // says, and skips the nodes that are then no longer needed. Which nodes
-    // are approximated does not change with the parameters afterwards, so the
-    // approximate score is a smooth function.
-    Plan shallowplan(const double* params, double alpha, double eps, ShallowMode mode, Work& w) const;
+    void values(const double* params, double alpha, Work& w) const;
+    // After values(params, alpha, w).
+    void derivatives(const double* params, double alpha, Work& w) const;
 
     std::vector<Node> node;       // children before parents
     std::vector<uint32_t> setoff;  // edges of set s: setpid[setoff[s] .. setoff[s + 1])
