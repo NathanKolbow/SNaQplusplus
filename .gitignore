@@ -28,3 +28,6 @@ compile_commands.json
 
 # Benchmark scratch (history and reports are committed)
 /benchmarks/history/outputs/*/*.log
+
+# Python bytecode
+__pycache__/
