@@ -51,6 +51,10 @@ add_library(csnaq_core STATIC
     src/likelihood.cpp
     src/optimize.cpp
     src/snaq_network.cpp
+    src/moves.cpp
+    src/restrictions.cpp
+    src/search.cpp
+    src/snaq.cpp
     src/util.cpp)
 target_include_directories(csnaq_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(csnaq_core PUBLIC nlopt Threads::Threads)
@@ -63,6 +67,13 @@ else()
     if(CSNAQ_NATIVE)
         target_compile_options(csnaq_core PUBLIC -march=native)
     endif()
+endif()
+
+add_executable(snaq apps/snaq_main.cpp apps/cli.cpp)
+target_link_libraries(snaq PRIVATE csnaq_core)
+target_compile_definitions(snaq PRIVATE CSNAQ_VERSION="${PROJECT_VERSION}")
+if(MSVC)
+    target_compile_options(snaq PRIVATE /utf-8)
 endif()
 
 # Validation tool: expected CFs, scores and gradients for networks (compared
