@@ -4,9 +4,9 @@
     "kind": "snaq",
     "nquartets": 1000,
     "cases": [
-      {"name": "n10_h1", "dataset": "n10_h1", "hmax": 1, "runs": 4, "Nfail": 40},
-      {"name": "n20_h2", "dataset": "n20_h2", "hmax": 2, "runs": 4, "Nfail": 40},
-      {"name": "n50_h2", "dataset": "n50_h2", "hmax": 2, "runs": 2, "Nfail": 40}
+      {"name": "n10_h1", "dataset": "n10_h1", "hmax": 1, "runs": 100, "Nfail": 40},
+      {"name": "n20_h2", "dataset": "n20_h2", "hmax": 2, "runs": 100, "Nfail": 40},
+      {"name": "n50_h2", "dataset": "n50_h2", "hmax": 2, "runs": 100, "Nfail": 40}
     ]
   },
   "standard": {
@@ -14,15 +14,15 @@
     "kind": "snaq",
     "nquartets": 1000,
     "cases": [
-      {"name": "n10_h1", "dataset": "n10_h1", "hmax": 1, "runs": 10, "Nfail": 40},
-      {"name": "n15_h1", "dataset": "n15_h1", "hmax": 1, "runs": 10, "Nfail": 40},
-      {"name": "n20_h2", "dataset": "n20_h2", "hmax": 2, "runs": 10, "Nfail": 40},
-      {"name": "n25_h1", "dataset": "n25_h1", "hmax": 1, "runs": 10, "Nfail": 40},
-      {"name": "n25_h3", "dataset": "n25_h3", "hmax": 3, "runs": 4, "Nfail": 40},
-      {"name": "n30_h2", "dataset": "n30_h2", "hmax": 2, "runs": 4, "Nfail": 40},
-      {"name": "n40_h1", "dataset": "n40_h1", "hmax": 1, "runs": 4, "Nfail": 40},
-      {"name": "n50_h2", "dataset": "n50_h2", "hmax": 2, "runs": 4, "Nfail": 40},
-      {"name": "n50_h2_lazy", "dataset": "n50_h2", "hmax": 2, "runs": 4, "Nfail": 40, "lazy": true}
+      {"name": "n10_h1", "dataset": "n10_h1", "hmax": 1, "runs": 100, "Nfail": 40},
+      {"name": "n15_h1", "dataset": "n15_h1", "hmax": 1, "runs": 100, "Nfail": 40},
+      {"name": "n20_h2", "dataset": "n20_h2", "hmax": 2, "runs": 100, "Nfail": 40},
+      {"name": "n25_h1", "dataset": "n25_h1", "hmax": 1, "runs": 100, "Nfail": 40},
+      {"name": "n25_h3", "dataset": "n25_h3", "hmax": 3, "runs": 100, "Nfail": 40},
+      {"name": "n30_h2", "dataset": "n30_h2", "hmax": 2, "runs": 100, "Nfail": 40},
+      {"name": "n40_h1", "dataset": "n40_h1", "hmax": 1, "runs": 100, "Nfail": 40},
+      {"name": "n50_h2", "dataset": "n50_h2", "hmax": 2, "runs": 100, "Nfail": 40},
+      {"name": "n50_h2_lazy", "dataset": "n50_h2", "hmax": 2, "runs": 100, "Nfail": 40, "lazy": true}
     ]
   },
   "fit": {
