@@ -14,6 +14,10 @@
 int main(int argc, char** argv) {
     using namespace csnaq;
     std::vector<std::string> args(argv + 1, argv + argc);
+    if (args.empty()) {
+        std::cout << short_usage();
+        return 0;
+    }
     try {
         CliArgs a = parse_cli(args);
         if (a.help) {
@@ -25,14 +29,17 @@ int main(int argc, char** argv) {
             return 0;
         }
         std::vector<Network> start = read_networks_arg(a.start_tree);
-        if (start.empty()) throw ArgumentError("no starting topology found in --start-tree");
+        if (start.empty()) throw UsageError("no starting topology found in --start-tree");
         std::vector<Network> genetrees = readmultinewick_file(a.input);
-        if (genetrees.empty()) throw ArgumentError("no gene trees found in " + a.input);
+        if (genetrees.empty()) throw UsageError("no gene trees found in " + a.input);
         // One Newick topology behaves like snaq!(T::HybridNetwork, ...);
         // several like snaq!(Vector{HybridNetwork}, ...).
         bool single_input = start.size() == 1;
         Network best = snaq(start, single_input, genetrees, a.opts);
         std::cout << writenewick(best) << "\nSNaQ score = " << julia_float(best.fscore) << "\n";
+    } catch (const UsageError& e) {
+        std::cerr << "ERROR: " << e.what() << "\n\n" << short_usage();
+        return 1;
     } catch (const std::exception& e) {
         std::cerr << "ERROR: " << e.what() << "\n";
         return 1;

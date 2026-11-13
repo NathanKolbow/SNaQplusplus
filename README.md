@@ -18,18 +18,37 @@ The build produces one program, `snaq`.
 
 ## Installation
 
+Download the code, then build it with one command.
+
 ```sh
 git clone https://github.com/NathanKolbow/CSNaQ.git
 cd CSNaQ
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build --config Release -j
+make                      # macOS / Linux
 ```
 
-The program is `build/snaq` (`build/Release/snaq.exe` with Visual Studio).
-To install it to a directory on your `PATH`:
+On Windows, or on any system without `make`, run this instead from the `CSNaQ` folder:
 
 ```sh
-cmake --install build --prefix ~/.local    # puts snaq in ~/.local/bin
+cmake -P build.cmake
+```
+
+Both put the program in `bin/` (`bin/snaq`, or `bin/snaq.exe` on Windows).
+Running `bin/snaq` with no arguments prints a short usage message.
+
+Other `make` targets:
+
+| Command | Effect |
+|---|---|
+| `make install` | install `snaq` to `~/.local/bin` (set `PREFIX=...` to change) |
+| `make test` | build and run the unit tests |
+| `make clean` | remove `build/` and `bin/` |
+
+The same build with CMake directly:
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
+cmake --install build --prefix ~/.local    # optional
 ```
 
 Optional CMake settings:

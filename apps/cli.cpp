@@ -15,7 +15,7 @@ double parse_double(const std::string& flag, const std::string& v) {
         if (idx != v.size()) throw std::invalid_argument(v);
         return d;
     } catch (...) {
-        throw ArgumentError("invalid value for " + flag + ": '" + v + "' (expected a number)");
+        throw UsageError("invalid value for " + flag + ": '" + v + "' (expected a number)");
     }
 }
 
@@ -26,13 +26,36 @@ long long parse_int(const std::string& flag, const std::string& v) {
         if (idx != v.size()) throw std::invalid_argument(v);
         return d;
     } catch (...) {
-        throw ArgumentError("invalid value for " + flag + ": '" + v + "' (expected an integer)");
+        throw UsageError("invalid value for " + flag + ": '" + v + "' (expected an integer)");
     }
 }
 
 bool is_bool_word(const std::string& v) { return v == "true" || v == "false"; }
 
 }  // namespace
+
+std::string short_usage() {
+    return R"(USAGE: snaq -i <gene trees file> --start-tree <newick string or file> [-o <output root name>] [options]
+
+Infers a phylogenetic network from gene trees (C++ port of SNaQ.jl's snaq!).
+
+Common options:
+  -i, --input FILE          gene trees, one Newick tree per line (required)
+  --start-tree TREE         starting tree: Newick string or file (required)
+  -o, --filename PATH       root name of the output files (default: snaq)
+  --hmax INT                maximum number of hybridizations (default: 1)
+  --runs INT                number of independent runs (default: 100)
+  --Nfail INT               failed proposals in a row before a run stops (default: 50)
+  --outgroup NAME           root the networks at this taxon
+  --seed INT                random seed
+  --threads INT             number of threads (default: all cores)
+
+Example:
+  snaq -i genetrees.tre --start-tree astral.tre -o net1 --hmax 1 --runs 10
+
+Run `snaq --help` for all options.
+)";
+}
 
 std::string usage() {
     return R"(snaq: phylogenetic network inference by maximum pseudolikelihood (C++ port of SNaQ.jl's snaq!)
@@ -187,7 +210,7 @@ CliArgs parse_cli(const std::vector<std::string>& args) {
             has_value = true;
         }
         auto it = specs.find(tok);
-        if (it == specs.end()) throw ArgumentError("unknown option: " + args[k] + " (see snaq --help)");
+        if (it == specs.end()) throw UsageError("unknown option: " + args[k] + " (see snaq --help)");
         const Spec& sp = it->second;
         if (sp.is_bool) {
             if (!has_value) {
@@ -197,18 +220,18 @@ CliArgs parse_cli(const std::vector<std::string>& args) {
                     value = "true";
                 }
             } else if (!is_bool_word(value)) {
-                throw ArgumentError("invalid value for " + tok + ": '" + value + "' (expected true or false)");
+                throw UsageError("invalid value for " + tok + ": '" + value + "' (expected true or false)");
             }
         } else if (!has_value) {
-            if (k + 1 >= args.size()) throw ArgumentError("missing value for " + tok);
+            if (k + 1 >= args.size()) throw UsageError("missing value for " + tok);
             value = args[++k];
         }
         sp.set(tok, value);
     }
     if (a.help || a.version) return a;
-    if (a.input.empty()) throw ArgumentError("missing required option -i/--input (gene trees)");
-    if (a.start_tree.empty()) throw ArgumentError("missing required option --start-tree");
-    if (o.threads < 1) throw ArgumentError("--threads must be ≥ 1");
+    if (a.input.empty()) throw UsageError("missing required option -i/--input (gene trees)");
+    if (a.start_tree.empty()) throw UsageError("missing required option --start-tree");
+    if (o.threads < 1) throw UsageError("--threads must be ≥ 1");
     return a;
 }
 

@@ -16,8 +16,15 @@ struct CliArgs {
     bool version = false;
 };
 
-// Throws ArgumentError on invalid usage.
+// Invalid command-line usage (printed together with the USAGE message).
+struct UsageError : public ArgumentError {
+    explicit UsageError(const std::string& msg) : ArgumentError(msg) {}
+};
+
+// Throws UsageError on invalid usage.
 CliArgs parse_cli(const std::vector<std::string>& args);
 std::string usage();
+// Short USAGE message with the most common flags.
+std::string short_usage();
 
 }  // namespace csnaq

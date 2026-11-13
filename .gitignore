@@ -3,6 +3,7 @@
 
 # Build output
 /build*/
+/bin/
 /out/
 /cmake-build-*/
 compile_commands.json
