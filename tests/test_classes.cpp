@@ -392,3 +392,95 @@ TEST(Classes, SharedSubEquationsMatchRecursion) {
     EXPECT_GT(treenodes, 20000u);
     EXPECT_LT(2 * dagnodes, treenodes);  // sub-equations are shared
 }
+
+TEST(Classes, ShallowEvaluation) {
+    // EqnDag::shallowplan: the three approximations of low-weight
+    // sub-equations. Each must be a consistent function (its gradient matches
+    // finite differences), exact when no node is below the threshold, and
+    // fitclasses must return the exact score at the parameters it found.
+    Rng rng(41);
+    size_t shallow = 0, checked = 0;
+    auto check = [&](Network& net, const CFMatrix& q, const std::string& what) {
+        ClassOptions co;
+        co.qlogq = obsqlogq(q);
+        Network a = net.deepcopynetwork();
+        QuartetClasses cls = buildclasses(a, QuartetList::allquartets(a.numtaxa), q, co);
+        if (cls.batch.gen.empty()) return;
+        const size_t np = static_cast<size_t>(cls.npid);
+        std::vector<double> params = pidparams(a, cls.npid), g(np), tmp(np);
+        LossWorkspace ws;
+        const double al = rhotoalpha(0.0);
+        const double exact = evalclassvalues(cls.batch, params.data(), al, ws, 1);
+        for (ShallowMode mode : {ShallowMode::path, ShallowMode::average, ShallowMode::freeze}) {
+            EqnDag::Work work;
+            // nothing is below a threshold of 0
+            EqnDag::Plan none = cls.batch.dag.shallowplan(params.data(), al, 0.0, mode, work);
+            ASSERT_EQ(none.nshallow, 0u);
+            ASSERT_EQ(evalclassvalues(cls.batch, params.data(), al, ws, 1, &none), exact) << what;
+            for (double eps : {0.05, 0.4}) {
+                EqnDag::Plan plan = cls.batch.dag.shallowplan(params.data(), al, eps, mode, work);
+                shallow += plan.nshallow;
+                const double f = evalclassvalues(cls.batch, params.data(), al, ws, 1, &plan);
+                evalclassderivatives(cls.batch, params.data(), g.data(), al, ws, 1, nullptr, 0, nullptr, &plan);
+                ASSERT_TRUE(std::isfinite(f)) << what;
+                if (mode == ShallowMode::freeze) ASSERT_NEAR(f, exact, 1e-10 * std::max(1.0, std::abs(exact))) << what;
+                for (size_t j = 0; j < np; j += 3) {
+                    const double x = params[j], h = 1e-6;
+                    params[j] = x + h;
+                    const double fp = evalclassvalues(cls.batch, params.data(), al, ws, 1, &plan);
+                    params[j] = x - h;
+                    const double fm = evalclassvalues(cls.batch, params.data(), al, ws, 1, &plan);
+                    params[j] = x;
+                    const double fd = (fp - fm) / (2 * h);
+                    ASSERT_NEAR(g[j], fd, 1e-5 * std::max(1.0, std::abs(fd))) << what << ", parameter " << j;
+                    ++checked;
+                }
+            }
+            // a fit with the approximation returns the exact score of what it found
+            Network b = net.deepcopynetwork();
+            QuartetClasses cb = buildclasses(b, QuartetList::allquartets(b.numtaxa), q, co);
+            FitOptions fo;
+            fo.method = FitMethod::newton;
+            fo.shallow = 0.4;
+            fo.shallowmode = mode;
+            FitInfo fi;
+            const double s = fitclasses(b, cb, 0.0, fo, 1, &fi);
+            // (a fit can exchange major and minor edges: the classes are then built again)
+            if (fi.flipped) cb = buildclasses(b, QuartetList::allquartets(b.numtaxa), q, co);
+            const double again = scoreclasses(b, cb, 0.0, 1);
+            ASSERT_NEAR(s, again, 1e-9 * std::max(1.0, std::abs(s))) << what;
+        }
+    };
+    Network N = random_tree(9, rng).deepcopynetwork();
+    semidirectnetwork(N);
+    N.compact_pids();
+    CFMatrix q = random_cfs(static_cast<size_t>(nchoose4(N.numtaxa)), rng);
+    std::vector<AttemptedMove> none;
+    std::vector<double> deltas;
+    CFMatrix emptyQ;
+    int maxh = 0;
+    for (int it = 0; it < 300; ++it) {
+        Network P = N.deepcopynetwork();
+        try {
+            auto mp = generatemoveproposal(P, nullptr, none, 4, 0.0, emptyQ, deltas, rng, 0.0);
+            if (mp.first == Move::none) continue;
+            applymove(P, mp.first, mp.second, rng);
+            removedegree2nodes(P);
+            while (shrink3cycles(P)) {
+            }
+            while (shrink2cycles(P)) {
+            }
+            semidirectnetwork(P);
+        } catch (const std::exception&) {
+            continue;
+        }
+        randomize_parameters(P, rng);
+        if (it % 8 == 0) check(P, q, "move " + std::to_string(it));
+        if (::testing::Test::HasFatalFailure()) return;
+        maxh = std::max(maxh, P.numhybrids);
+        N = std::move(P);
+    }
+    EXPECT_GE(maxh, 3);
+    EXPECT_GT(shallow, 200u);
+    EXPECT_GT(checked, 1000u);
+}

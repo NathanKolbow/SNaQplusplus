@@ -111,6 +111,7 @@ struct ClassObjective {
     LossWorkspace ws;
     int nthreads;
     int evals = 0;
+    const EqnDag::Plan* plan = nullptr;
 };
 
 double classobjective(unsigned n, const double* x, double* grad, void* data) {
@@ -118,7 +119,9 @@ double classobjective(unsigned n, const double* x, double* grad, void* data) {
     ++d->evals;
     const std::vector<int>& pidof = *d->pidof;
     for (unsigned j = 0; j < n; ++j) d->params[static_cast<size_t>(pidof[j])] = x[j];
-    const double f = evalclasses(*d->batch, d->params.data(), d->grad.data(), d->alpha, d->ws, d->nthreads);
+    const double f = evalclassvalues(*d->batch, d->params.data(), d->alpha, d->ws, d->nthreads, d->plan);
+    evalclassderivatives(*d->batch, d->params.data(), d->grad.data(), d->alpha, d->ws, d->nthreads, nullptr, 0,
+                         nullptr, d->plan);
     if (grad)
         for (unsigned j = 0; j < n; ++j) grad[j] = d->grad[static_cast<size_t>(pidof[j])];
     return f;
@@ -172,7 +175,7 @@ bool dampedsolve(const std::vector<double>& B, const std::vector<double>& g, con
 // are held fixed; a step is accepted only if it increases the score.
 double newtonfit(const ClassBatch& batch, const std::vector<int>& pidof, std::vector<double>& params, double alpha,
                  std::vector<double>& x, const OptInfo& info, const FitOptions& fo, int maxeval, int& evals,
-                 bool& converged) {
+                 bool& converged, const EqnDag::Plan* plan) {
     const size_t n = x.size();
     std::vector<int> dense(static_cast<size_t>(batch.npid), -1);
     for (size_t j = 0; j < n; ++j) dense[static_cast<size_t>(pidof[j])] = static_cast<int>(j);
@@ -183,11 +186,11 @@ double newtonfit(const ClassBatch& batch, const std::vector<int>& pidof, std::ve
     auto score = [&](const std::vector<double>& at) {
         for (size_t j = 0; j < n; ++j) params[static_cast<size_t>(pidof[j])] = at[j];
         ++evals;
-        return evalclassvalues(batch, params.data(), alpha, ws, 1);
+        return evalclassvalues(batch, params.data(), alpha, ws, 1, plan);
     };
     auto derivatives = [&](std::vector<double>& grad, std::vector<double>& curv) {  // at the last point scored
         evalclassderivatives(batch, params.data(), gpid.data(), alpha, ws, 1, dense.data(), static_cast<int>(n),
-                             curv.data());
+                             curv.data(), plan);
         for (size_t j = 0; j < n; ++j) grad[j] = gpid[static_cast<size_t>(pidof[j])];
     };
     double f = score(x);
@@ -330,6 +333,21 @@ double fitclasses(Network& net, const QuartetClasses& cls, double rho, const Fit
     }
     ClassObjective data{&cls.batch, &pidof, pidparams(net, cls.npid),
                         std::vector<double>(static_cast<size_t>(cls.npid)), rhotoalpha(rho), {}, nthreads};
+    // Shallow evaluation: which sub-equations are approximated is decided here,
+    // from their weights at the starting parameters, and does not change
+    // during the fit.
+    EqnDag::Plan plan;
+    if (fo.shallow > 0.0 && !cls.batch.gen.empty()) {
+        for (unsigned j = 0; j < narg; ++j) data.params[static_cast<size_t>(pidof[j])] = x[j];
+        EqnDag::Work work;
+        plan = cls.batch.dag.shallowplan(data.params.data(), data.alpha, fo.shallow, fo.shallowmode, work);
+        if (fitinfo) {
+            fitinfo->shallow = plan.nshallow;
+            fitinfo->skipped = plan.nskipped;
+            fitinfo->divisions = plan.ndivisions;
+        }
+        if (plan.nshallow > 0) data.plan = &plan;
+    }
     double maxf = std::numeric_limits<double>::quiet_NaN();
     bool converged = false;
     auto lbfgs = [&](int evalsleft) {
@@ -350,7 +368,8 @@ double fitclasses(Network& net, const QuartetClasses& cls, double rho, const Fit
         converged = ret > 0 && ret != NLOPT_MAXEVAL_REACHED;
     };
     if (newton) {
-        maxf = newtonfit(cls.batch, pidof, data.params, data.alpha, x, info, fo, maxeval, data.evals, converged);
+        maxf = newtonfit(cls.batch, pidof, data.params, data.alpha, x, info, fo, maxeval, data.evals, converged,
+                         data.plan);
         // The curvature of reticulate classes is approximate (Gauss-Newton), and
         // Newton steps can stall on it far from the optimum: L-BFGS finishes
         // from where they stopped, and stops at once if they had converged.
@@ -375,6 +394,10 @@ double fitclasses(Network& net, const QuartetClasses& cls, double rho, const Fit
         }
     } else {
         lbfgs(maxeval);
+    }
+    if (data.plan) {  // the exact score at the fitted parameters
+        for (unsigned j = 0; j < narg; ++j) data.params[static_cast<size_t>(pidof[j])] = x[j];
+        maxf = evalclassvalues(cls.batch, data.params.data(), data.alpha, data.ws, nthreads);
     }
     setX(net, x.data(), info.idx_obj);
     if (maxf == -std::numeric_limits<double>::infinity()) throw SnaqError("Optimization error: maxf == -Inf");

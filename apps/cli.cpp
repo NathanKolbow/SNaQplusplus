@@ -116,6 +116,14 @@ parameter optimization (not in SNaQ.jl):
   --optimizer NAME          "newton": projected Newton method, run to convergence (default);
                             "lbfgs": L-BFGS limited to --opt_maxeval evaluations, as SNaQ.jl
 
+  --shallow FLOAT           approximate, while a proposed network is fitted, the parts of the
+                            equations of reticulate classes whose weight (product of the
+                            probabilities that lead to them) is below FLOAT; networks are still
+                            compared by their exact score (default: 0, no approximation)
+  --shallowMode NAME        what replaces such a part: "path" (the lineages take the edges of
+                            largest γ), "average" (the average of the trees it leads to) or
+                            "freeze" (its value when the fit starts) (default: path)
+
 hybrid additions (not in SNaQ.jl):
   --guideHybrids [BOOL]     draw half of the proposed hybrid additions between edges where the
                             data suggest a reticulation (default: true)
@@ -205,6 +213,8 @@ CliArgs parse_cli(const std::vector<std::string>& args) {
     str("--logprefix", &o.logprefix);
     boolean("--geneWeights", &o.geneWeights);
     str("--optimizer", &o.optimizer);
+    num("--shallow", &o.shallow);
+    str("--shallowMode", &o.shallowMode);
     boolean("--guideHybrids", &o.guideHybrids);
     integer("--minAddHybrid", &o.minAddHybrid);
     boolean("--boundPrune", &o.boundPrune);

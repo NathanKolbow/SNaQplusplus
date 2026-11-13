@@ -178,9 +178,19 @@ static FitMethod fit_method(const SnaqOptions& o) {
     throw SnaqError("optimizer must be \"newton\" or \"lbfgs\" (optimizer = " + o.optimizer + ")");
 }
 
+static ShallowMode shallow_mode(const SnaqOptions& o) {
+    if (o.shallowMode == "path") return ShallowMode::path;
+    if (o.shallowMode == "average") return ShallowMode::average;
+    if (o.shallowMode == "freeze") return ShallowMode::freeze;
+    throw SnaqError("shallowMode must be \"path\", \"average\" or \"freeze\" (shallowMode = " + o.shallowMode + ")");
+}
+
 static FitOptions search_fit_options(const SnaqOptions& o, int maxeval) {
     FitOptions f;
     f.method = fit_method(o);
+    if (!(o.shallow >= 0.0 && o.shallow <= 1.0)) throw SnaqError("shallow must be in [0, 1]");
+    f.shallow = o.shallow;
+    f.shallowmode = shallow_mode(o);
     f.maxeval = maxeval;
     f.ftolRel = o.ftolRel;
     f.ftolAbs = o.ftolAbs;

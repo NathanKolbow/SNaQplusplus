@@ -101,6 +101,12 @@ struct SnaqOptions {
     // the quartet classes, run to convergence) or "lbfgs" (NLopt's L-BFGS
     // limited to opt_maxeval evaluations, as SNaQ.jl).
     std::string optimizer = "newton";
+    // Shallow evaluation while a proposed network is fitted (0: exact; see
+    // FitOptions::shallow). `shallowMode`: "path", "average" or "freeze". The
+    // score of every network is still its exact score, and the final
+    // optimization of a run's network is exact.
+    double shallow = 0.0;
+    std::string shallowMode = "path";
     // CLI-only
     bool lazy = false;
     int threads = 1;
