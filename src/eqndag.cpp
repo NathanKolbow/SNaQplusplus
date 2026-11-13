@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <unordered_map>
 
 #include "likelihood.hpp"
 
@@ -34,10 +33,51 @@ struct Hasher {
 
 struct Key {
     uint64_t a, b;
-    bool operator==(const Key& o) const { return a == o.a && b == o.b; }
 };
-struct KeyHash {
-    size_t operator()(const Key& k) const { return static_cast<size_t>(k.a); }
+
+// Open-addressing hash table from a 128-bit key to an index.
+class KeyTable {
+public:
+    explicit KeyTable(size_t expected) {
+        size_t n = 64;
+        while (n < 2 * expected) n *= 2;
+        slots_.assign(n, Slot{0, 0, EMPTY});
+    }
+    static constexpr uint32_t EMPTY = 0xffffffffu;
+    // The value of `k`, or EMPTY.
+    uint32_t find(const Key& k) const {
+        const size_t mask = slots_.size() - 1;
+        for (size_t i = static_cast<size_t>(k.a) & mask;; i = (i + 1) & mask) {
+            const Slot& s = slots_[i];
+            if (s.value == EMPTY) return EMPTY;
+            if (s.a == k.a && s.b == k.b) return s.value;
+        }
+    }
+    void insert(const Key& k, uint32_t value) {
+        if (2 * (count_ + 1) > slots_.size()) grow();
+        place(k, value);
+        ++count_;
+    }
+
+private:
+    struct Slot {
+        uint64_t a, b;
+        uint32_t value;
+    };
+    void place(const Key& k, uint32_t value) {
+        const size_t mask = slots_.size() - 1;
+        size_t i = static_cast<size_t>(k.a) & mask;
+        while (slots_[i].value != EMPTY) i = (i + 1) & mask;
+        slots_[i] = Slot{k.a, k.b, value};
+    }
+    void grow() {
+        std::vector<Slot> old(2 * slots_.size(), Slot{0, 0, EMPTY});
+        old.swap(slots_);
+        for (const Slot& s : old)
+            if (s.value != EMPTY) place(Key{s.a, s.b}, s.value);
+    }
+    std::vector<Slot> slots_;
+    size_t count_ = 0;
 };
 
 using Sorted = SmallVec<int, 24>;
@@ -86,20 +126,41 @@ EqnHash hashnode(const RecursiveCFEquation& e, std::vector<EqnHash>& out) {
     return r;
 }
 
-// Probabilities of the four ways two lineages pass a hybrid node (both minor,
-// both major, one each, one each), and their derivatives in γ.
-inline void splitprobabilities(double g, double alpha, double* sp, double* sg) {
-    for (int di = 1; di <= 4; ++di) {
-        sp[di - 1] = quadsplitprobability(di, g, alpha);
-        sg[di - 1] = quadsplitprobabilitygradient(di, g, alpha);
+// Probabilities of the four ways two lineages pass a hybrid node with minor γ
+// `g` (both minor, both major, one each, one each), and their derivatives in
+// γ: quadsplitprobability and quadsplitprobabilitygradient for the four types.
+inline void splitprobabilities(double g, double a, double* sp, double* sg) {
+    if (std::isinf(a)) {
+        sp[0] = g * g;
+        sp[1] = (1 - g) * (1 - g);
+        sp[2] = sp[3] = g * (1 - g);
+        sg[0] = 2 * g;
+        sg[1] = -2 * (1 - g);
+        sg[2] = sg[3] = 1 - 2 * g;
+    } else if (a == 0.0) {
+        sp[0] = g;
+        sp[1] = 1 - g;
+        sp[2] = sp[3] = 0;
+        sg[0] = 1;
+        sg[1] = -1;
+        sg[2] = sg[3] = 0.0;
+    } else {
+        sp[0] = g * (1 / (a + 1) + a / (a + 1) * g);
+        sp[1] = (1 - g) * (1 / (a + 1) + a / (a + 1) * (1 - g));
+        sp[2] = sp[3] = g * (a / (a + 1)) * (1 - g);
+        sg[0] = 1 / (a + 1) + 2 * g * a / (a + 1);
+        sg[1] = -1 / (a + 1) - 2 * (1 - g) * a / (a + 1);
+        sg[2] = sg[3] = (a / (a + 1)) * (1 - 2 * g);
     }
 }
 
 struct Builder {
     EqnDag& dag;
-    std::unordered_map<Key, uint32_t, KeyHash> ids;
-    std::unordered_map<Key, int32_t, KeyHash> sets;
+    KeyTable ids, sets;
     std::vector<int> tmp;
+    // by pid: whether it is among the parameters of the node being added, and where
+    std::vector<uint32_t> seen, pos;
+    uint32_t stamp = 0;
 
     int32_t setof(const ParamList& coal) {
         if (coal.empty()) return -1;
@@ -108,13 +169,13 @@ struct Builder {
         Hasher h;
         for (int p : s) h.add(static_cast<uint64_t>(p));
         const Key k{h.a, h.b};
-        auto it = sets.find(k);
-        if (it != sets.end()) return it->second;
-        const int32_t id = static_cast<int32_t>(dag.setoff.size() - 1);
+        const uint32_t found = sets.find(k);
+        if (found != KeyTable::EMPTY) return static_cast<int32_t>(found);
+        const uint32_t id = static_cast<uint32_t>(dag.setoff.size() - 1);
         for (int p : s) dag.setpid.push_back(p);
         dag.setoff.push_back(static_cast<uint32_t>(dag.setpid.size()));
-        sets.emplace(k, id);
-        return id;
+        sets.insert(k, id);
+        return static_cast<int32_t>(id);
     }
     // the parameters of node `i`
     const int* paramsof(uint32_t i, uint32_t& n) const {
@@ -126,8 +187,8 @@ struct Builder {
 
     uint32_t add(const RecursiveCFEquation& e, const EqnHash* h) {
         const Key key{h->a, h->b};
-        auto it = ids.find(key);
-        if (it != ids.end()) return it->second;
+        const uint32_t found = ids.find(key);
+        if (found != KeyTable::EMPTY) return found;
         EqnDag::Node n;
         if (e.division_H == -1) {
             n.kind = 0;
@@ -149,40 +210,50 @@ struct Builder {
             }
             // its parameters: γ, its edges, and the parameters of its children
             tmp.clear();
-            tmp.push_back(n.H);
+            ++stamp;
+            auto collect = [&](const int* p, uint32_t count) {
+                for (uint32_t t = 0; t < count; ++t) {
+                    const size_t q = static_cast<size_t>(p[t]);
+                    if (q >= seen.size()) {
+                        seen.resize(2 * q + 16, 0);
+                        pos.resize(2 * q + 16, 0);
+                    }
+                    if (seen[q] == stamp) continue;
+                    seen[q] = stamp;
+                    tmp.push_back(p[t]);
+                }
+            };
+            collect(&n.H, 1);
             uint32_t ns = 0;
-            const int* sp = nullptr;
             if (n.set >= 0) {
-                sp = dag.setpid.data() + dag.setoff[static_cast<size_t>(n.set)];
                 ns = dag.setoff[static_cast<size_t>(n.set) + 1] - dag.setoff[static_cast<size_t>(n.set)];
-                tmp.insert(tmp.end(), sp, sp + ns);
+                collect(dag.setpid.data() + dag.setoff[static_cast<size_t>(n.set)], ns);
             }
             for (size_t k = 0; k < nd; ++k) {
                 uint32_t nc;
                 const int* cp = paramsof(n.child[k], nc);
-                tmp.insert(tmp.end(), cp, cp + nc);
+                collect(cp, nc);
             }
             std::sort(tmp.begin(), tmp.end());
-            tmp.erase(std::unique(tmp.begin(), tmp.end()), tmp.end());
             n.poff = static_cast<uint32_t>(dag.pid.size());
             n.np = static_cast<uint32_t>(tmp.size());
-            dag.pid.insert(dag.pid.end(), tmp.begin(), tmp.end());
-            auto position = [&](int p) {
-                return static_cast<uint32_t>(std::lower_bound(tmp.begin(), tmp.end(), p) - tmp.begin());
-            };
-            n.hpos = position(n.H);
+            for (uint32_t t = 0; t < n.np; ++t) {
+                pos[static_cast<size_t>(tmp[t])] = t;
+                dag.pid.push_back(tmp[t]);
+            }
+            n.hpos = pos[static_cast<size_t>(n.H)];
             n.moff = static_cast<uint32_t>(dag.map.size());
             for (size_t k = 0; k < nd; ++k) {
                 uint32_t nc;
                 const int* cp = paramsof(n.child[k], nc);
-                for (uint32_t t = 0; t < nc; ++t) dag.map.push_back(position(cp[t]));
+                for (uint32_t t = 0; t < nc; ++t) dag.map.push_back(pos[static_cast<size_t>(cp[t])]);
             }
-            sp = n.set >= 0 ? dag.setpid.data() + dag.setoff[static_cast<size_t>(n.set)] : nullptr;
-            for (uint32_t t = 0; t < ns; ++t) dag.map.push_back(position(sp[t]));
+            const int* sp = n.set >= 0 ? dag.setpid.data() + dag.setoff[static_cast<size_t>(n.set)] : nullptr;
+            for (uint32_t t = 0; t < ns; ++t) dag.map.push_back(pos[static_cast<size_t>(sp[t])]);
         }
         const uint32_t id = static_cast<uint32_t>(dag.node.size());
         dag.node.push_back(n);
-        ids.emplace(key, id);
+        ids.insert(key, id);
         return id;
     }
 };
@@ -203,8 +274,11 @@ void EqnDag::build(const std::vector<const ClassEqn*>& classes) {
     map.clear();
     root.resize(classes.size());
     if (classes.empty()) return;
-    Builder b{*this, {}, {}, {}};
-    b.ids.reserve(4 * classes.size());
+    const size_t nc = classes.size();
+    node.reserve(2 * nc);
+    pid.reserve(24 * nc);
+    map.reserve(32 * nc);
+    Builder b{*this, KeyTable(2 * nc), KeyTable(nc / 2), {}, {}, {}, 0};
     std::vector<EqnHash> local;
     for (size_t c = 0; c < classes.size(); ++c) {
         const ClassEqn& ce = *classes[c];
