@@ -223,28 +223,58 @@ std::vector<NodeId> treelikeancestorchain(const Network& net, NodeId node) {
     return chain;
 }
 
-void pathedges(const Network& net, EdgeVec& dest, const std::vector<NodeId>& cx, const std::vector<NodeId>& cy) {
-    size_t ix = cx.size(), iy = cy.size();  // 1-based semantics
-    while (ix > 1 && iy > 1 && cx[ix - 2] == cy[iy - 2]) {
+Chain make_chain(const Network& net, std::vector<NodeId> nodes) {
+    Chain c;
+    c.pe.assign(nodes.size(), NONE);
+    for (size_t k = 0; k + 1 < nodes.size(); ++k) c.pe[k] = net.getparentedge(nodes[k]);
+    c.n = std::move(nodes);
+    return c;
+}
+
+void pathedges(EdgeVec& dest, const Chain& cx, const Chain& cy) {
+    size_t ix = cx.n.size(), iy = cy.n.size();  // 1-based semantics
+    while (ix > 1 && iy > 1 && cx.n[ix - 2] == cy.n[iy - 2]) {
         --ix;
         --iy;
     }
     dest.clear();
-    for (size_t k = 0; k + 1 < ix; ++k) dest.push_back(net.getparentedge(cx[k]));
-    for (size_t k = 0; k + 1 < iy; ++k) dest.push_back(net.getparentedge(cy[k]));
+    for (size_t k = 0; k + 1 < ix; ++k) dest.push_back(cx.pe[k]);
+    for (size_t k = 0; k + 1 < iy; ++k) dest.push_back(cy.pe[k]);
 }
 
-bool meetingpathedges(const Network& net, EdgeVec& dest, const std::vector<NodeId>& cx,
-                      const std::vector<NodeId>& cy) {
-    for (size_t ix = 0; ix < cx.size(); ++ix) {
-        NodeId nx = cx[ix];
-        for (size_t iy = 0; iy < cy.size(); ++iy) {
-            if (cy[iy] != nx) continue;
-            dest.clear();
-            for (size_t k = 0; k < ix; ++k) dest.push_back(net.getparentedge(cx[k]));
-            for (size_t k = 0; k < iy; ++k) dest.push_back(net.getparentedge(cy[k]));
-            return true;
+// Node -> position marks, to find where two chains first meet in linear time.
+struct NodeMarks {
+    std::vector<uint32_t> mark;
+    std::vector<int> pos;
+    uint32_t stamp = 0;
+    void begin(size_t poolsize) {
+        if (mark.size() < poolsize) {
+            mark.assign(poolsize, 0);
+            pos.assign(poolsize, -1);
         }
+        if (++stamp == 0) {
+            std::fill(mark.begin(), mark.end(), 0);
+            stamp = 1;
+        }
+    }
+};
+
+// SNaQ's meetingpathedges!: the first node of cx (lowest index) that is in
+// cy, and its first position in cy.
+bool meetingpathedges(const Network& net, NodeMarks& nm, EdgeVec& dest, const Chain& cx, const Chain& cy) {
+    nm.begin(net.npool.size());
+    for (size_t iy = cy.n.size(); iy-- > 0;) {  // reverse: keep the first position of repeated nodes
+        nm.mark[static_cast<size_t>(cy.n[iy])] = nm.stamp;
+        nm.pos[static_cast<size_t>(cy.n[iy])] = static_cast<int>(iy);
+    }
+    for (size_t ix = 0; ix < cx.n.size(); ++ix) {
+        NodeId nx = cx.n[ix];
+        if (nm.mark[static_cast<size_t>(nx)] != nm.stamp) continue;
+        size_t iy = static_cast<size_t>(nm.pos[static_cast<size_t>(nx)]);
+        dest.clear();
+        for (size_t k = 0; k < ix; ++k) dest.push_back(cx.pe[k]);
+        for (size_t k = 0; k < iy; ++k) dest.push_back(cy.pe[k]);
+        return true;
     }
     return false;
 }
@@ -270,6 +300,7 @@ struct EdgeMarks {
 struct PathScratch {
     EdgeVec ab, cd, ac, bd;
     EdgeMarks marks;
+    NodeMarks nodes;
 };
 
 bool aredisjointedges(const Network& net, PathScratch& sc, const EdgeVec& A, const EdgeVec& B) {
@@ -311,19 +342,19 @@ void unionedgeparams(const Network& net, PathScratch& sc, const EdgeVec& A, cons
 
 // treelikequartetdata: returns false when the quartet is not tree-like.
 template <class Rel>
-bool treelikequartetdata(const Network& net, const std::vector<NodeId>& ca, const std::vector<NodeId>& cb,
-                         const std::vector<NodeId>& cc, const std::vector<NodeId>& cdch, const ParamMap& pm,
-                         bool hashybrids, PathScratch& sc, RecursiveCFEquation& eqn, Rel* relevant) {
+bool treelikequartetdata(const Network& net, const Chain& ca, const Chain& cb, const Chain& cc, const Chain& cdch,
+                         const ParamMap& pm, bool hashybrids, PathScratch& sc, RecursiveCFEquation& eqn,
+                         Rel* relevant) {
     if (hashybrids) {
-        if (!meetingpathedges(net, sc.ab, ca, cb)) return false;
-        if (!meetingpathedges(net, sc.cd, cc, cdch)) return false;
-        if (!meetingpathedges(net, sc.ac, ca, cc)) return false;
-        if (!meetingpathedges(net, sc.bd, cb, cdch)) return false;
+        if (!meetingpathedges(net, sc.nodes, sc.ab, ca, cb)) return false;
+        if (!meetingpathedges(net, sc.nodes, sc.cd, cc, cdch)) return false;
+        if (!meetingpathedges(net, sc.nodes, sc.ac, ca, cc)) return false;
+        if (!meetingpathedges(net, sc.nodes, sc.bd, cb, cdch)) return false;
     } else {
-        pathedges(net, sc.ab, ca, cb);
-        pathedges(net, sc.cd, cc, cdch);
-        pathedges(net, sc.ac, ca, cc);
-        pathedges(net, sc.bd, cb, cdch);
+        pathedges(sc.ab, ca, cb);
+        pathedges(sc.cd, cc, cdch);
+        pathedges(sc.ac, ca, cc);
+        pathedges(sc.bd, cb, cdch);
     }
     eqn.can_coalesce_here = true;
     eqn.division_H = -1;
@@ -348,7 +379,7 @@ bool treelikequartetdata(const Network& net, const std::vector<NodeId>& ca, cons
 bool trytreelikequartet_names(const Network& net, const std::array<std::string, 4>& taxa, const ParamMap& pm,
                               RecursiveCFEquation& eqn) {
     bool hashybrids = net.numhybrids != 0;
-    std::array<std::vector<NodeId>, 4> ch;
+    std::array<Chain, 4> ch;
     for (int k = 0; k < 4; ++k) {
         NodeId l = NONE;
         for (NodeId x : net.leaf)
@@ -359,7 +390,8 @@ bool trytreelikequartet_names(const Network& net, const std::array<std::string, 
         if (l == NONE)
             throw SnaqError("trytreelikequartet: taxon " + taxa[static_cast<size_t>(k)] +
                             " is not a leaf of the network.");
-        ch[static_cast<size_t>(k)] = hashybrids ? treelikeancestorchain(net, l) : ancestorchain(net, l);
+        ch[static_cast<size_t>(k)] =
+            make_chain(net, hashybrids ? treelikeancestorchain(net, l) : ancestorchain(net, l));
     }
     static thread_local PathScratch sc;
     return treelikequartetdata<ParamList>(net, ch[0], ch[1], ch[2], ch[3], pm, hashybrids, sc, eqn, nullptr);
@@ -735,7 +767,8 @@ TreeQuartetContext treequartetcontext(const Network& net) {
     for (auto& p : lv) {
         ctx.taxa.push_back(p.first);
         ctx.leaf_of_taxon.push_back(p.second);
-        ctx.chains.push_back(ctx.hashybrids ? treelikeancestorchain(net, p.second) : ancestorchain(net, p.second));
+        ctx.chains.push_back(
+            make_chain(net, ctx.hashybrids ? treelikeancestorchain(net, p.second) : ancestorchain(net, p.second)));
     }
     if (ctx.hashybrids) {
         ctx.nodepos.assign(net.npool.size(), -1);

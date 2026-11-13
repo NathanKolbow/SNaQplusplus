@@ -81,12 +81,20 @@ struct QuartetDataImpl {
 // as SNaQ.jl does when it copies `old_eqns[j]` into the new equations.
 using QuartetData = std::shared_ptr<const QuartetDataImpl>;
 
+// An ancestor chain [leaf, parent, grandparent, ...] with the (major) parent
+// edge of each node precomputed (pe[k] = parent edge of n[k]; NONE for the
+// last node).
+struct Chain {
+    std::vector<NodeId> n;
+    std::vector<EdgeId> pe;
+};
+
 // Per-network data reused across quartets (SNaQ's TreeQuartetContext).
 struct TreeQuartetContext {
     const Network* net = nullptr;
     std::vector<std::string> taxa;           // sorted taxon names
     std::vector<NodeId> leaf_of_taxon;       // taxon index -> leaf node
-    std::vector<std::vector<NodeId>> chains; // taxon index -> ancestor chain
+    std::vector<Chain> chains;               // taxon index -> ancestor chain
     bool hashybrids = false;
     std::vector<int> nodepos;  // NodeId -> position in net.node
     std::vector<int> edgepos;  // EdgeId -> position in net.edge
