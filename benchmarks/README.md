@@ -38,6 +38,8 @@ python3 benchmarks/bench.py run --suite fit --label my-idea [--fit-binary build/
 python3 benchmarks/bench.py run-julia --suite standard           # SNaQ.jl, recorded with label "SNaQ.jl"
 python3 benchmarks/bench.py report [--baseline SNaQ.jl] [--labels SNaQ.jl,cpp-v1,my-idea]
 python3 benchmarks/bench.py list
+python3 benchmarks/bench.py rescore                              # same csnaq_eval for every recorded run
+python3 benchmarks/bench.py run --suite fit --label my-idea --extra-args newton   # fit suite: optimizer
 python3 benchmarks/bench.py run --suite standard --cases n10_h1,n20_h2   # a subset of cases
 ```
 
@@ -64,7 +66,9 @@ For every case, the history records:
 | `best_score`, `run_scores`, `median_run_score` | As reported in the `.out` file. |
 | `hwcd` | Hardwired-cluster distance between the best network and the true network (0 means the same topology). |
 | `score_all_quartets` | SNaQ score of the best network, recomputed on the observed CFs of all quartets by `csnaq_eval`. This makes runs that used `propQuartets` < 1 comparable. |
-| `score_truth_all_quartets` | The same for the true network, after fitting its parameters. |
+| `rescored` | `hwcd`, `score_all_quartets` and `score_truth_all_quartets` recomputed by `bench.py rescore` from the saved `.out` file. The report uses these when present, so that all versions are evaluated by the same `csnaq_eval`. Run `rescore` after a change to `csnaq_eval` or to the expected CFs. |
+| `score_refit_all_quartets` | SNaQ score of the best network's topology after fitting its parameters to all quartets. Compared with `score_truth_all_quartets`, it measures the topology alone. |
+| `score_truth_all_quartets` | SNaQ score of the true network, after fitting its parameters to all quartets. |
 | `fit_s`, `equations_s`, `score` | Fit suite: best of 3 repeats. |
 
 Each record also holds:

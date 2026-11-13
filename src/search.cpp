@@ -508,6 +508,7 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
                 candidates_current = false;
                 addhybrid_evaluated = 0;
                 hybridsweep = false;
+                sweep_skipped = 0;
                 // a topology that was the current network is never fitted again
                 if (havesig) record(sig, current_logPL, true);
             } else {

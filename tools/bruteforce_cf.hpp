@@ -94,7 +94,7 @@ struct BruteForceCF {
                             const uint64_t x0 = a.bits[w], x1 = b.bits[w], x2 = c.bits[w], x3 = d.bits[w];
                             uint64_t shared = (x0 & x1) | (x0 & x2) | (x0 & x3) | (x1 & x2) | (x1 & x3) | (x2 & x3);
                             while (shared) {
-                                const size_t r = (w << 6) + static_cast<size_t>(__builtin_ctzll(shared));
+                                const size_t r = (w << 6) + static_cast<size_t>(ctz64(shared));
                                 shared &= shared - 1;
                                 int in[4], k = 0;
                                 for (int j = 0; j < 4; ++j)

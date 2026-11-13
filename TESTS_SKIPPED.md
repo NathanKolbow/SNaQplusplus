@@ -57,5 +57,19 @@ Ported with three changes:
    in-place rNNI(1) update gives equations that differ from a full rebuild, because
    quartets with taxa below `t` are not re-derived. CSNaQ's search rebuilds them.
 
-Changes 2 and 3 are also deviations of CSNaQ's search from SNaQ.jl. They are marked
-`FIX` in `src/search.cpp` and listed in the README.
+Changes 2 and 3 concern SNaQ.jl's in-place updates, which are ported and tested
+(`applyrNNI1update`, `applyrNNI2update`). CSNaQ's search no longer uses them: it works on
+quartet classes, and reuses the equations of the classes a move leaves untouched (see the
+README).
+
+## Tests that are not ported from SNaQ.jl
+
+| File | What it tests |
+|---|---|
+| `tests/test_classes.cpp` | Quartet classes: expected CFs against a brute-force calculation, the score against the per-quartet sum, gradients against finite differences, and equations reused after random moves against equations built from scratch. |
+| `tests/test_search_shortcuts.cpp` | The score upper bound (never below a fitted score; does not change a search), the topology signature, the Newton optimizer against L-BFGS run to convergence, the candidate pairs for hybrid additions, and gene weights. |
+
+The tests ported from SNaQ.jl compute expected CFs and scores of networks with
+`computeexpectedCFmatrix` and `computeSNaQscore_net`, which now use quartet classes. For
+networks where SNaQ.jl's per-quartet equations are wrong (see "Corrected expected CFs" in the
+README), these values differ from SNaQ.jl's.

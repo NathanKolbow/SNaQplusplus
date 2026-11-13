@@ -10,6 +10,9 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#if defined(_MSC_VER)
+#include <intrin.h>
+#endif
 
 namespace csnaq {
 
@@ -193,6 +196,24 @@ private:
         }
     }
 };
+
+// Index of the lowest set bit of x (x != 0).
+inline int ctz64(uint64_t x) {
+#if defined(_MSC_VER) && defined(_M_X64)
+    unsigned long i;
+    _BitScanForward64(&i, x);
+    return static_cast<int>(i);
+#elif defined(__GNUC__) || defined(__clang__)
+    return __builtin_ctzll(x);
+#else
+    int i = 0;
+    while (!(x & 1)) {
+        x >>= 1;
+        ++i;
+    }
+    return i;
+#endif
+}
 
 // Number of 4-taxon subsets of n taxa.
 inline long long nchoose4(long long n) { return n < 4 ? 0 : n * (n - 1) * (n - 2) * (n - 3) / 24; }

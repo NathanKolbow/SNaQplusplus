@@ -71,8 +71,19 @@ int main(int argc, char** argv) {
         fo.method = FitMethod::newton;
         double s_truth = fitnumericalparameters_all(t, q, 0.0, fo, nthreads);
 
-        std::printf("{\"hwcd\": %d, \"score_estimated\": %s, \"score_truth\": %s, \"nhybrids\": %d}\n", hwcd,
-                    julia_float(s_est).c_str(), julia_float(s_truth).c_str(), est.numhybrids);
+        // the estimated topology with its parameters fitted to all quartets, like the true network:
+        // this compares topologies, whatever quartets the parameters were estimated from
+        Network e = est.deepcopynetwork();
+        semidirectnetwork(e);
+        for (EdgeId x : e.edge)
+            if (!e.N(e.getchild(x)).leaf && !(e.E(x).length >= 0.0)) e.E(x).length = 0.0;
+        double s_refit = fitnumericalparameters_all(e, q, 0.0, fo, nthreads);
+        s_refit = std::max(s_refit, s_est);
+
+        std::printf("{\"hwcd\": %d, \"score_estimated\": %s, \"score_truth\": %s, \"score_refit\": %s, "
+                    "\"nhybrids\": %d}\n",
+                    hwcd, julia_float(s_est).c_str(), julia_float(s_truth).c_str(), julia_float(s_refit).c_str(),
+                    est.numhybrids);
     } catch (const std::exception& e) {
         std::cerr << "error: " << e.what() << "\n";
         return 1;

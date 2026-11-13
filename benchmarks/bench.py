@@ -277,7 +277,8 @@ def run_snaq_case(args, implementation, case, files, outdir):
         if args.eval_binary and os.path.isfile(exe(args.eval_binary)):
             ev = evaluate(args.eval_binary, outroot + ".out", files["truth"], files["genetrees"], args.threads)
             metrics.update({"hwcd": ev.get("hwcd"), "score_all_quartets": ev.get("score_estimated"),
-                            "score_truth_all_quartets": ev.get("score_truth"), "nhybrids": ev.get("nhybrids")})
+                            "score_truth_all_quartets": ev.get("score_truth"),
+                            "score_refit_all_quartets": ev.get("score_refit"), "nhybrids": ev.get("nhybrids")})
         dest = os.path.join(outdir, case["name"])
         for ext in (".out", ".networks"):
             if os.path.exists(outroot + ext):
@@ -590,7 +591,7 @@ def ordered_labels(recs, suite, baseline, chosen, maxseries=4):
     return ([baseline] if baseline in first_seen else []) + keep
 
 
-RESCORED_KEYS = ("hwcd", "score_all_quartets", "score_truth_all_quartets", "nhybrids")
+RESCORED_KEYS = ("hwcd", "score_all_quartets", "score_truth_all_quartets", "score_refit_all_quartets", "nhybrids")
 
 
 def metric(rec, key):
@@ -599,8 +600,9 @@ def metric(rec, key):
     if rec is None or rec["metrics"].get("failed"):
         return None
     m = rec["metrics"]
-    if key == "score_gap":
-        a, b = metric(rec, "score_all_quartets"), metric(rec, "score_truth_all_quartets")
+    if key in ("score_gap", "refit_gap"):
+        a = metric(rec, "score_all_quartets" if key == "score_gap" else "score_refit_all_quartets")
+        b = metric(rec, "score_truth_all_quartets")
         return None if a is None or b is None else a - b
     if key in RESCORED_KEYS and key in m.get("rescored", {}):
         return m["rescored"][key]
@@ -630,6 +632,7 @@ def rescore(args):
             continue
         done[(r["run_id"], r["case"])] = {"hwcd": ev.get("hwcd"), "score_all_quartets": ev.get("score_estimated"),
                                            "score_truth_all_quartets": ev.get("score_truth"),
+                                           "score_refit_all_quartets": ev.get("score_refit"),
                                            "nhybrids": ev.get("nhybrids"),
                                            "eval_commit": commit + ("+dirty" if dirty else "")}
         n += 1
@@ -675,7 +678,10 @@ def report(args):
           "the Julia runtime and loaded packages (see `base_rss_mb` in the history). HWCD is the hardwired "
           "cluster distance between the best network and the true network (0: same topology). The score on "
           "all quartets is the SNaQ score of the best network recomputed by `csnaq_eval` on the observed CFs "
-          "of all quartets, which makes runs that used `propQuartets` < 1 comparable. After `bench.py rescore`, "
+          "of all quartets, which makes runs that used `propQuartets` < 1 comparable. \"Refitted to all "
+          "quartets\" is the score of the best network's topology after its parameters are fitted to all "
+          "quartets, as is done for the true network: it compares topologies, whatever quartets the reported "
+          "parameters were estimated from. After `bench.py rescore`, "
           "HWCD and the scores on all quartets of every version come from the same `csnaq_eval`.", ""]
     figures = []
     for sname in [s for s in suites if any(r["suite"] == s for r in recs)]:
@@ -696,7 +702,10 @@ def report(args):
                      ("memory", "peak_rss_mb", "Peak memory", "MB (peak resident set size)", True),
                      ("hwcd", "hwcd", "Distance of the best network to the truth", "HWCD (lower is better)", False),
                      ("score", "score_gap", "Score of the best network on all quartets, minus the true network's",
-                      "SNaQ score difference (higher is better; 0 = as good as the fitted true network)", False)]
+                      "SNaQ score difference (higher is better; 0 = as good as the fitted true network)", False),
+                     ("refit", "refit_gap",
+                      "Score of the best topology refitted to all quartets, minus the true network's",
+                      "SNaQ score difference (higher is better; 0 = as good a topology as the true network)", False)]
         else:
             specs = [("fit", "fit_s", "Parameter optimization time", "seconds", True),
                      ("equations", "equations_s", "Time to build the quartet equations", "seconds", True),
@@ -730,6 +739,7 @@ def report(args):
         if suite["kind"] == "snaq":
             cols = [("time (s)", "time_s"), ("peak MB", "peak_rss_mb"), ("best score", "best_score"),
                     ("median run score", "median_run_score"), ("score on all quartets", "score_all_quartets"),
+                    ("refitted to all quartets", "score_refit_all_quartets"),
                     ("truth score on all quartets", "score_truth_all_quartets"), ("HWCD", "hwcd"),
                     ("hybrids", "nhybrids")]
         else:

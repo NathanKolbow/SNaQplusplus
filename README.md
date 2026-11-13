@@ -57,7 +57,7 @@ Optional CMake settings:
 |---|---|---|
 | `-DCSNAQ_NATIVE=ON` | `OFF` | Compile with `-march=native` |
 | `-DCSNAQ_BUILD_TESTS=ON` | `OFF` | Build the unit tests (downloads GoogleTest) |
-| `-DCSNAQ_BUILD_TOOLS=ON` | `OFF` | Build the validation and benchmark tools (`csnaq_check`, `csnaq_bench_fit`) |
+| `-DCSNAQ_BUILD_TOOLS=ON` | `OFF` | Build the validation and benchmark tools (`csnaq_check`, `csnaq_classcheck`, `csnaq_bench_fit`, `csnaq_eval`) |
 
 ## Usage
 
@@ -94,6 +94,19 @@ value. The one exception is `ρ`, which is `--rho`. Run `snaq --help` for the fu
   `--galled_network`, `--rooted_tree_child`, `--weakly_tree_child` and `--strongly_tree_child`.
 - **Advanced:** these are search keyword arguments that `snaq!` passes through:
   `--maxeval`, `--liktolAbs`, `--liktolRel`, `--opt_maxeval` and `--logprefix`.
+- **Not in SNaQ.jl:** these flags control what `snaq` does differently from SNaQ.jl (see
+  [Differences from SNaQ.jl](#differences-from-snaqjl)). The values in the last column
+  reproduce SNaQ.jl's behavior.
+
+  | Flag | Default | As SNaQ.jl |
+  |---|---|---|
+  | `--optimizer` | `newton` | `lbfgs` |
+  | `--boundPrune` | true | false |
+  | `--dedup` | true | false |
+  | `--dedupCounts` | false | |
+  | `--guideHybrids` | true | false |
+  | `--minAddHybrid` | `Nfail` | 0 |
+  | `--geneWeights` | false | false |
 - **Other flags:**
   - `--lazy` computes observed CFs on demand, like `DataCF(trees; lazy=true)`. It requires
     `--propQuartets` < 1.
@@ -120,19 +133,39 @@ The best network and its score are also printed to standard output.
 - **Parallelism.** Independent runs execute in parallel threads.
 - **Copied quirks.** Some behaviors of SNaQ.jl are copied on purpose. Each is marked in the
   source with a `// QUIRK:` comment.
-- **Fixes.** Two errors of SNaQ.jl's search are fixed, and each fix is marked `FIX` in
-  `src/search.cpp`. The search reuses quartet equations in place after an rNNI move. It now
-  rebuilds them instead in the two cases where reuse gives equations that differ from a full
-  rebuild:
-  - the move changes which edges carry parameters;
-  - the move is an rNNI(1) in which `v` is the parent of `u`.
-
-  See `TESTS_SKIPPED.md`.
-- **Grouped quartets in the fit.** During parameter fitting, quartets whose expected CFs are
-  the same function of the parameters are merged into one term, using the sum of their
-  observed CFs. This is the case for quartets that coalesce over the same branches, or that
-  have identical reticulate equations. Scores equal SNaQ.jl's up to floating-point
-  summation order.
+- **Quartet classes.** Quartets whose four lineages enter the network through the same four
+  cut edges have the same expected CFs. `snaq` builds one equation per such class and fits to
+  the sum of the class's observed CFs. For each proposed network, the equations of the classes
+  that the move leaves untouched are taken from the current network, for every kind of move
+  (SNaQ.jl reuses equations after rNNI moves only).
+- **Corrected expected CFs.** SNaQ.jl's equations give wrong expected CFs for some quartets of
+  some networks: when a reticulation that cannot affect a quartet is removed and this leaves a
+  root of degree 2, the root's two edges are fused and one of their two lengths is dropped from
+  the equation. Class equations do not have this error. `csnaq_classcheck` compares both
+  against a brute-force calculation: on `checks.net`, 88 of 133,552 tested quartets are wrong
+  with SNaQ.jl's equations and none with class equations, and the scores from the two sets of
+  equations differ for 64 of the 669 networks (on up to 3000 quartets per network).
+- **Parameter optimization.** By default, branch lengths and γ are optimized with a projected
+  Newton method run to convergence, followed for networks by L-BFGS started from its result.
+  SNaQ.jl uses L-BFGS limited to `max(30, ntaxa)` evaluations; `--optimizer lbfgs` does the same.
+- **Proposals rejected without a fit** (`--boundPrune`). An upper bound of the score of a
+  proposed network is computed first: each class is given the parameter values that suit it
+  best. If the bound cannot be accepted, the network is rejected without being fitted. It
+  still counts as a failed proposal, so this does not change the result of a search.
+- **Topologies are not fitted twice** (`--dedup`). A run recognizes the topologies it has
+  already fitted. Such a proposal is not fitted again, and by default not counted as a failed
+  proposal either: another proposal is drawn, so a run stops after `Nfail` distinct
+  topologies failed in a row (`--dedupCounts` counts them instead). When `--propQuartets` is
+  1, a topology fitted by one run is not fitted again by the others.
+- **Hybrid additions.** SNaQ.jl proposes a hybrid addition 5% of the time, between two edges
+  drawn uniformly. In `snaq`:
+  - half of them are drawn between edges where the observed CFs exceed the current network's
+    expected CFs (`--guideHybrids`);
+  - a run whose network has fewer than `hmax` reticulations does not stop before `Nfail`
+    hybrid additions were evaluated since its last accepted move (`--minAddHybrid`).
+- **Gene weights** (`--geneWeights`, off by default). Each quartet is weighted by the
+  proportion of gene trees that its observed CFs come from. SNaQ.jl weighs all quartets
+  equally. The two are the same when every gene tree has every taxon.
 - **Input.** Gene trees must be in Newick format. CF tables, NEXUS files and multiple
   alleles are not supported.
 - **Tests.** The tests that were ported, and those that were not, are listed in
@@ -143,7 +176,8 @@ The best network and its score are also printed to standard output.
 | Path | Purpose |
 |---|---|
 | `tools/julia/setup.jl` | sets up a Julia environment with SNaQ.jl, expected at `../SNaQ.jl` relative to the repository root |
-| `tools/csnaq_check.cpp`, `tools/julia/check_networks.jl` | compare expected CFs, SNaQ scores and gradients with SNaQ.jl on the networks of a Newick file (e.g. `checks.net`) |
+| `tools/csnaq_check.cpp`, `tools/julia/check_networks.jl` | compare expected CFs, SNaQ scores and gradients of the per-quartet equations with SNaQ.jl on the networks of a Newick file (e.g. `checks.net`) |
+| `tools/classcheck.cpp`, `tools/bruteforce_cf.hpp` | compare the quartet-class likelihood with the per-quartet one, and both with brute-force expected CFs: `build/csnaq_classcheck checks.net 3000` |
 | `validation/checks_net_comparison.csv` | result of that comparison on `checks.net` |
 | `tools/bench_fit.cpp`, `tools/julia/bench_fit.jl` | time numerical parameter optimization in both implementations, with peak memory |
 | `tools/julia/make_test_fixtures.jl` | regenerates the test fixtures in `tests/data/` |

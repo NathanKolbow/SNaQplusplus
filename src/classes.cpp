@@ -361,7 +361,7 @@ QuartetClasses buildclasses(Network& net, const QuartetList& ql, const CFMatrix&
         for (size_t w = 0; w < W; ++w) {
             uint64_t bits = un[w] & ~above[w];
             while (bits) {
-                const size_t pos = (w << 6) + static_cast<size_t>(__builtin_ctzll(bits));
+                const size_t pos = (w << 6) + static_cast<size_t>(ctz64(bits));
                 bits &= bits - 1;
                 k.a += h1[pos];
                 k.b ^= h2[pos];

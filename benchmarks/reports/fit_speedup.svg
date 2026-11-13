@@ -1,71 +1,79 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="860" height="470" viewBox="0 0 860 470" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
-<rect width="860" height="470" fill="#fcfcfb"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="582" viewBox="0 0 860 582" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="860" height="582" fill="#fcfcfb"/>
 <text x="20" y="30" font-size="17" font-weight="600" fill="#0b0b0b">Speedup over SNaQ.jl — suite fit</text>
 <text x="20" y="52" font-size="12.5" fill="#52514e">SNaQ.jl time ÷ version time; Apple M1, 1 thread(s)</text>
 <rect x="170" y="61" width="12" height="12" rx="3" fill="#2a78d6"/>
 <text x="188" y="71" font-size="12" fill="#52514e">cpp-initial</text>
 <rect x="283" y="61" width="12" height="12" rx="3" fill="#eb6834"/>
 <text x="301" y="71" font-size="12" fill="#52514e">exp-A-classes</text>
-<line x1="205.6" y1="94" x2="205.6" y2="430" stroke="#e1e0d9" stroke-width="1"/>
-<text x="205.6" y="446" font-size="11" fill="#898781" text-anchor="middle">1.00</text>
-<line x1="266.3" y1="94" x2="266.3" y2="430" stroke="#e1e0d9" stroke-width="1"/>
-<text x="266.3" y="446" font-size="11" fill="#898781" text-anchor="middle">2.00</text>
-<line x1="346.7" y1="94" x2="346.7" y2="430" stroke="#e1e0d9" stroke-width="1"/>
-<text x="346.7" y="446" font-size="11" fill="#898781" text-anchor="middle">5.00</text>
-<line x1="407.5" y1="94" x2="407.5" y2="430" stroke="#e1e0d9" stroke-width="1"/>
-<text x="407.5" y="446" font-size="11" fill="#898781" text-anchor="middle">10.0</text>
-<line x1="468.2" y1="94" x2="468.2" y2="430" stroke="#e1e0d9" stroke-width="1"/>
-<text x="468.2" y="446" font-size="11" fill="#898781" text-anchor="middle">20.0</text>
-<line x1="548.6" y1="94" x2="548.6" y2="430" stroke="#e1e0d9" stroke-width="1"/>
-<text x="548.6" y="446" font-size="11" fill="#898781" text-anchor="middle">50.0</text>
-<line x1="609.4" y1="94" x2="609.4" y2="430" stroke="#e1e0d9" stroke-width="1"/>
-<text x="609.4" y="446" font-size="11" fill="#898781" text-anchor="middle">100</text>
-<line x1="670.2" y1="94" x2="670.2" y2="430" stroke="#e1e0d9" stroke-width="1"/>
-<text x="670.2" y="446" font-size="11" fill="#898781" text-anchor="middle">200</text>
-<line x1="750.5" y1="94" x2="750.5" y2="430" stroke="#e1e0d9" stroke-width="1"/>
-<text x="750.5" y="446" font-size="11" fill="#898781" text-anchor="middle">500</text>
-<text x="470.0" y="464" font-size="11.5" fill="#52514e" text-anchor="middle">times faster (log scale)</text>
-<line x1="170.0" y1="94" x2="170.0" y2="430" stroke="#c3c2b7" stroke-width="1"/>
-<line x1="205.6" y1="94" x2="205.6" y2="430" stroke="#52514e" stroke-width="1" stroke-dasharray="4 3"/>
-<text x="209.6" y="90" font-size="11" fill="#52514e">same speed</text>
-<text x="160" y="117.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n10_h1</text>
-<g><title>cpp-initial · fit_n10_h1: 6.42 times faster</title><rect x="170.0" y="100" width="198.6" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="373.6" y="110" font-size="10.5" fill="#52514e" text-anchor="start">6.42</text>
-<g><title>exp-A-classes · fit_n10_h1: 10.4 times faster</title><rect x="170.0" y="114" width="241.2" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="416.2" y="124" font-size="10.5" fill="#52514e" text-anchor="start">10.4</text>
-<text x="160" y="157.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n15_h1</text>
-<g><title>cpp-initial · fit_n15_h1: 52.5 times faster</title><rect x="170.0" y="140" width="382.9" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="557.9" y="150" font-size="10.5" fill="#52514e" text-anchor="start">52.5</text>
-<g><title>exp-A-classes · fit_n15_h1: 114 times faster</title><rect x="170.0" y="154" width="451.1" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="626.1" y="164" font-size="10.5" fill="#52514e" text-anchor="start">114</text>
-<text x="160" y="197.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n20_h2</text>
-<g><title>cpp-initial · fit_n20_h2: 47.6 times faster</title><rect x="170.0" y="180" width="374.3" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="549.3" y="190" font-size="10.5" fill="#52514e" text-anchor="start">47.6</text>
-<g><title>exp-A-classes · fit_n20_h2: 75.1 times faster</title><rect x="170.0" y="194" width="414.3" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="589.3" y="204" font-size="10.5" fill="#52514e" text-anchor="start">75.1</text>
-<text x="160" y="237.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n25_h1</text>
-<g><title>cpp-initial · fit_n25_h1: 143 times faster</title><rect x="170.0" y="220" width="470.6" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="645.6" y="230" font-size="10.5" fill="#52514e" text-anchor="start">143</text>
-<g><title>exp-A-classes · fit_n25_h1: 91.1 times faster</title><rect x="170.0" y="234" width="431.2" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="606.2" y="244" font-size="10.5" fill="#52514e" text-anchor="start">91.1</text>
-<text x="160" y="277.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n25_h3</text>
-<g><title>cpp-initial · fit_n25_h3: 62.4 times faster</title><rect x="170.0" y="260" width="398.1" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="573.1" y="270" font-size="10.5" fill="#52514e" text-anchor="start">62.4</text>
-<g><title>exp-A-classes · fit_n25_h3: 187 times faster</title><rect x="170.0" y="274" width="494.2" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="669.2" y="284" font-size="10.5" fill="#52514e" text-anchor="start">187</text>
-<text x="160" y="317.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n30_h2</text>
-<g><title>cpp-initial · fit_n30_h2: 126 times faster</title><rect x="170.0" y="300" width="459.6" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="634.6" y="310" font-size="10.5" fill="#52514e" text-anchor="start">126</text>
-<g><title>exp-A-classes · fit_n30_h2: 246 times faster</title><rect x="170.0" y="314" width="518.5" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="693.5" y="324" font-size="10.5" fill="#52514e" text-anchor="start">246</text>
-<text x="160" y="357.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n40_h1</text>
-<g><title>cpp-initial · fit_n40_h1: 138 times faster</title><rect x="170.0" y="340" width="467.7" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="642.7" y="350" font-size="10.5" fill="#52514e" text-anchor="start">138</text>
-<g><title>exp-A-classes · fit_n40_h1: 171 times faster</title><rect x="170.0" y="354" width="486.3" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="661.3" y="364" font-size="10.5" fill="#52514e" text-anchor="start">171</text>
-<text x="160" y="397.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n50_h2</text>
-<g><title>cpp-initial · fit_n50_h2: 276 times faster</title><rect x="170.0" y="380" width="528.3" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="703.3" y="390" font-size="10.5" fill="#52514e" text-anchor="start">276</text>
-<g><title>exp-A-classes · fit_n50_h2: 416 times faster</title><rect x="170.0" y="394" width="564.4" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="739.4" y="404" font-size="10.5" fill="#52514e" text-anchor="start">416</text>
+<rect x="410" y="61" width="12" height="12" rx="3" fill="#1baf7a"/>
+<text x="428" y="71" font-size="12" fill="#52514e">exp-C-newton-hybrids</text>
+<line x1="201.0" y1="94" x2="201.0" y2="542" stroke="#e1e0d9" stroke-width="1"/>
+<text x="201.0" y="558" font-size="11" fill="#898781" text-anchor="middle">1.00</text>
+<line x1="377.3" y1="94" x2="377.3" y2="542" stroke="#e1e0d9" stroke-width="1"/>
+<text x="377.3" y="558" font-size="11" fill="#898781" text-anchor="middle">10.0</text>
+<line x1="553.5" y1="94" x2="553.5" y2="542" stroke="#e1e0d9" stroke-width="1"/>
+<text x="553.5" y="558" font-size="11" fill="#898781" text-anchor="middle">100</text>
+<line x1="729.8" y1="94" x2="729.8" y2="542" stroke="#e1e0d9" stroke-width="1"/>
+<text x="729.8" y="558" font-size="11" fill="#898781" text-anchor="middle">1,000</text>
+<text x="470.0" y="576" font-size="11.5" fill="#52514e" text-anchor="middle">times faster (log scale)</text>
+<line x1="170.0" y1="94" x2="170.0" y2="542" stroke="#c3c2b7" stroke-width="1"/>
+<line x1="201.0" y1="94" x2="201.0" y2="542" stroke="#52514e" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="205.0" y="90" font-size="11" fill="#52514e">same speed</text>
+<text x="160" y="124.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n10_h1</text>
+<g><title>cpp-initial · fit_n10_h1: 6.42 times faster</title><rect x="170.0" y="100" width="173.4" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="348.4" y="110" font-size="10.5" fill="#52514e" text-anchor="start">6.42</text>
+<g><title>exp-A-classes · fit_n10_h1: 10.4 times faster</title><rect x="170.0" y="114" width="210.5" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="385.5" y="124" font-size="10.5" fill="#52514e" text-anchor="start">10.4</text>
+<g><title>exp-C-newton-hybrids · fit_n10_h1: 10.2 times faster</title><rect x="170.0" y="128" width="208.6" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="383.6" y="138" font-size="10.5" fill="#52514e" text-anchor="start">10.2</text>
+<text x="160" y="178.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n15_h1</text>
+<g><title>cpp-initial · fit_n15_h1: 52.5 times faster</title><rect x="170.0" y="154" width="334.3" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="509.3" y="164" font-size="10.5" fill="#52514e" text-anchor="start">52.5</text>
+<g><title>exp-A-classes · fit_n15_h1: 114 times faster</title><rect x="170.0" y="168" width="393.8" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="568.8" y="178" font-size="10.5" fill="#52514e" text-anchor="start">114</text>
+<g><title>exp-C-newton-hybrids · fit_n15_h1: 159 times faster</title><rect x="170.0" y="182" width="419.3" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="594.3" y="192" font-size="10.5" fill="#52514e" text-anchor="start">159</text>
+<text x="160" y="232.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n20_h2</text>
+<g><title>cpp-initial · fit_n20_h2: 47.6 times faster</title><rect x="170.0" y="208" width="326.7" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="501.7" y="218" font-size="10.5" fill="#52514e" text-anchor="start">47.6</text>
+<g><title>exp-A-classes · fit_n20_h2: 75.1 times faster</title><rect x="170.0" y="222" width="361.6" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="536.6" y="232" font-size="10.5" fill="#52514e" text-anchor="start">75.1</text>
+<g><title>exp-C-newton-hybrids · fit_n20_h2: 276 times faster</title><rect x="170.0" y="236" width="461.2" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="636.2" y="246" font-size="10.5" fill="#52514e" text-anchor="start">276</text>
+<text x="160" y="286.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n25_h1</text>
+<g><title>cpp-initial · fit_n25_h1: 143 times faster</title><rect x="170.0" y="262" width="410.8" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="585.8" y="272" font-size="10.5" fill="#52514e" text-anchor="start">143</text>
+<g><title>exp-A-classes · fit_n25_h1: 91.1 times faster</title><rect x="170.0" y="276" width="376.4" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="551.4" y="286" font-size="10.5" fill="#52514e" text-anchor="start">91.1</text>
+<g><title>exp-C-newton-hybrids · fit_n25_h1: 551 times faster</title><rect x="170.0" y="290" width="514.2" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="689.2" y="300" font-size="10.5" fill="#52514e" text-anchor="start">551</text>
+<text x="160" y="340.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n25_h3</text>
+<g><title>cpp-initial · fit_n25_h3: 62.4 times faster</title><rect x="170.0" y="316" width="347.5" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="522.5" y="326" font-size="10.5" fill="#52514e" text-anchor="start">62.4</text>
+<g><title>exp-A-classes · fit_n25_h3: 187 times faster</title><rect x="170.0" y="330" width="431.4" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="606.4" y="340" font-size="10.5" fill="#52514e" text-anchor="start">187</text>
+<g><title>exp-C-newton-hybrids · fit_n25_h3: 529 times faster</title><rect x="170.0" y="344" width="511.1" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="686.1" y="354" font-size="10.5" fill="#52514e" text-anchor="start">529</text>
+<text x="160" y="394.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n30_h2</text>
+<g><title>cpp-initial · fit_n30_h2: 126 times faster</title><rect x="170.0" y="370" width="401.2" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="576.2" y="380" font-size="10.5" fill="#52514e" text-anchor="start">126</text>
+<g><title>exp-A-classes · fit_n30_h2: 246 times faster</title><rect x="170.0" y="384" width="452.6" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="627.6" y="394" font-size="10.5" fill="#52514e" text-anchor="start">246</text>
+<g><title>exp-C-newton-hybrids · fit_n30_h2: 408 times faster</title><rect x="170.0" y="398" width="491.2" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="666.2" y="408" font-size="10.5" fill="#52514e" text-anchor="start">408</text>
+<text x="160" y="448.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n40_h1</text>
+<g><title>cpp-initial · fit_n40_h1: 138 times faster</title><rect x="170.0" y="424" width="408.3" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="583.3" y="434" font-size="10.5" fill="#52514e" text-anchor="start">138</text>
+<g><title>exp-A-classes · fit_n40_h1: 171 times faster</title><rect x="170.0" y="438" width="424.5" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="599.5" y="448" font-size="10.5" fill="#52514e" text-anchor="start">171</text>
+<g><title>exp-C-newton-hybrids · fit_n40_h1: 135 times faster</title><rect x="170.0" y="452" width="406.6" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="581.6" y="462" font-size="10.5" fill="#52514e" text-anchor="start">135</text>
+<text x="160" y="502.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n50_h2</text>
+<g><title>cpp-initial · fit_n50_h2: 276 times faster</title><rect x="170.0" y="478" width="461.2" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="636.2" y="488" font-size="10.5" fill="#52514e" text-anchor="start">276</text>
+<g><title>exp-A-classes · fit_n50_h2: 416 times faster</title><rect x="170.0" y="492" width="492.7" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="667.7" y="502" font-size="10.5" fill="#52514e" text-anchor="start">416</text>
+<g><title>exp-C-newton-hybrids · fit_n50_h2: 1,127 times faster</title><rect x="170.0" y="506" width="569.0" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="744.0" y="516" font-size="10.5" fill="#52514e" text-anchor="start">1,127</text>
 </svg>
