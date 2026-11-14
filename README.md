@@ -134,10 +134,10 @@ The files have the same names and layout as those written by `snaq!`:
 
 The best network and its score are also printed to standard output.
 
-When runs use a sample of the quartets (`--propQuartets` < 1 with `--propQuartetsFinal` < 1,
-or `--lazy`), each run draws its own sample. The scores in these files are then the scores
-of all networks on one sample of the quartets shared by all runs (a proportion
-`--propQuartetsFinal` of them).
+When `--propQuartetsFinal` is between 0 and 1, or with `--lazy`, the scores in these files
+are the scores of all networks on one sample of the quartets shared by all runs (a
+proportion `--propQuartetsFinal` of them). Each run otherwise scores its network on its own
+sample, and such scores are not comparable.
 
 ## Differences from SNaQ.jl
 

@@ -9,37 +9,41 @@
 <text x="62" y="283.5" font-size="11" fill="#898781" text-anchor="end">2.00</text>
 <line x1="70" y1="225.7" x2="830" y2="225.7" stroke="#e1e0d9" stroke-width="1"/>
 <text x="62" y="229.7" font-size="11" fill="#898781" text-anchor="end">5.00</text>
-<line x1="70" y1="184.9" x2="830" y2="184.9" stroke="#e1e0d9" stroke-width="1"/>
-<text x="62" y="188.9" font-size="11" fill="#898781" text-anchor="end">10.0</text>
-<line x1="70" y1="144.2" x2="830" y2="144.2" stroke="#e1e0d9" stroke-width="1"/>
-<text x="62" y="148.2" font-size="11" fill="#898781" text-anchor="end">20.0</text>
-<line x1="70" y1="90.4" x2="830" y2="90.4" stroke="#e1e0d9" stroke-width="1"/>
-<text x="62" y="94.4" font-size="11" fill="#898781" text-anchor="end">50.0</text>
+<line x1="70" y1="185.0" x2="830" y2="185.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="62" y="189.0" font-size="11" fill="#898781" text-anchor="end">10.0</text>
+<line x1="70" y1="144.3" x2="830" y2="144.3" stroke="#e1e0d9" stroke-width="1"/>
+<text x="62" y="148.3" font-size="11" fill="#898781" text-anchor="end">20.0</text>
+<line x1="70" y1="90.5" x2="830" y2="90.5" stroke="#e1e0d9" stroke-width="1"/>
+<text x="62" y="94.5" font-size="11" fill="#898781" text-anchor="end">50.0</text>
 <text x="16" y="214.0" font-size="11.5" fill="#52514e" text-anchor="middle" transform="rotate(-90 16 214.0)">times faster (log)</text>
 <line x1="70" y1="320.2" x2="830" y2="320.2" stroke="#52514e" stroke-width="1" stroke-dasharray="4 3"/>
 <text x="76" y="315.2" font-size="11" fill="#52514e">SNaQ.jl speed</text>
-<text x="104.5" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 104.5 360)">cpp-initial (20261113)</text>
-<text x="173.6" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 173.6 360)">exp-A-classes (20261113)</text>
-<text x="242.7" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 242.7 360)">exp-B-bound-dedup (20261113)</text>
-<text x="311.8" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 311.8 360)">exp-B-bound-dedupcount (20261113</text>
-<text x="380.9" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 380.9 360)">exp-C-newton (20261113)</text>
-<text x="450.0" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 450.0 360)">exp-C-newton-hybrids (20261113)</text>
-<text x="519.1" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 519.1 360)">exp-D-eqbuilder (20261113)</text>
-<text x="588.2" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 588.2 360)">exp-E-evaluator (20261113)</text>
-<text x="657.3" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 657.3 360)">exp-F-equal-classes (20261113)</text>
-<text x="726.4" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 726.4 360)">exp-G-newton-steps (20261113)</text>
-<text x="795.5" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 795.5 360)">exp-H-builder (20261113)</text>
-<path d="M104.5,243.6 L173.6,191.9 L242.7,195.5 L311.8,169.3 L380.9,189.0 L450.0,188.5 L519.1,150.7 L588.2,131.5 L657.3,128.1 L726.4,121.9 L795.5,107.8" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
-<g><title>geometric-mean speedup · cpp-initial (20261113): 3.68 times faster</title><circle cx="104.5" cy="243.6" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
-<g><title>geometric-mean speedup · exp-A-classes (20261113): 8.89 times faster</title><circle cx="173.6" cy="191.9" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
-<g><title>geometric-mean speedup · exp-B-bound-dedup (20261113): 8.35 times faster</title><circle cx="242.7" cy="195.5" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
-<g><title>geometric-mean speedup · exp-B-bound-dedupcount (20261113): 13.0 times faster</title><circle cx="311.8" cy="169.3" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
-<g><title>geometric-mean speedup · exp-C-newton (20261113): 9.34 times faster</title><circle cx="380.9" cy="189.0" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
-<g><title>geometric-mean speedup · exp-C-newton-hybrids (20261113): 9.41 times faster</title><circle cx="450.0" cy="188.5" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
-<g><title>geometric-mean speedup · exp-D-eqbuilder (20261113): 17.9 times faster</title><circle cx="519.1" cy="150.7" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
-<g><title>geometric-mean speedup · exp-E-evaluator (20261113): 24.8 times faster</title><circle cx="588.2" cy="131.5" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
-<g><title>geometric-mean speedup · exp-F-equal-classes (20261113): 26.3 times faster</title><circle cx="657.3" cy="128.1" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
-<g><title>geometric-mean speedup · exp-G-newton-steps (20261113): 29.2 times faster</title><circle cx="726.4" cy="121.9" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
-<g><title>geometric-mean speedup · exp-H-builder (20261113): 37.2 times faster</title><circle cx="795.5" cy="107.8" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
-<text x="803.5" y="111.8" font-size="10.5" fill="#52514e">37.2</text>
+<text x="99.2" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 99.2 360)">cpp-initial (20261113)</text>
+<text x="157.7" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 157.7 360)">exp-A-classes (20261113)</text>
+<text x="216.2" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 216.2 360)">exp-B-bound-dedup (20261113)</text>
+<text x="274.6" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 274.6 360)">exp-B-bound-dedupcount (20261113</text>
+<text x="333.1" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 333.1 360)">exp-C-newton (20261113)</text>
+<text x="391.5" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 391.5 360)">exp-C-newton-hybrids (20261113)</text>
+<text x="450.0" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 450.0 360)">exp-D-eqbuilder (20261113)</text>
+<text x="508.5" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 508.5 360)">exp-E-evaluator (20261113)</text>
+<text x="566.9" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 566.9 360)">exp-F-equal-classes (20261113)</text>
+<text x="625.4" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 625.4 360)">exp-G-newton-steps (20261113)</text>
+<text x="683.8" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 683.8 360)">exp-H-builder (20261113)</text>
+<text x="742.3" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 742.3 360)">exp-I-search (20261113)</text>
+<text x="800.8" y="360" font-size="10.5" fill="#898781" text-anchor="end" transform="rotate(-30 800.8 360)">exp-I-sweep (20261113)</text>
+<path d="M99.2,243.6 L157.7,191.9 L216.2,195.6 L274.6,169.4 L333.1,189.0 L391.5,188.6 L450.0,150.8 L508.5,131.6 L566.9,128.2 L625.4,122.0 L683.8,107.9 L742.3,107.8 L800.8,157.6" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
+<g><title>geometric-mean speedup · cpp-initial (20261113): 3.68 times faster</title><circle cx="99.2" cy="243.6" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-A-classes (20261113): 8.89 times faster</title><circle cx="157.7" cy="191.9" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-B-bound-dedup (20261113): 8.35 times faster</title><circle cx="216.2" cy="195.6" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-B-bound-dedupcount (20261113): 13.0 times faster</title><circle cx="274.6" cy="169.4" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-C-newton (20261113): 9.34 times faster</title><circle cx="333.1" cy="189.0" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-C-newton-hybrids (20261113): 9.41 times faster</title><circle cx="391.5" cy="188.6" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-D-eqbuilder (20261113): 17.9 times faster</title><circle cx="450.0" cy="150.8" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-E-evaluator (20261113): 24.8 times faster</title><circle cx="508.5" cy="131.6" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-F-equal-classes (20261113): 26.3 times faster</title><circle cx="566.9" cy="128.2" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-G-newton-steps (20261113): 29.2 times faster</title><circle cx="625.4" cy="122.0" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-H-builder (20261113): 37.2 times faster</title><circle cx="683.8" cy="107.9" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-I-search (20261113): 37.2 times faster</title><circle cx="742.3" cy="107.8" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<g><title>geometric-mean speedup · exp-I-sweep (20261113): 15.9 times faster</title><circle cx="800.8" cy="157.6" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/></g>
+<text x="808.8" y="161.6" font-size="10.5" fill="#52514e">15.9</text>
 </svg>

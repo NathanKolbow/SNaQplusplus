@@ -71,6 +71,13 @@ For every case, the history records:
 | `score_truth_all_quartets` | SNaQ score of the true network, after fitting its parameters to all quartets. |
 | `fit_s`, `equations_s`, `score` | Fit suite: best of 3 repeats. |
 
+The best network of a case is the first network of its `.out` file. For the cases run with
+`--lazy`, versions before `exp-I-search` (and SNaQ.jl) sort that file by the score each
+network got in its own run, on its own sample of quartets, so their best network is not the
+network that `snaq` selects on the shared quartets. From `exp-I-search` on, the file is
+sorted by the scores on the shared quartets: `best_score` and `run_scores` are those scores,
+and the accuracy metrics are those of the selected network.
+
 Each record also holds:
 - the label, implementation, git commit and whether the tree had uncommitted changes;
 - the host (OS, CPU, cores), the thread count, the extra arguments and free-text `--notes`.
