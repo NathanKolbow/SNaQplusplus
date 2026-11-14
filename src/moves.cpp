@@ -657,6 +657,45 @@ MoveParams samplefliphybridparameters(const Network& net, Rng& rng) {
     return {};
 }
 
+std::vector<std::pair<Move, MoveParams>> localmoves(const Network& net) {
+    std::vector<std::pair<Move, MoveParams>> all;
+    for (const auto& c : allvalidrNNInodes(net, 1)) all.emplace_back(Move::rNNI1, nodes_params({c[0], c[1], c[2], c[3]}));
+    if (net.numhybrids == 0) return all;
+    for (const auto& c : allvalidrNNInodes(net, 4)) all.emplace_back(Move::rNNI4, nodes_params({c[0], c[1], c[2], c[3]}));
+    for (NodeId hybrid : net.hybrid) {
+        // as samplemovereticulateoriginlocalparameters
+        const EdgeId minor_edge = net.getparentedgeminor(hybrid);
+        const NodeId origin = net.getparent(minor_edge);
+        for (EdgeId e : net.N(origin).edge) {
+            if (e == minor_edge) continue;
+            const NodeId o = net.getOtherNode(e, origin);
+            for (EdgeId ne : net.N(o).edge)
+                if (ne != e && isvalidmovereticulateorigin(net, hybrid, ne))
+                    all.emplace_back(Move::retic_origin_local, hyb_edge_params(hybrid, ne));
+        }
+        // as samplemovereticulatetargetlocalparameters
+        const NodeId major_parent = net.getparent(net.getparentedge(hybrid));
+        std::vector<EdgeId> cand;
+        for (EdgeId e : net.N(major_parent).edge)
+            if (e != net.getparentedge(hybrid)) cand.push_back(e);
+        auto hc = net.getchildren(hybrid);
+        if (hc.size() == 1) hc = net.getchildren(hc[0]);
+        for (NodeId c : hc) cand.push_back(net.getparentedge(c));
+        for (EdgeId e : cand)
+            if (isvalidmovereticulatetarget(net, hybrid, e))
+                all.emplace_back(Move::retic_target_local, hyb_edge_params(hybrid, e));
+        // as samplefliphybridparameters
+        Network n0 = net.deepcopynetwork();
+        bool flips = false;
+        try {
+            flips = fliphybrid(n0, hybrid);
+        } catch (const std::exception&) {
+        }
+        if (flips) all.emplace_back(Move::flip_hybrid, nodes_params({hybrid}));
+    }
+    return all;
+}
+
 // ------------------------------------------------------------------------
 // proposals (move_proposals.jl)
 // ------------------------------------------------------------------------

@@ -93,6 +93,12 @@ struct SnaqOptions {
     // before this many hybrid additions have been evaluated since its last
     // accepted move. -1: Nfail. 0: no such requirement, as SNaQ.jl.
     int minAddHybrid = -1;
+    // Before a run stops, every local move of its network is evaluated
+    // (localmoves: the NNIs and the local moves of its reticulations), and the
+    // run goes on as before if one of them is accepted. A run then stops at a
+    // network that Nfail random proposals in a row and all of its local moves
+    // failed to improve.
+    bool sweep = false;
     // Weigh each quartet by the proportion of gene trees that its observed
     // CFs come from (1 for all quartets when every gene tree has every taxon),
     // instead of weighing all quartets equally as SNaQ.jl does.

@@ -324,6 +324,114 @@ TEST(NewtonFit, ShortensLongBranchesThatTheDataWantShort) {
     EXPECT_EQ(trapped, 0) << "of " << fits << " fits";
 }
 
+TEST(Sweep, RunStopsWhereNoLocalMoveIsAccepted) {
+    // With `sweep`, a run stops only after every local move of its network was
+    // proposed without being accepted. Until its first sweep the run is the
+    // run without `sweep`, so it cannot end with a worse score.
+    Rng rng(21);
+    Network truth = read_trees("gennet_10_2_8.net").at(0);
+    CFMatrix q = noisy_cfs(truth, rng, 0.1);
+    std::vector<std::string> taxa = truth.tiplabels();
+    std::sort(taxa.begin(), taxa.end());
+    Network start = random_tree(10, rng).deepcopynetwork();
+    {  // same taxa as the data
+        std::vector<NodeId> leaves = start.leaf;
+        for (size_t k = 0; k < leaves.size(); ++k) start.N(leaves[k]).name = taxa[k];
+    }
+    CFSource src = CFSource::full(q, taxa);
+    ClassOptions co;
+    co.qlogq = obsqlogq(q);
+    int better = 0;
+    for (long long seed : {3, 4, 5, 6}) {
+        auto run = [&](bool sweep) {
+            SnaqOptions o = quiet_options();
+            o.hmax = 1;
+            o.Nfail = 6;  // few random proposals: runs without the sweep stop early
+            o.probST = 0.0;
+            o.sweep = sweep;
+            return search(start.clone(), src, o.hmax, o, seed, 0.0, "", "", 1);
+        };
+        Network swept = run(true), plain = run(false);
+        EXPECT_GE(swept.fscore, plain.fscore - 1e-12) << "seed " << seed;
+        if (swept.fscore > plain.fscore + 1e-6) ++better;
+        // no local move of the final network is accepted
+        const SnaqOptions o = quiet_options();
+        FitOptions fo;
+        fo.method = FitMethod::newton;
+        fo.ftolRel = o.ftolRel;
+        fo.ftolAbs = o.ftolAbs;
+        fo.xtolRel = o.xtolRel;
+        fo.xtolAbs = o.xtolAbs;
+        const double cur = swept.fscore;
+        Network N = swept.deepcopynetwork();
+        semidirectnetwork(N);
+        N.compact_pids();
+        size_t nmoves = 0;
+        for (const auto& mv : localmoves(N)) {
+            Network P = N.deepcopynetwork();
+            applymove(P, mv.first, mv.second, rng);
+            removedegree2nodes(P);
+            while (shrink3cycles(P)) {
+            }
+            while (shrink2cycles(P)) {
+            }
+            semidirectnetwork(P);
+            QuartetClasses cls = buildclasses(P, QuartetList::allquartets(P.numtaxa), q, co);
+            const double score = fitclasses(P, cls, 0.0, fo, 1);
+            const bool improves = score - cur > o.liktolAbs && (cur - score) / cur > o.liktolRel;
+            EXPECT_FALSE(improves) << "seed " << seed << ", " << move_name(mv.first) << ": " << score << " > " << cur;
+            ++nmoves;
+        }
+        EXPECT_GT(nmoves, 10u);
+    }
+    EXPECT_GT(better, 0);  // the sweep found something in at least one run
+}
+
+TEST(Restrictions, SearchedNetworksMeetThemWhenReadAgain) {
+    // The tree-child conditions read attributes of the edges (their direction,
+    // whether the root can be on them) that moves leave out of date. A network
+    // accepted under a restriction must meet it as it is read from the output:
+    // written, read, copied and semidirected.
+    Rng rng(31);
+    Network truth = nw("(15,(1,((14,(#H1,(((12,13),(11,#H3)),(7,((10)#H3,(8,9)))))),((((2,3))#H2,(6,(5,(#H2,4)))))#H1)));");
+    truth = truth.deepcopynetwork();
+    semidirectnetwork(truth);
+    for (EdgeId e : truth.edge) truth.E(e).length = 0.2 + rng.rand();
+    for (NodeId h : truth.hybrid) {
+        truth.E(truth.getparentedgeminor(h)).gamma = 0.3;
+        truth.E(truth.getparentedge(h)).gamma = 0.7;
+    }
+    CFMatrix q = noisy_cfs(truth, rng, 0.05);
+    std::vector<std::string> taxa = truth.tiplabels();
+    std::sort(taxa.begin(), taxa.end());
+    Network start = truth.clone();
+    semidirectnetwork(start);
+    removeexcessreticulations(start, 0);
+    CFSource src = CFSource::full(q, taxa);
+    size_t checked = 0, withhybrids = 0;
+    for (int which = 0; which < 3; ++which) {
+        SnaqOptions o = quiet_options();
+        o.hmax = 4;
+        o.runs = 12;
+        o.Nfail = 15;
+        o.seed = 5 + which;
+        o.restrictions.rooted_tree_child = which == 0;
+        o.restrictions.weakly_tree_child = which == 1;
+        o.restrictions.strongly_tree_child = which == 2;
+        for (Network& net : multisearch({start}, true, src, o.hmax, o, 0.0)) {
+            Network again = readnewick_string(writenewick(net)).deepcopynetwork();
+            semidirectnetwork(again);
+            const auto tc = istreechild(again);
+            EXPECT_TRUE(which == 0 ? std::get<0>(tc) : (which == 1 ? std::get<1>(tc) : std::get<2>(tc)))
+                << (which == 0 ? "rooted" : (which == 1 ? "weakly" : "strongly")) << " tree-child: " << writenewick(net);
+            ++checked;
+            if (net.numhybrids >= 2) ++withhybrids;
+        }
+    }
+    EXPECT_EQ(checked, 36u);
+    EXPECT_GT(withhybrids, 6u);  // the restrictions had something to restrict
+}
+
 TEST(HybridGuide, CandidatesPointAtTheMissingReticulation) {
     // Data from a network with one reticulation, fitted on its major tree: the
     // two edges the reticulation connects must be among the best candidate

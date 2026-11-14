@@ -123,6 +123,9 @@ TEST(CLI, DefaultsFollowSnaqCode) {
     EXPECT_DOUBLE_EQ(o.probST, 0.9);
     EXPECT_TRUE(o.updateBL);
     EXPECT_FALSE(o.seed_given);
+    EXPECT_FALSE(o.sweep);
+    EXPECT_TRUE(parse_cli({"-i", "g.tre", "--start-tree", "t.tre", "--sweep"}).opts.sweep);
+    EXPECT_FALSE(parse_cli({"-i", "g.tre", "--start-tree", "t.tre", "--sweep", "false"}).opts.sweep);
 }
 
 TEST(CLI, UsageErrors) {

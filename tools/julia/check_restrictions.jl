@@ -45,6 +45,9 @@ const cases = [
     ("galled_tree + galled_network", ["--galled_tree", "--galled_network"], (galled_tree = true, galled_network = true)),
     ("rooted + strongly tree-child", ["--rooted_tree_child", "--strongly_tree_child"],
      (rooted_tree_child = true, strongly_tree_child = true)),
+    # with the sweep of the local moves, which proposes moves by another route
+    ("max_level 1 + sweep", ["--max_level", "1", "--sweep"], (max_level = 1,)),
+    ("strongly_tree_child + sweep", ["--strongly_tree_child", "--sweep"], (strongly_tree_child = true,)),
     # hyphenated spellings of the flags
     ("max-level 1 (hyphenated)", ["--max-level", "1"], (max_level = 1,)),
     ("galled-network (hyphenated)", ["--galled-network"], (galled_network = true,)),

@@ -108,6 +108,7 @@ value. The one exception is `ρ`, which is `--rho`. Run `snaq --help` for the fu
   | `--dedupCounts` | false | |
   | `--guideHybrids` | true | false |
   | `--minAddHybrid` | `Nfail` | 0 |
+  | `--sweep` | false | false |
   | `--geneWeights` | false | false |
 - **Other flags:**
   - `--lazy` computes observed CFs on demand, like `DataCF(trees; lazy=true)`. It requires
@@ -205,6 +206,17 @@ of all networks on one sample of the quartets shared by all runs (a proportion
     expected CFs (`--guideHybrids`);
   - a run whose network has fewer than `hmax` reticulations does not stop before `Nfail`
     hybrid additions were evaluated since its last accepted move (`--minAddHybrid`).
+- **Restrictions are checked on the network as it is written.** The tree-child conditions
+  read the direction of the edges and whether the root can be placed on them. SNaQ.jl checks
+  a proposed network as the move left it, where these are not up to date for every edge;
+  ported as is, this accepted networks that do not meet `--weakly_tree_child` once they are
+  read from the output files. `snaq` computes them again before the check.
+- **Sweep of the local moves** (`--sweep`, off by default). A run of SNaQ.jl stops after
+  `Nfail` random proposals failed in a row, whether or not a move that it did not draw would
+  improve its network. With `--sweep`, a run that would stop first proposes every local move
+  of its network: the NNIs and, for each reticulation, the local moves of its origin and of
+  its target and the change of its direction. If one is accepted, the run goes on with random
+  proposals; it stops when none is.
 - **Gene weights** (`--geneWeights`, off by default). Each quartet is weighted by the
   proportion of gene trees that its observed CFs come from. SNaQ.jl weighs all quartets
   equally. The two are the same when every gene tree has every taxon.

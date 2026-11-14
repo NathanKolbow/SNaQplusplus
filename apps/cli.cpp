@@ -123,6 +123,11 @@ hybrid additions (not in SNaQ.jl):
                             many hybrid additions were evaluated since its last accepted move
                             (default: Nfail; 0: no such requirement)
 
+local search (not in SNaQ.jl):
+  --sweep [BOOL]            before a run stops, evaluate every local move of its network (the
+                            NNIs and the local moves of its reticulations); the run goes on if
+                            one is accepted (default: false)
+
 search shortcuts (not in SNaQ.jl; each can be turned off with "false"):
   --boundPrune [BOOL]       reject a proposed network without fitting it when an upper bound of
                             its score shows it cannot be accepted (default: true)
@@ -208,6 +213,7 @@ CliArgs parse_cli(const std::vector<std::string>& args) {
     str("--optimizer", &o.optimizer);
     boolean("--guideHybrids", &o.guideHybrids);
     integer("--minAddHybrid", &o.minAddHybrid);
+    boolean("--sweep", &o.sweep);
     boolean("--boundPrune", &o.boundPrune);
     boolean("--dedup", &o.dedup);
     boolean("--dedupCounts", &o.dedupCounts);

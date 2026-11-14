@@ -112,4 +112,10 @@ MoveParams samplemovereticulatetargetlocalparameters(const Network& net, Rng& rn
 
 MoveParams samplefliphybridparameters(const Network& net, Rng& rng);
 
+// Every local move of `net`, in an order that only depends on the network:
+// the NNIs (rNNI1, and rNNI4 if it has reticulations) and, for each
+// reticulation, the local moves of its origin and of its target and the change
+// of its direction. They are the moves that SnaqOptions::sweep evaluates.
+std::vector<std::pair<Move, MoveParams>> localmoves(const Network& net);
+
 }  // namespace csnaq

@@ -368,6 +368,11 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
     bool hybridsweep = false;           // only hybrid additions are proposed
     std::vector<HybridCandidate> candidates;
     bool candidates_current = false;
+    // Sweep of the local moves (o.sweep): the moves of the current network are
+    // proposed one after the other, in the random order `sweeporder`.
+    bool sweeping = false;
+    std::vector<int> sweeporder;
+    size_t sweeppos = 0;
     logtext(logfile, "Entering main loop with -logPL = " + julia_float(current_logPL));
 
     for (long long j = 2; j <= o.maxeval; ++j) {
@@ -387,8 +392,25 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
             }
             guide.candidates = &candidates;
         }
-        std::pair<Move, MoveParams> proposal =
-            generatemoveproposal(Nprime, &N_cls, moves_attempted, hmax, o.probQR, qsub, CFdeltas, rng, rho, &guide);
+        std::pair<Move, MoveParams> proposal;
+        if (sweeping) {
+            // (Nprime is a copy of N: the moves and their order are the same at every iteration)
+            std::vector<std::pair<Move, MoveParams>> all = localmoves(Nprime);
+            if (sweeporder.empty()) {
+                sweeporder = rng.randperm(static_cast<int>(all.size()));
+                sweeppos = 0;
+            }
+            if (sweeppos >= sweeporder.size() || sweeporder.size() != all.size()) {
+                logtext(logfile, "Iteration " + std::to_string(j) +
+                                     ": no local move of the current network is accepted, stopping.");
+                break;
+            }
+            proposal = std::move(all[static_cast<size_t>(sweeporder[sweeppos++])]);
+            dupskips = 0;  // topologies already evaluated are expected here
+        } else {
+            proposal =
+                generatemoveproposal(Nprime, &N_cls, moves_attempted, hmax, o.probQR, qsub, CFdeltas, rng, rho, &guide);
+        }
         const Move prop_move = proposal.first;
         const MoveParams prop_params = proposal.second;
         if (prop_move == Move::none) {
@@ -529,7 +551,8 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
         if (!accepted && !duplicate) moves_attempted.push_back(snapshot_attempt(Nprime, prop_move, prop_params));
         if (completed && !accepted && prop_move == Move::addhybrid) ++addhybrid_evaluated;
         if (hybridsweep) sweep_skipped = completed ? 0 : sweep_skipped + 1;
-        if (unchanged_iters > maxequivPLs && (completed || hybridsweep)) {
+        if (accepted) sweeping = false;  // random proposals again
+        if (unchanged_iters > maxequivPLs && (completed || hybridsweep) && !sweeping) {
             // The run would stop here. With room for more reticulations, first
             // make sure that enough hybrid additions were evaluated.
             if (N.numhybrids < hmax && addhybrid_evaluated < minaddhybrid && sweep_skipped < 1000) {
@@ -538,6 +561,14 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
                                          " hybrid additions evaluated since the last accepted move; proposing only "
                                          "hybrid additions until " + std::to_string(minaddhybrid) + " are.");
                 hybridsweep = true;
+            } else if (o.sweep) {
+                // Then every local move of the network (the run stops when they
+                // have all been proposed without one being accepted).
+                logtext(logfile, "Iteration " + std::to_string(j) +
+                                     ": proposing every local move of the current network before stopping.");
+                sweeping = true;
+                hybridsweep = false;
+                sweeporder.clear();
             } else {
                 break;
             }
