@@ -288,6 +288,20 @@ QuartetClasses buildclasses(Network& net, const QuartetList& ql, const CFMatrix&
         h1[pos] = hashrec(0x1234567ULL, pe, pp, pc, flags);
         h2[pos] = hashrec(0xabcdef01ULL, pe, pp, pc, flags);
     }
+    // the part of a key that a cut edge contributes as the x-th port of a class
+    const size_t NB = bridges.size();
+    std::vector<uint64_t> porta(4 * NB), portb(4 * NB);
+    std::vector<int> bridgepid(NB);
+    std::vector<NodeId> bridgechild(NB);
+    for (size_t r = 0; r < NB; ++r) {
+        bridgepid[r] = net.E(bridges[r]).pid;
+        bridgechild[r] = net.getchild(bridges[r]);
+        const uint64_t pp = static_cast<uint64_t>(bridgepid[r]);
+        for (size_t x = 0; x < 4; ++x) {
+            porta[4 * r + x] = hashrec(0x51ed270bULL, static_cast<uint64_t>(x), pp, 0, 0);
+            portb[4 * r + x] = hashrec(0x2f9be6ccULL, static_cast<uint64_t>(x), pp, 0, 0);
+        }
+    }
     std::vector<int> ancidx(NP, -1);
     std::vector<uint64_t> ancstore;
     std::vector<NodeId> order;  // nodes whose ancestors are being computed (explicit stack)
@@ -339,17 +353,16 @@ QuartetClasses buildclasses(Network& net, const QuartetList& ql, const CFMatrix&
         const NodeId top = classtop[ci] == NOTOP ? rootnode : net.getchild(bridges[classtop[ci]]);
         topnode[ci] = top;
         ancestors(top);
-        for (int x = 0; x < 4; ++x) {
-            const EdgeId be = bridges[(classports[ci] >> (16 * x)) & 0xffff];
-            const NodeId pn = net.getchild(be);
-            portnodes[ci][static_cast<size_t>(x)] = pn;
+        for (size_t x = 0; x < 4; ++x) {
+            const size_t r = (classports[ci] >> (16 * x)) & 0xffff;
+            const NodeId pn = bridgechild[r];
+            portnodes[ci][x] = pn;
             ancestors(pn);
             const uint64_t* src = &ancstore[static_cast<size_t>(ancidx[static_cast<size_t>(pn)]) * W];
             for (size_t w = 0; w < W; ++w) un[w] |= src[w];
-            out.portpid[ci][static_cast<size_t>(x)] = net.E(be).pid;
-            const uint64_t pp = static_cast<uint64_t>(net.E(be).pid);
-            k.a += hashrec(0x51ed270bULL, static_cast<uint64_t>(x), pp, 0, 0);
-            k.b ^= hashrec(0x2f9be6ccULL, static_cast<uint64_t>(x), pp, 0, 0);
+            out.portpid[ci][x] = bridgepid[r];
+            k.a += porta[4 * r + x];
+            k.b ^= portb[4 * r + x];
         }
         const uint64_t* above = &ancstore[static_cast<size_t>(ancidx[static_cast<size_t>(top)]) * W];
         for (size_t w = 0; w < W; ++w) {
