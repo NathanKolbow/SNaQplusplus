@@ -250,8 +250,9 @@ def run_snaq_case(args, implementation, case, files, outdir):
                    "--hmax", str(case["hmax"]), "--runs", str(case["runs"]), "--Nfail", str(case["Nfail"]),
                    "--seed", str(seed), "--threads", str(args.threads), "--propQuartets", repr(pq),
                    "--propQuartetsFinal", repr(pqf)]
-            if lazy:
-                cmd.append("--lazy")
+            # explicit either way: snaq turns --lazy on by itself when both proportions are below 1,
+            # and a case must run the same way in every version
+            cmd += ["--lazy", "true" if lazy else "false"]
             cmd += shlex.split(args.extra_args or "")
             rc, out, err, wall, peak = run_measured(cmd)
             if rc != 0:

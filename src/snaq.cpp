@@ -99,6 +99,19 @@ Network snaq_cfs(const std::vector<Network>& startnets, bool single_input, CFMat
     return finish(std::move(sorted[0]));
 }
 
+// Whether lazysnaq accepts these inputs: there are gene trees, and every
+// starting topology has exactly their taxa.
+static bool lazyapplies(const std::vector<Network>& startnets, const std::vector<Network>& genetrees) {
+    if (genetrees.empty()) return false;
+    const std::vector<std::string> taxa = sorted_union_taxa(genetrees);
+    for (const Network& n : startnets) {
+        std::vector<std::string> t = n.tiplabels();
+        std::sort(t.begin(), t.end());
+        if (t != taxa) return false;
+    }
+    return true;
+}
+
 Network snaq(const std::vector<Network>& startnets, bool single_input, const std::vector<Network>& genetrees,
              SnaqOptions o) {
     if (startnets.empty()) throw SnaqError("no starting topology given");
@@ -109,6 +122,13 @@ Network snaq(const std::vector<Network>& startnets, bool single_input, const std
             throw SnaqError("snaq! with a lazy DataCF requires propQuartets < 1.0, otherwise every quartet is "
                             "computed anyways. Specify propQuartets and propQuartetsFinal, or use a DataCF with "
                             "lazy=false.");
+        return lazysnaq(startnets, single_input, genetrees, o);
+    }
+    // Not asked for, but only a sample of the quartets is ever needed: observed
+    // CFs are computed on demand, where the lazy DataCF can be used.
+    if (o.autoLazy && 0 < o.propQuartets && o.propQuartets < 1 && 0 < o.propQuartetsFinal &&
+        o.propQuartetsFinal < 1 && !o.qinfTest && lazyapplies(startnets, genetrees)) {
+        o.lazy = true;
         return lazysnaq(startnets, single_input, genetrees, o);
     }
 

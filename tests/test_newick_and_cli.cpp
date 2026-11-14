@@ -96,6 +96,20 @@ TEST(CLI, ParsesAllSnaqKeywords) {
     EXPECT_EQ(o.threads, 2);
 }
 
+TEST(CLI, LazyIsAutomaticUnlessGiven) {
+    // not given: lazy is decided from propQuartets and propQuartetsFinal (snaq)
+    CliArgs a = parse_cli({"-i", "g.tre", "--start-tree", "t.tre"});
+    EXPECT_FALSE(a.opts.lazy);
+    EXPECT_TRUE(a.opts.autoLazy);
+    CliArgs b = parse_cli({"-i", "g.tre", "--start-tree", "t.tre", "--lazy"});
+    EXPECT_TRUE(b.opts.lazy);
+    CliArgs c = parse_cli({"-i", "g.tre", "--start-tree", "t.tre", "--lazy", "false"});
+    EXPECT_FALSE(c.opts.lazy);
+    EXPECT_FALSE(c.opts.autoLazy);
+    CliArgs d = parse_cli({"-i", "g.tre", "--start-tree", "t.tre", "--lazy=true", "--propQuartets", "0.5"});
+    EXPECT_TRUE(d.opts.lazy);
+}
+
 TEST(CLI, DefaultsFollowSnaqCode) {
     CliArgs a = parse_cli({"-i", "g.tre", "--start-tree", "t.tre"});
     const SnaqOptions& o = a.opts;

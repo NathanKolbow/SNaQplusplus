@@ -131,8 +131,9 @@ search shortcuts (not in SNaQ.jl; each can be turned off with "false"):
                             (default: false: another proposal is drawn instead)
 
 other:
-  --lazy                    compute observed CFs on demand (like DataCF(trees; lazy=true));
-                            requires --propQuartets < 1
+  --lazy [BOOL]             compute observed CFs on demand (like DataCF(trees; lazy=true));
+                            requires --propQuartets < 1. Default: on when --propQuartets and
+                            --propQuartetsFinal are both below 1, off otherwise
   --threads INT             number of threads (default: all available cores)
   -h, --help                show this help
   --version                 show the version
@@ -210,7 +211,11 @@ CliArgs parse_cli(const std::vector<std::string>& args) {
     boolean("--boundPrune", &o.boundPrune);
     boolean("--dedup", &o.dedup);
     boolean("--dedupCounts", &o.dedupCounts);
-    boolean("--lazy", &o.lazy);
+    // --lazy false also turns off the automatic use of on-demand CFs
+    specs["--lazy"] = {true, [&o](const std::string&, const std::string& v) {
+                           o.lazy = (v == "true");
+                           o.autoLazy = false;
+                       }};
     integer("--threads", &o.threads);
     // hyphenated aliases for the restriction / advanced flags
     for (const char* name : {"max_level", "galled_tree", "galled_network", "rooted_tree_child", "weakly_tree_child",

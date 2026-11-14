@@ -109,7 +109,12 @@ value. The one exception is `ρ`, which is `--rho`. Run `snaq --help` for the fu
   | `--geneWeights` | false | false |
 - **Other flags:**
   - `--lazy` computes observed CFs on demand, like `DataCF(trees; lazy=true)`. It requires
-    `--propQuartets` < 1.
+    `--propQuartets` < 1. It is on by default when `--propQuartets` and `--propQuartetsFinal`
+    are both below 1, and off otherwise; `--lazy false` turns it off. The default stays off
+    with `--qinfTest`, or when the starting topology does not have exactly the taxa of the
+    gene trees, because the lazy `DataCF` supports neither. As in SNaQ.jl, the two differ for
+    a quartet that a gene tree leaves unresolved: `--lazy` counts it for one of its tied
+    topologies, and without `--lazy` it is skipped.
   - `--threads N` sets the number of threads; the default is all cores. Independent runs
     execute in parallel.
 

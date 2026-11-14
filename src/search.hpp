@@ -101,8 +101,15 @@ struct SnaqOptions {
     // the quartet classes, run to convergence) or "lbfgs" (NLopt's L-BFGS
     // limited to opt_maxeval evaluations, as SNaQ.jl).
     std::string optimizer = "newton";
-    // CLI-only
+    // Compute observed CFs on demand (SNaQ.jl's lazy DataCF). Requires
+    // propQuartets < 1.
     bool lazy = false;
+    // If `lazy` is false: compute observed CFs on demand anyway when
+    // propQuartets and propQuartetsFinal are both below 1 (only a sample of the
+    // quartets is ever needed), unless the lazy DataCF cannot be used
+    // (qinfTest, or starting topologies whose taxa are not those of the gene
+    // trees). `--lazy false` sets this to false.
+    bool autoLazy = true;
     int threads = 1;
 };
 

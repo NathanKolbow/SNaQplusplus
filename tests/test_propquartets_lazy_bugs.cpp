@@ -3,6 +3,7 @@
 #include <cmath>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <regex>
 #include <sstream>
 
@@ -180,6 +181,44 @@ TEST(PropQuartets, LazyDataCF) {
     Data lazy = from_genetrees(gts, true), full = from_genetrees(gts, false);
     EXPECT_NEAR(snaqtre.fscore, score(snaqtre, lazy.q), 1e-10);
     EXPECT_NEAR(score(truetre, full.q), score(truetre, lazy.q), 1e-10);
+}
+
+TEST(PropQuartets, LazyIsTheDefaultBelowOne) {
+    // Without `lazy`, observed CFs are computed on demand when propQuartets and
+    // propQuartetsFinal are both below 1, unless autoLazy is false or the lazy
+    // DataCF cannot be used.
+    Network falsetre = nw(kFalse);
+    auto gts = read_trees("propq_gts.tre");
+    const std::string dir = tempdir();
+    auto run = [&](const std::string& name, const std::function<void(SnaqOptions&)>& set, const Network& start) {
+        SnaqOptions o = quiet_options();
+        o.hmax = 0;
+        o.threads = 1;
+        o.runs = 3;
+        o.Nfail = 10;
+        o.propQuartets = 0.8;
+        o.propQuartetsFinal = 0.5;
+        o.filename = dir + "/" + name;
+        set(o);
+        Network net = snaq({start}, true, gts, o);
+        const bool lazy = slurp(dir + "/" + name + ".log").find("(lazy DataCF)") != std::string::npos;
+        return std::make_pair(writenewick(net), lazy);
+    };
+    const auto automatic = run("auto", [](SnaqOptions&) {}, falsetre);
+    const auto asked = run("asked", [](SnaqOptions& o) { o.lazy = true; }, falsetre);
+    EXPECT_TRUE(automatic.second);
+    EXPECT_TRUE(asked.second);
+    EXPECT_EQ(automatic.first, asked.first);  // asking for it changes nothing
+    EXPECT_FALSE(run("off", [](SnaqOptions& o) { o.autoLazy = false; }, falsetre).second);
+    EXPECT_FALSE(run("final1", [](SnaqOptions& o) { o.propQuartetsFinal = 1.0; }, falsetre).second);
+    EXPECT_FALSE(run("final0", [](SnaqOptions& o) { o.propQuartetsFinal = 0.0; }, falsetre).second);
+    EXPECT_FALSE(run("all", [](SnaqOptions& o) { o.propQuartets = 1.0; }, falsetre).second);
+    // a starting topology with a taxon that no gene tree has: the lazy DataCF
+    // rejects it, the default deletes the taxon as before
+    Network extra = nw("(((a,c):5.0,(e,b):5.0):1.0,(d,(f,zz):1.0):1.5);");
+    EXPECT_FALSE(run("extra", [](SnaqOptions&) {}, extra).second);
+    EXPECT_THROW(run("extralazy", [](SnaqOptions& o) { o.lazy = true; }, extra), SnaqError);
+    std::filesystem::remove_all(dir);
 }
 
 // --------------------------------------------------------- lazy DataCF
