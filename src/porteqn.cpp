@@ -6,17 +6,8 @@ namespace csnaq {
 
 namespace {
 
-using EdgeChain = SmallVec<EdgeId, 24>;
-
 // Split (1: 01|23, 2: 02|13, 3: 03|12) that pairs lineages x and y.
 const int PAIRSPLIT[4][4] = {{0, 1, 2, 3}, {1, 0, 3, 2}, {2, 3, 0, 1}, {3, 2, 1, 0}};
-
-inline size_t commonsuffix(const EdgeChain& a, const EdgeChain& b) {
-    size_t s = 0;
-    const size_t na = a.size(), nb = b.size();
-    while (s < na && s < nb && a[na - 1 - s] == b[nb - 1 - s]) ++s;
-    return s;
-}
 
 }  // namespace
 
@@ -30,6 +21,8 @@ PortEquationBuilder::PortEquationBuilder(const Network& net) {
     const size_t NP = net.npool.size(), EP = net.epool.size(), N = net.node.size();
     pmaj_.assign(NP, NONE);
     pmin_.assign(NP, NONE);
+    tend_.assign(NP, NONE);
+    bypos_.assign(N, NONE);
     npid_.assign(NP, -1);
     npos_.assign(NP, -1);
     eparent_.assign(EP, NONE);
@@ -43,6 +36,7 @@ PortEquationBuilder::PortEquationBuilder(const Network& net) {
     for (size_t j = 0; j < N; ++j) {
         const NodeId x = net.node[j];
         npos_[static_cast<size_t>(x)] = static_cast<int>(j);
+        bypos_[j] = x;
         npid_[static_cast<size_t>(x)] = net.N(x).pid;
         int np = 0;
         EdgeId pe[2] = {NONE, NONE};
@@ -95,6 +89,10 @@ PortEquationBuilder::PortEquationBuilder(const Network& net) {
                     for (size_t w = 0; w < W_; ++w) dst[w] |= src[w];
                 }
             dst[bx >> 6] |= 1ULL << (bx & 63);
+            // (its parents are done)
+            tend_[sx] = (pmin_[sx] != NONE || pmaj_[sx] == NONE)
+                            ? x
+                            : tend_[static_cast<size_t>(eparent_[static_cast<size_t>(pmaj_[sx])])];
             done[sx] = 1;
             stack.pop_back();
         }
@@ -114,25 +112,68 @@ RecursiveCFEquation PortEquationBuilder::build(const std::array<NodeId, 4>& port
 
 RecursiveCFEquation PortEquationBuilder::recur(const State& start, NodeId top, int depth) const {
     State st = start;
+    const size_t W = W_;
+    // P + k * W: the nodes of the tree-like path of lineage k, its end included
+    SmallVec<uint64_t, 32> pathbuf;
+    for (size_t i = 0; i < 4 * W; ++i) pathbuf.push_back(0);
+    uint64_t* const P = pathbuf.data();
+    const NodeId topend = tend_[static_cast<size_t>(top)];
     for (;; ++depth) {
         if (depth > maxdepth_) throw SnaqError("PortEquationBuilder: the recursion does not end");
         // ---- each lineage climbs to a hybrid node it has not passed, or to `top` ----
-        EdgeChain chain[4];
         NodeId end[4];
-        for (int k = 0; k < 4; ++k) {
-            NodeId x = st[static_cast<size_t>(k)].node;
-            if (st[static_cast<size_t>(k)].via != NONE) {
-                chain[k].push_back(st[static_cast<size_t>(k)].via);
-                x = eparent_[static_cast<size_t>(st[static_cast<size_t>(k)].via)];
+        size_t len[4];  // number of edges it climbs
+        for (size_t k = 0; k < 4; ++k) {
+            const Pos& p = st[k];
+            const NodeId t = p.via != NONE ? eparent_[static_cast<size_t>(p.via)] : p.node;
+            NodeId e = tend_[static_cast<size_t>(t)];
+            if (e == topend)
+                e = top;  // `top` is on the way
+            else if (pmin_[static_cast<size_t>(e)] == NONE)
+                throw SnaqError("PortEquationBuilder: a lineage passed `top`");
+            end[k] = e;
+            // the ancestors of t that are not above e
+            const uint64_t* at = &anc_[static_cast<size_t>(npos_[static_cast<size_t>(t)]) * W];
+            const size_t be = static_cast<size_t>(npos_[static_cast<size_t>(e)]);
+            const uint64_t* ae = &anc_[be * W];
+            uint64_t* dst = P + k * W;
+            size_t n = 0;
+            for (size_t w = 0; w < W; ++w) {
+                dst[w] = at[w] & ~ae[w];
+                n += static_cast<size_t>(popcount64(dst[w]));
             }
-            while (x != top && pmin_[static_cast<size_t>(x)] == NONE) {
-                const EdgeId e = pmaj_[static_cast<size_t>(x)];
-                if (e == NONE) throw SnaqError("PortEquationBuilder: a lineage passed `top`");
-                chain[k].push_back(e);
-                x = eparent_[static_cast<size_t>(e)];
-            }
-            end[k] = x;
+            dst[be >> 6] |= 1ULL << (be & 63);
+            len[k] = n + (p.via != NONE ? 1 : 0);
         }
+        // whether lineages x and y climb the same hybrid edge first (their paths are then the same)
+        auto samevia = [&](int x, int y) {
+            return st[static_cast<size_t>(x)].via != NONE &&
+                   st[static_cast<size_t>(x)].via == st[static_cast<size_t>(y)].via;
+        };
+        // number of edges that lineages x and y, with the same end, both climb
+        auto shared = [&](int x, int y) {
+            const uint64_t *px = P + static_cast<size_t>(x) * W, *py = P + static_cast<size_t>(y) * W;
+            size_t n = 0;
+            for (size_t w = 0; w < W; ++w) n += static_cast<size_t>(popcount64(px[w] & py[w]));
+            return n - 1 + (samevia(x, y) ? 1 : 0);
+        };
+        // the edges that x and y both climb, except those that `u` or `v` (if >= 0) climbs too
+        auto sharededges = [&](int x, int y, int u, int v, bool withvia, ParamList& out) {
+            const uint64_t *px = P + static_cast<size_t>(x) * W, *py = P + static_cast<size_t>(y) * W;
+            const size_t be = static_cast<size_t>(npos_[static_cast<size_t>(end[x])]);
+            if (withvia) out.push_back(epid_[static_cast<size_t>(st[static_cast<size_t>(x)].via)]);
+            for (size_t w = 0; w < W; ++w) {
+                uint64_t bits = px[w] & py[w];
+                if (u >= 0) bits &= ~P[static_cast<size_t>(u) * W + w];
+                if (v >= 0) bits &= ~P[static_cast<size_t>(v) * W + w];
+                if (w == (be >> 6)) bits &= ~(1ULL << (be & 63));  // the end is not the child of an edge climbed
+                while (bits) {
+                    const size_t pos = (w << 6) + static_cast<size_t>(ctz64(bits));
+                    bits &= bits - 1;
+                    out.push_back(epid_[static_cast<size_t>(pmaj_[static_cast<size_t>(bypos_[pos])])]);
+                }
+            }
+        };
         // ---- lineages that meet along tree-like paths: those with the same end ----
         int members[4], nmembers = 0, outsider = -1;
         for (int k = 0; k < 4 && nmembers < 3; ++k) {
@@ -150,7 +191,7 @@ RecursiveCFEquation PortEquationBuilder::recur(const State& start, NodeId top, i
             size_t best = 0, sall = ~size_t{0};
             for (int a = 0; a < nmembers; ++a)
                 for (int b = a + 1; b < nmembers; ++b) {
-                    const size_t v = commonsuffix(chain[members[a]], chain[members[b]]);
+                    const size_t v = shared(members[a], members[b]);
                     s[members[a]][members[b]] = s[members[b]][members[a]] = v;
                     sall = std::min(sall, v);
                     if (v > best) {
@@ -161,12 +202,19 @@ RecursiveCFEquation PortEquationBuilder::recur(const State& start, NodeId top, i
                 }
             bool tree = true;
             if (nmembers == 3) {
-                // the fourth lineage must not be able to join the three before they have all met
+                // the fourth lineage must not be able to join the three before they have all met:
+                // no node below the point where they have all met is one of its ancestors
                 const uint64_t* ao = ancestors(st[static_cast<size_t>(outsider)]);
+                const uint64_t *p0 = P + static_cast<size_t>(members[0]) * W,
+                               *p1 = P + static_cast<size_t>(members[1]) * W,
+                               *p2 = P + static_cast<size_t>(members[2]) * W;
                 for (int a = 0; a < 3 && tree; ++a) {
-                    const EdgeChain& c = chain[members[a]];
-                    for (size_t i = 0; i + sall < c.size() && tree; ++i)
-                        if (isancestor(echild_[static_cast<size_t>(c[i])], ao)) tree = false;
+                    const size_t m = static_cast<size_t>(members[a]);
+                    const uint64_t* pa = P + m * W;
+                    for (size_t w = 0; w < W && tree; ++w)
+                        if (pa[w] & ~(p0[w] & p1[w] & p2[w]) & ao[w]) tree = false;
+                    // (the hybrid node below the hybrid edge it climbs first)
+                    if (tree && st[m].via != NONE && sall < len[m] && isancestor(st[m].node, ao)) tree = false;
                 }
             }
             if (tree) {
@@ -175,20 +223,15 @@ RecursiveCFEquation PortEquationBuilder::recur(const State& start, NodeId top, i
                 eq.division_H = -1;
                 eq.which_coal = PAIRSPLIT[x][y];
                 // edges climbed by exactly two lineages: x and y, then the other two (if they are a pair)
-                size_t lo = 0;
+                int z = -1, w = -1;
                 for (int a = 0; a < nmembers; ++a)
-                    if (members[a] != x && members[a] != y) lo = std::max(lo, s[x][members[a]]);
-                const EdgeChain& cx = chain[x];
-                for (size_t i = cx.size() - best; i + lo < cx.size(); ++i)
-                    eq.coal_edges.push_back(epid_[static_cast<size_t>(cx[i])]);
+                    if (members[a] != x && members[a] != y) (z < 0 ? z : w) = members[a];
+                size_t lo = s[x][z];
+                if (w >= 0) lo = std::max(lo, s[x][w]);
+                sharededges(x, y, z, w, samevia(x, y) && lo < best, eq.coal_edges);
                 if (nmembers == 4) {
-                    int z = -1, w = -1;
-                    for (int a = 0; a < 4; ++a)
-                        if (a != x && a != y) (z < 0 ? z : w) = a;
                     const size_t szw = s[z][w], lz = std::max(s[z][x], s[z][y]);
-                    const EdgeChain& cz = chain[z];
-                    for (size_t i = cz.size() - szw; i + lz < cz.size(); ++i)
-                        eq.coal_edges.push_back(epid_[static_cast<size_t>(cz[i])]);
+                    sharededges(z, w, x, y, samevia(z, w) && lz < szw, eq.coal_edges);
                 }
                 return eq;
             }
@@ -275,10 +318,8 @@ RecursiveCFEquation PortEquationBuilder::recur(const State& start, NodeId top, i
         if (nat != 2) throw SnaqError("PortEquationBuilder: unexpected number of lineages at a hybrid node");
         const int x = at[0], y = at[1];  // x < y
         RecursiveCFEquation eq;
-        const size_t shared = commonsuffix(chain[x], chain[y]);
-        for (size_t i = chain[x].size() - shared; i < chain[x].size(); ++i)
-            eq.coal_edges.push_back(epid_[static_cast<size_t>(chain[x][i])]);
-        eq.can_coalesce_here = shared > 0;
+        sharededges(x, y, -1, -1, samevia(x, y), eq.coal_edges);  // the edges they share below H
+        eq.can_coalesce_here = !eq.coal_edges.empty();
         eq.which_coal = PAIRSPLIT[x][y];
         eq.division_H = npid_[static_cast<size_t>(H)];
         eq.divisions.reserve(4);

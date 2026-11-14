@@ -9,7 +9,10 @@
 //
 //  - Each lineage climbs through tree nodes until it reaches a hybrid node it
 //    has not passed yet, or `top`. Lineages that reach the same end node meet
-//    on the way, along tree-like paths.
+//    on the way, along tree-like paths. (The paths are not walked: the nodes
+//    of a path are the ancestors of its start that are not above its end, and
+//    the edges that two lineages share are counted and listed from the
+//    intersection of two such sets.)
 //  - Four lineages with the same end, or three that the fourth cannot join
 //    before they have all met: the equation is that of a tree. (Three
 //    lineages that reach a node without having coalesced are exchangeable, so
@@ -69,6 +72,10 @@ private:
     // by NodeId
     std::vector<EdgeId> pmaj_, pmin_;  // parent edges; pmin_ != NONE: hybrid node
     std::vector<int> npid_, npos_;     // pid; position in net.node
+    // where a lineage at the node stops climbing through tree nodes: the first
+    // hybrid node at or above it, or the root
+    std::vector<NodeId> tend_;
+    std::vector<NodeId> bypos_;  // by position in net.node: the node
     // by EdgeId
     std::vector<NodeId> eparent_, echild_;
     std::vector<int> epid_;

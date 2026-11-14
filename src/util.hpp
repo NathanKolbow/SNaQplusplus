@@ -198,6 +198,18 @@ private:
     }
 };
 
+// Number of set bits of x.
+inline int popcount64(uint64_t x) {
+#if defined(__GNUC__) || defined(__clang__)
+    return __builtin_popcountll(x);
+#else
+    x = x - ((x >> 1) & 0x5555555555555555ULL);
+    x = (x & 0x3333333333333333ULL) + ((x >> 2) & 0x3333333333333333ULL);
+    x = (x + (x >> 4)) & 0x0f0f0f0f0f0f0f0fULL;
+    return static_cast<int>((x * 0x0101010101010101ULL) >> 56);
+#endif
+}
+
 // Index of the lowest set bit of x (x != 0).
 inline int ctz64(uint64_t x) {
 #if defined(_MSC_VER) && defined(_M_X64)
