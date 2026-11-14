@@ -5,11 +5,11 @@
 <rect x="170" y="61" width="12" height="12" rx="3" fill="#2a78d6"/>
 <text x="188" y="71" font-size="12" fill="#52514e">SNaQ.jl</text>
 <rect x="255" y="61" width="12" height="12" rx="3" fill="#eb6834"/>
-<text x="273" y="71" font-size="12" fill="#52514e">exp-E-evaluator</text>
-<rect x="396" y="61" width="12" height="12" rx="3" fill="#1baf7a"/>
-<text x="414" y="71" font-size="12" fill="#52514e">exp-F-equal-classes</text>
-<rect x="565" y="61" width="12" height="12" rx="3" fill="#eda100"/>
-<text x="583" y="71" font-size="12" fill="#52514e">exp-G-newton-steps</text>
+<text x="273" y="71" font-size="12" fill="#52514e">exp-F-equal-classes</text>
+<rect x="424" y="61" width="12" height="12" rx="3" fill="#1baf7a"/>
+<text x="442" y="71" font-size="12" fill="#52514e">exp-G-newton-steps</text>
+<rect x="586" y="61" width="12" height="12" rx="3" fill="#eda100"/>
+<text x="604" y="71" font-size="12" fill="#52514e">exp-H-builder</text>
 <line x1="194.2" y1="94" x2="194.2" y2="654" stroke="#e1e0d9" stroke-width="1"/>
 <text x="194.2" y="670" font-size="11" fill="#898781" text-anchor="middle">5.00</text>
 <line x1="262.2" y1="94" x2="262.2" y2="654" stroke="#e1e0d9" stroke-width="1"/>
@@ -31,73 +31,73 @@
 <text x="160" y="131.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n10_h1</text>
 <g><title>SNaQ.jl · fit_n10_h1: 693 MB (peak resident set size)</title><rect x="170.0" y="100" width="507.7" height="12" rx="4.0" fill="#2a78d6"/></g>
 <text x="682.7" y="110" font-size="10.5" fill="#52514e" text-anchor="start">693</text>
-<g><title>exp-E-evaluator · fit_n10_h1: 6.12 MB (peak resident set size)</title><rect x="170.0" y="114" width="44.1" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="219.1" y="124" font-size="10.5" fill="#52514e" text-anchor="start">6.12</text>
-<g><title>exp-F-equal-classes · fit_n10_h1: 6.17 MB (peak resident set size)</title><rect x="170.0" y="128" width="44.8" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="219.8" y="138" font-size="10.5" fill="#52514e" text-anchor="start">6.17</text>
-<g><title>exp-G-newton-steps · fit_n10_h1: 5.86 MB (peak resident set size)</title><rect x="170.0" y="142" width="39.8" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="214.8" y="152" font-size="10.5" fill="#52514e" text-anchor="start">5.86</text>
+<g><title>exp-F-equal-classes · fit_n10_h1: 6.17 MB (peak resident set size)</title><rect x="170.0" y="114" width="44.8" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="219.8" y="124" font-size="10.5" fill="#52514e" text-anchor="start">6.17</text>
+<g><title>exp-G-newton-steps · fit_n10_h1: 5.86 MB (peak resident set size)</title><rect x="170.0" y="128" width="39.8" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="214.8" y="138" font-size="10.5" fill="#52514e" text-anchor="start">5.86</text>
+<g><title>exp-H-builder · fit_n10_h1: 5.89 MB (peak resident set size)</title><rect x="170.0" y="142" width="40.3" height="12" rx="4.0" fill="#eda100"/></g>
+<text x="215.3" y="152" font-size="10.5" fill="#52514e" text-anchor="start">5.89</text>
 <text x="160" y="199.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n15_h1</text>
 <g><title>SNaQ.jl · fit_n15_h1: 716 MB (peak resident set size)</title><rect x="170.0" y="168" width="510.9" height="12" rx="4.0" fill="#2a78d6"/></g>
 <text x="685.9" y="178" font-size="10.5" fill="#52514e" text-anchor="start">716</text>
-<g><title>exp-E-evaluator · fit_n15_h1: 6.64 MB (peak resident set size)</title><rect x="170.0" y="182" width="52.0" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="227.0" y="192" font-size="10.5" fill="#52514e" text-anchor="start">6.64</text>
-<g><title>exp-F-equal-classes · fit_n15_h1: 6.69 MB (peak resident set size)</title><rect x="170.0" y="196" width="52.7" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="227.7" y="206" font-size="10.5" fill="#52514e" text-anchor="start">6.69</text>
-<g><title>exp-G-newton-steps · fit_n15_h1: 6.38 MB (peak resident set size)</title><rect x="170.0" y="210" width="48.0" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="223.0" y="220" font-size="10.5" fill="#52514e" text-anchor="start">6.38</text>
+<g><title>exp-F-equal-classes · fit_n15_h1: 6.69 MB (peak resident set size)</title><rect x="170.0" y="182" width="52.7" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="227.7" y="192" font-size="10.5" fill="#52514e" text-anchor="start">6.69</text>
+<g><title>exp-G-newton-steps · fit_n15_h1: 6.38 MB (peak resident set size)</title><rect x="170.0" y="196" width="48.0" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="223.0" y="206" font-size="10.5" fill="#52514e" text-anchor="start">6.38</text>
+<g><title>exp-H-builder · fit_n15_h1: 6.44 MB (peak resident set size)</title><rect x="170.0" y="210" width="49.0" height="12" rx="4.0" fill="#eda100"/></g>
+<text x="224.0" y="220" font-size="10.5" fill="#52514e" text-anchor="start">6.44</text>
 <text x="160" y="267.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n20_h2</text>
 <g><title>SNaQ.jl · fit_n20_h2: 750 MB (peak resident set size)</title><rect x="170.0" y="236" width="515.4" height="12" rx="4.0" fill="#2a78d6"/></g>
 <text x="690.4" y="246" font-size="10.5" fill="#52514e" text-anchor="start">750</text>
-<g><title>exp-E-evaluator · fit_n20_h2: 10.4 MB (peak resident set size)</title><rect x="170.0" y="250" width="95.6" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="270.6" y="260" font-size="10.5" fill="#52514e" text-anchor="start">10.4</text>
-<g><title>exp-F-equal-classes · fit_n20_h2: 10.5 MB (peak resident set size)</title><rect x="170.0" y="264" width="97.1" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="272.1" y="274" font-size="10.5" fill="#52514e" text-anchor="start">10.5</text>
-<g><title>exp-G-newton-steps · fit_n20_h2: 10.1 MB (peak resident set size)</title><rect x="170.0" y="278" width="93.4" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="268.4" y="288" font-size="10.5" fill="#52514e" text-anchor="start">10.1</text>
+<g><title>exp-F-equal-classes · fit_n20_h2: 10.5 MB (peak resident set size)</title><rect x="170.0" y="250" width="97.1" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="272.1" y="260" font-size="10.5" fill="#52514e" text-anchor="start">10.5</text>
+<g><title>exp-G-newton-steps · fit_n20_h2: 10.1 MB (peak resident set size)</title><rect x="170.0" y="264" width="93.4" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="268.4" y="274" font-size="10.5" fill="#52514e" text-anchor="start">10.1</text>
+<g><title>exp-H-builder · fit_n20_h2: 10.1 MB (peak resident set size)</title><rect x="170.0" y="278" width="92.8" height="12" rx="4.0" fill="#eda100"/></g>
+<text x="267.8" y="288" font-size="10.5" fill="#52514e" text-anchor="start">10.1</text>
 <text x="160" y="335.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n25_h1</text>
 <g><title>SNaQ.jl · fit_n25_h1: 712 MB (peak resident set size)</title><rect x="170.0" y="304" width="510.3" height="12" rx="4.0" fill="#2a78d6"/></g>
 <text x="685.3" y="314" font-size="10.5" fill="#52514e" text-anchor="start">712</text>
-<g><title>exp-E-evaluator · fit_n25_h1: 11.0 MB (peak resident set size)</title><rect x="170.0" y="318" width="101.2" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="276.2" y="328" font-size="10.5" fill="#52514e" text-anchor="start">11.0</text>
-<g><title>exp-F-equal-classes · fit_n25_h1: 11.0 MB (peak resident set size)</title><rect x="170.0" y="332" width="101.1" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="276.1" y="342" font-size="10.5" fill="#52514e" text-anchor="start">11.0</text>
-<g><title>exp-G-newton-steps · fit_n25_h1: 10.8 MB (peak resident set size)</title><rect x="170.0" y="346" width="100.1" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="275.1" y="356" font-size="10.5" fill="#52514e" text-anchor="start">10.8</text>
+<g><title>exp-F-equal-classes · fit_n25_h1: 11.0 MB (peak resident set size)</title><rect x="170.0" y="318" width="101.1" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="276.1" y="328" font-size="10.5" fill="#52514e" text-anchor="start">11.0</text>
+<g><title>exp-G-newton-steps · fit_n25_h1: 10.8 MB (peak resident set size)</title><rect x="170.0" y="332" width="100.1" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="275.1" y="342" font-size="10.5" fill="#52514e" text-anchor="start">10.8</text>
+<g><title>exp-H-builder · fit_n25_h1: 10.9 MB (peak resident set size)</title><rect x="170.0" y="346" width="100.8" height="12" rx="4.0" fill="#eda100"/></g>
+<text x="275.8" y="356" font-size="10.5" fill="#52514e" text-anchor="start">10.9</text>
 <text x="160" y="403.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n25_h3</text>
 <g><title>SNaQ.jl · fit_n25_h3: 860 MB (peak resident set size)</title><rect x="170.0" y="372" width="528.8" height="12" rx="4.0" fill="#2a78d6"/></g>
 <text x="703.8" y="382" font-size="10.5" fill="#52514e" text-anchor="start">860</text>
-<g><title>exp-E-evaluator · fit_n25_h3: 11.9 MB (peak resident set size)</title><rect x="170.0" y="386" width="109.0" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="284.0" y="396" font-size="10.5" fill="#52514e" text-anchor="start">11.9</text>
-<g><title>exp-F-equal-classes · fit_n25_h3: 12.0 MB (peak resident set size)</title><rect x="170.0" y="400" width="109.8" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="284.8" y="410" font-size="10.5" fill="#52514e" text-anchor="start">12.0</text>
-<g><title>exp-G-newton-steps · fit_n25_h3: 11.5 MB (peak resident set size)</title><rect x="170.0" y="414" width="106.1" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="281.1" y="424" font-size="10.5" fill="#52514e" text-anchor="start">11.5</text>
+<g><title>exp-F-equal-classes · fit_n25_h3: 12.0 MB (peak resident set size)</title><rect x="170.0" y="386" width="109.8" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="284.8" y="396" font-size="10.5" fill="#52514e" text-anchor="start">12.0</text>
+<g><title>exp-G-newton-steps · fit_n25_h3: 11.5 MB (peak resident set size)</title><rect x="170.0" y="400" width="106.1" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="281.1" y="410" font-size="10.5" fill="#52514e" text-anchor="start">11.5</text>
+<g><title>exp-H-builder · fit_n25_h3: 11.8 MB (peak resident set size)</title><rect x="170.0" y="414" width="108.1" height="12" rx="4.0" fill="#eda100"/></g>
+<text x="283.1" y="424" font-size="10.5" fill="#52514e" text-anchor="start">11.8</text>
 <text x="160" y="471.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n30_h2</text>
 <g><title>SNaQ.jl · fit_n30_h2: 925 MB (peak resident set size)</title><rect x="170.0" y="440" width="535.9" height="12" rx="4.0" fill="#2a78d6"/></g>
 <text x="710.9" y="450" font-size="10.5" fill="#52514e" text-anchor="start">925</text>
-<g><title>exp-E-evaluator · fit_n30_h2: 11.6 MB (peak resident set size)</title><rect x="170.0" y="454" width="107.0" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="282.0" y="464" font-size="10.5" fill="#52514e" text-anchor="start">11.6</text>
-<g><title>exp-F-equal-classes · fit_n30_h2: 11.8 MB (peak resident set size)</title><rect x="170.0" y="468" width="108.1" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="283.1" y="478" font-size="10.5" fill="#52514e" text-anchor="start">11.8</text>
-<g><title>exp-G-newton-steps · fit_n30_h2: 11.2 MB (peak resident set size)</title><rect x="170.0" y="482" width="103.7" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="278.7" y="492" font-size="10.5" fill="#52514e" text-anchor="start">11.2</text>
+<g><title>exp-F-equal-classes · fit_n30_h2: 11.8 MB (peak resident set size)</title><rect x="170.0" y="454" width="108.1" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="283.1" y="464" font-size="10.5" fill="#52514e" text-anchor="start">11.8</text>
+<g><title>exp-G-newton-steps · fit_n30_h2: 11.2 MB (peak resident set size)</title><rect x="170.0" y="468" width="103.7" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="278.7" y="478" font-size="10.5" fill="#52514e" text-anchor="start">11.2</text>
+<g><title>exp-H-builder · fit_n30_h2: 11.5 MB (peak resident set size)</title><rect x="170.0" y="482" width="105.7" height="12" rx="4.0" fill="#eda100"/></g>
+<text x="280.7" y="492" font-size="10.5" fill="#52514e" text-anchor="start">11.5</text>
 <text x="160" y="539.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n40_h1</text>
 <g><title>SNaQ.jl · fit_n40_h1: 1,057 MB (peak resident set size)</title><rect x="170.0" y="508" width="549.0" height="12" rx="4.0" fill="#2a78d6"/></g>
 <text x="724.0" y="518" font-size="10.5" fill="#52514e" text-anchor="start">1,057</text>
-<g><title>exp-E-evaluator · fit_n40_h1: 35.1 MB (peak resident set size)</title><rect x="170.0" y="522" width="215.1" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="390.1" y="532" font-size="10.5" fill="#52514e" text-anchor="start">35.1</text>
-<g><title>exp-F-equal-classes · fit_n40_h1: 35.8 MB (peak resident set size)</title><rect x="170.0" y="536" width="217.2" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="392.2" y="546" font-size="10.5" fill="#52514e" text-anchor="start">35.8</text>
-<g><title>exp-G-newton-steps · fit_n40_h1: 35.3 MB (peak resident set size)</title><rect x="170.0" y="550" width="215.9" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="390.9" y="560" font-size="10.5" fill="#52514e" text-anchor="start">35.3</text>
+<g><title>exp-F-equal-classes · fit_n40_h1: 35.8 MB (peak resident set size)</title><rect x="170.0" y="522" width="217.2" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="392.2" y="532" font-size="10.5" fill="#52514e" text-anchor="start">35.8</text>
+<g><title>exp-G-newton-steps · fit_n40_h1: 35.3 MB (peak resident set size)</title><rect x="170.0" y="536" width="215.9" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="390.9" y="546" font-size="10.5" fill="#52514e" text-anchor="start">35.3</text>
+<g><title>exp-H-builder · fit_n40_h1: 35.6 MB (peak resident set size)</title><rect x="170.0" y="550" width="216.5" height="12" rx="4.0" fill="#eda100"/></g>
+<text x="391.5" y="560" font-size="10.5" fill="#52514e" text-anchor="start">35.6</text>
 <text x="160" y="607.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n50_h2</text>
 <g><title>SNaQ.jl · fit_n50_h2: 1,185 MB (peak resident set size)</title><rect x="170.0" y="576" width="560.2" height="12" rx="4.0" fill="#2a78d6"/></g>
 <text x="735.2" y="586" font-size="10.5" fill="#52514e" text-anchor="start">1,185</text>
-<g><title>exp-E-evaluator · fit_n50_h2: 42.1 MB (peak resident set size)</title><rect x="170.0" y="590" width="233.0" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="408.0" y="600" font-size="10.5" fill="#52514e" text-anchor="start">42.1</text>
-<g><title>exp-F-equal-classes · fit_n50_h2: 44.7 MB (peak resident set size)</title><rect x="170.0" y="604" width="238.9" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="413.9" y="614" font-size="10.5" fill="#52514e" text-anchor="start">44.7</text>
-<g><title>exp-G-newton-steps · fit_n50_h2: 44.7 MB (peak resident set size)</title><rect x="170.0" y="618" width="239.0" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="414.0" y="628" font-size="10.5" fill="#52514e" text-anchor="start">44.7</text>
+<g><title>exp-F-equal-classes · fit_n50_h2: 44.7 MB (peak resident set size)</title><rect x="170.0" y="590" width="238.9" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="413.9" y="600" font-size="10.5" fill="#52514e" text-anchor="start">44.7</text>
+<g><title>exp-G-newton-steps · fit_n50_h2: 44.7 MB (peak resident set size)</title><rect x="170.0" y="604" width="239.0" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="414.0" y="614" font-size="10.5" fill="#52514e" text-anchor="start">44.7</text>
+<g><title>exp-H-builder · fit_n50_h2: 45.6 MB (peak resident set size)</title><rect x="170.0" y="618" width="240.9" height="12" rx="4.0" fill="#eda100"/></g>
+<text x="415.9" y="628" font-size="10.5" fill="#52514e" text-anchor="start">45.6</text>
 </svg>

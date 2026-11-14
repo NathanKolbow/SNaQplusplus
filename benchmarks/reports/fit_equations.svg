@@ -5,95 +5,95 @@
 <rect x="170" y="61" width="12" height="12" rx="3" fill="#2a78d6"/>
 <text x="188" y="71" font-size="12" fill="#52514e">SNaQ.jl</text>
 <rect x="255" y="61" width="12" height="12" rx="3" fill="#eb6834"/>
-<text x="273" y="71" font-size="12" fill="#52514e">exp-E-evaluator</text>
-<rect x="396" y="61" width="12" height="12" rx="3" fill="#1baf7a"/>
-<text x="414" y="71" font-size="12" fill="#52514e">exp-F-equal-classes</text>
-<rect x="565" y="61" width="12" height="12" rx="3" fill="#eda100"/>
-<text x="583" y="71" font-size="12" fill="#52514e">exp-G-newton-steps</text>
-<line x1="212.2" y1="94" x2="212.2" y2="654" stroke="#e1e0d9" stroke-width="1"/>
-<text x="212.2" y="670" font-size="11" fill="#898781" text-anchor="middle">0.0001</text>
-<line x1="321.3" y1="94" x2="321.3" y2="654" stroke="#e1e0d9" stroke-width="1"/>
-<text x="321.3" y="670" font-size="11" fill="#898781" text-anchor="middle">0.001</text>
-<line x1="430.4" y1="94" x2="430.4" y2="654" stroke="#e1e0d9" stroke-width="1"/>
-<text x="430.4" y="670" font-size="11" fill="#898781" text-anchor="middle">0.010</text>
-<line x1="539.5" y1="94" x2="539.5" y2="654" stroke="#e1e0d9" stroke-width="1"/>
-<text x="539.5" y="670" font-size="11" fill="#898781" text-anchor="middle">0.100</text>
-<line x1="648.6" y1="94" x2="648.6" y2="654" stroke="#e1e0d9" stroke-width="1"/>
-<text x="648.6" y="670" font-size="11" fill="#898781" text-anchor="middle">1.00</text>
-<line x1="757.7" y1="94" x2="757.7" y2="654" stroke="#e1e0d9" stroke-width="1"/>
-<text x="757.7" y="670" font-size="11" fill="#898781" text-anchor="middle">10.0</text>
+<text x="273" y="71" font-size="12" fill="#52514e">exp-F-equal-classes</text>
+<rect x="424" y="61" width="12" height="12" rx="3" fill="#1baf7a"/>
+<text x="442" y="71" font-size="12" fill="#52514e">exp-G-newton-steps</text>
+<rect x="586" y="61" width="12" height="12" rx="3" fill="#eda100"/>
+<text x="604" y="71" font-size="12" fill="#52514e">exp-H-builder</text>
+<line x1="219.8" y1="94" x2="219.8" y2="654" stroke="#e1e0d9" stroke-width="1"/>
+<text x="219.8" y="670" font-size="11" fill="#898781" text-anchor="middle">0.0001</text>
+<line x1="327.5" y1="94" x2="327.5" y2="654" stroke="#e1e0d9" stroke-width="1"/>
+<text x="327.5" y="670" font-size="11" fill="#898781" text-anchor="middle">0.001</text>
+<line x1="435.1" y1="94" x2="435.1" y2="654" stroke="#e1e0d9" stroke-width="1"/>
+<text x="435.1" y="670" font-size="11" fill="#898781" text-anchor="middle">0.010</text>
+<line x1="542.7" y1="94" x2="542.7" y2="654" stroke="#e1e0d9" stroke-width="1"/>
+<text x="542.7" y="670" font-size="11" fill="#898781" text-anchor="middle">0.100</text>
+<line x1="650.3" y1="94" x2="650.3" y2="654" stroke="#e1e0d9" stroke-width="1"/>
+<text x="650.3" y="670" font-size="11" fill="#898781" text-anchor="middle">1.00</text>
+<line x1="757.9" y1="94" x2="757.9" y2="654" stroke="#e1e0d9" stroke-width="1"/>
+<text x="757.9" y="670" font-size="11" fill="#898781" text-anchor="middle">10.0</text>
 <text x="470.0" y="688" font-size="11.5" fill="#52514e" text-anchor="middle">seconds (log scale)</text>
 <line x1="170.0" y1="94" x2="170.0" y2="654" stroke="#c3c2b7" stroke-width="1"/>
 <text x="160" y="131.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n10_h1</text>
-<g><title>SNaQ.jl · fit_n10_h1: 0.0051 seconds</title><rect x="170.0" y="100" width="228.9" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="403.9" y="110" font-size="10.5" fill="#52514e" text-anchor="start">0.0051</text>
-<g><title>exp-E-evaluator · fit_n10_h1: 6.2e-05 seconds</title><rect x="170.0" y="114" width="19.2" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="194.2" y="124" font-size="10.5" fill="#52514e" text-anchor="start">6.2e-05</text>
-<g><title>exp-F-equal-classes · fit_n10_h1: 6.6e-05 seconds</title><rect x="170.0" y="128" width="22.6" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="197.6" y="138" font-size="10.5" fill="#52514e" text-anchor="start">6.6e-05</text>
-<g><title>exp-G-newton-steps · fit_n10_h1: 6.3e-05 seconds</title><rect x="170.0" y="142" width="20.1" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="195.1" y="152" font-size="10.5" fill="#52514e" text-anchor="start">6.3e-05</text>
+<g><title>SNaQ.jl · fit_n10_h1: 0.0051 seconds</title><rect x="170.0" y="100" width="234.0" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="409.0" y="110" font-size="10.5" fill="#52514e" text-anchor="start">0.0051</text>
+<g><title>exp-F-equal-classes · fit_n10_h1: 6.6e-05 seconds</title><rect x="170.0" y="114" width="30.5" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="205.5" y="124" font-size="10.5" fill="#52514e" text-anchor="start">6.6e-05</text>
+<g><title>exp-G-newton-steps · fit_n10_h1: 6.3e-05 seconds</title><rect x="170.0" y="128" width="28.1" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="203.1" y="138" font-size="10.5" fill="#52514e" text-anchor="start">6.3e-05</text>
+<g><title>exp-H-builder · fit_n10_h1: 5.2e-05 seconds</title><rect x="170.0" y="142" width="18.9" height="12" rx="4.0" fill="#eda100"/></g>
+<text x="193.9" y="152" font-size="10.5" fill="#52514e" text-anchor="start">5.2e-05</text>
 <text x="160" y="199.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n15_h1</text>
-<g><title>SNaQ.jl · fit_n15_h1: 0.027 seconds</title><rect x="170.0" y="168" width="306.6" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="481.6" y="178" font-size="10.5" fill="#52514e" text-anchor="start">0.027</text>
-<g><title>exp-E-evaluator · fit_n15_h1: 0.00019 seconds</title><rect x="170.0" y="182" width="72.7" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="247.7" y="192" font-size="10.5" fill="#52514e" text-anchor="start">0.00019</text>
-<g><title>exp-F-equal-classes · fit_n15_h1: 0.00034 seconds</title><rect x="170.0" y="196" width="99.7" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="274.7" y="206" font-size="10.5" fill="#52514e" text-anchor="start">0.00034</text>
-<g><title>exp-G-newton-steps · fit_n15_h1: 0.00021 seconds</title><rect x="170.0" y="210" width="77.9" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="252.9" y="220" font-size="10.5" fill="#52514e" text-anchor="start">0.00021</text>
+<g><title>SNaQ.jl · fit_n15_h1: 0.027 seconds</title><rect x="170.0" y="168" width="310.7" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="485.7" y="178" font-size="10.5" fill="#52514e" text-anchor="start">0.027</text>
+<g><title>exp-F-equal-classes · fit_n15_h1: 0.00034 seconds</title><rect x="170.0" y="182" width="106.6" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="281.6" y="192" font-size="10.5" fill="#52514e" text-anchor="start">0.00034</text>
+<g><title>exp-G-newton-steps · fit_n15_h1: 0.00021 seconds</title><rect x="170.0" y="196" width="85.1" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="260.1" y="206" font-size="10.5" fill="#52514e" text-anchor="start">0.00021</text>
+<g><title>exp-H-builder · fit_n15_h1: 0.00017 seconds</title><rect x="170.0" y="210" width="74.3" height="12" rx="4.0" fill="#eda100"/></g>
+<text x="249.3" y="220" font-size="10.5" fill="#52514e" text-anchor="start">0.00017</text>
 <text x="160" y="267.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n20_h2</text>
-<g><title>SNaQ.jl · fit_n20_h2: 0.072 seconds</title><rect x="170.0" y="236" width="353.8" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="528.8" y="246" font-size="10.5" fill="#52514e" text-anchor="start">0.072</text>
-<g><title>exp-E-evaluator · fit_n20_h2: 0.00069 seconds</title><rect x="170.0" y="250" width="133.9" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="308.9" y="260" font-size="10.5" fill="#52514e" text-anchor="start">0.00069</text>
-<g><title>exp-F-equal-classes · fit_n20_h2: 0.00081 seconds</title><rect x="170.0" y="264" width="141.0" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="316.0" y="274" font-size="10.5" fill="#52514e" text-anchor="start">0.00081</text>
-<g><title>exp-G-newton-steps · fit_n20_h2: 0.0007 seconds</title><rect x="170.0" y="278" width="134.7" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="309.7" y="288" font-size="10.5" fill="#52514e" text-anchor="start">0.0007</text>
+<g><title>SNaQ.jl · fit_n20_h2: 0.072 seconds</title><rect x="170.0" y="236" width="357.2" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="532.2" y="246" font-size="10.5" fill="#52514e" text-anchor="start">0.072</text>
+<g><title>exp-F-equal-classes · fit_n20_h2: 0.00081 seconds</title><rect x="170.0" y="250" width="147.3" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="322.3" y="260" font-size="10.5" fill="#52514e" text-anchor="start">0.00081</text>
+<g><title>exp-G-newton-steps · fit_n20_h2: 0.0007 seconds</title><rect x="170.0" y="264" width="141.1" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="316.1" y="274" font-size="10.5" fill="#52514e" text-anchor="start">0.0007</text>
+<g><title>exp-H-builder · fit_n20_h2: 0.00054 seconds</title><rect x="170.0" y="278" width="128.9" height="12" rx="4.0" fill="#eda100"/></g>
+<text x="303.9" y="288" font-size="10.5" fill="#52514e" text-anchor="start">0.00054</text>
 <text x="160" y="335.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n25_h1</text>
-<g><title>SNaQ.jl · fit_n25_h1: 0.154 seconds</title><rect x="170.0" y="304" width="390.0" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="565.0" y="314" font-size="10.5" fill="#52514e" text-anchor="start">0.154</text>
-<g><title>exp-E-evaluator · fit_n25_h1: 0.0011 seconds</title><rect x="170.0" y="318" width="157.1" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="332.1" y="328" font-size="10.5" fill="#52514e" text-anchor="start">0.0011</text>
-<g><title>exp-F-equal-classes · fit_n25_h1: 0.0011 seconds</title><rect x="170.0" y="332" width="156.0" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="331.0" y="342" font-size="10.5" fill="#52514e" text-anchor="start">0.0011</text>
-<g><title>exp-G-newton-steps · fit_n25_h1: 0.0012 seconds</title><rect x="170.0" y="346" width="159.3" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="334.3" y="356" font-size="10.5" fill="#52514e" text-anchor="start">0.0012</text>
+<g><title>SNaQ.jl · fit_n25_h1: 0.154 seconds</title><rect x="170.0" y="304" width="392.9" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="567.9" y="314" font-size="10.5" fill="#52514e" text-anchor="start">0.154</text>
+<g><title>exp-F-equal-classes · fit_n25_h1: 0.0011 seconds</title><rect x="170.0" y="318" width="162.1" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="337.1" y="328" font-size="10.5" fill="#52514e" text-anchor="start">0.0011</text>
+<g><title>exp-G-newton-steps · fit_n25_h1: 0.0012 seconds</title><rect x="170.0" y="332" width="165.4" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="340.4" y="342" font-size="10.5" fill="#52514e" text-anchor="start">0.0012</text>
+<g><title>exp-H-builder · fit_n25_h1: 0.00089 seconds</title><rect x="170.0" y="346" width="151.8" height="12" rx="4.0" fill="#eda100"/></g>
+<text x="326.8" y="356" font-size="10.5" fill="#52514e" text-anchor="start">0.00089</text>
 <text x="160" y="403.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n25_h3</text>
-<g><title>SNaQ.jl · fit_n25_h3: 1.22 seconds</title><rect x="170.0" y="372" width="488.0" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="663.0" y="382" font-size="10.5" fill="#52514e" text-anchor="start">1.22</text>
-<g><title>exp-E-evaluator · fit_n25_h3: 0.0019 seconds</title><rect x="170.0" y="386" width="182.8" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="357.8" y="396" font-size="10.5" fill="#52514e" text-anchor="start">0.0019</text>
-<g><title>exp-F-equal-classes · fit_n25_h3: 0.0019 seconds</title><rect x="170.0" y="400" width="181.9" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="356.9" y="410" font-size="10.5" fill="#52514e" text-anchor="start">0.0019</text>
-<g><title>exp-G-newton-steps · fit_n25_h3: 0.0021 seconds</title><rect x="170.0" y="414" width="185.4" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="360.4" y="424" font-size="10.5" fill="#52514e" text-anchor="start">0.0021</text>
+<g><title>SNaQ.jl · fit_n25_h3: 1.22 seconds</title><rect x="170.0" y="372" width="489.5" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="664.5" y="382" font-size="10.5" fill="#52514e" text-anchor="start">1.22</text>
+<g><title>exp-F-equal-classes · fit_n25_h3: 0.0019 seconds</title><rect x="170.0" y="386" width="187.7" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="362.7" y="396" font-size="10.5" fill="#52514e" text-anchor="start">0.0019</text>
+<g><title>exp-G-newton-steps · fit_n25_h3: 0.0021 seconds</title><rect x="170.0" y="400" width="191.1" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="366.1" y="410" font-size="10.5" fill="#52514e" text-anchor="start">0.0021</text>
+<g><title>exp-H-builder · fit_n25_h3: 0.0014 seconds</title><rect x="170.0" y="414" width="173.6" height="12" rx="4.0" fill="#eda100"/></g>
+<text x="348.6" y="424" font-size="10.5" fill="#52514e" text-anchor="start">0.0014</text>
 <text x="160" y="471.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n30_h2</text>
-<g><title>SNaQ.jl · fit_n30_h2: 0.515 seconds</title><rect x="170.0" y="440" width="447.1" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="622.1" y="450" font-size="10.5" fill="#52514e" text-anchor="start">0.515</text>
-<g><title>exp-E-evaluator · fit_n30_h2: 0.0015 seconds</title><rect x="170.0" y="454" width="170.1" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="345.1" y="464" font-size="10.5" fill="#52514e" text-anchor="start">0.0015</text>
-<g><title>exp-F-equal-classes · fit_n30_h2: 0.0014 seconds</title><rect x="170.0" y="468" width="166.9" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="341.9" y="478" font-size="10.5" fill="#52514e" text-anchor="start">0.0014</text>
-<g><title>exp-G-newton-steps · fit_n30_h2: 0.0014 seconds</title><rect x="170.0" y="482" width="168.6" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="343.6" y="492" font-size="10.5" fill="#52514e" text-anchor="start">0.0014</text>
+<g><title>SNaQ.jl · fit_n30_h2: 0.515 seconds</title><rect x="170.0" y="440" width="449.2" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="624.2" y="450" font-size="10.5" fill="#52514e" text-anchor="start">0.515</text>
+<g><title>exp-F-equal-classes · fit_n30_h2: 0.0014 seconds</title><rect x="170.0" y="454" width="172.8" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="347.8" y="464" font-size="10.5" fill="#52514e" text-anchor="start">0.0014</text>
+<g><title>exp-G-newton-steps · fit_n30_h2: 0.0014 seconds</title><rect x="170.0" y="468" width="174.6" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="349.6" y="478" font-size="10.5" fill="#52514e" text-anchor="start">0.0014</text>
+<g><title>exp-H-builder · fit_n30_h2: 0.0012 seconds</title><rect x="170.0" y="482" width="164.4" height="12" rx="4.0" fill="#eda100"/></g>
+<text x="339.4" y="492" font-size="10.5" fill="#52514e" text-anchor="start">0.0012</text>
 <text x="160" y="539.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n40_h1</text>
-<g><title>SNaQ.jl · fit_n40_h1: 1.18 seconds</title><rect x="170.0" y="508" width="486.6" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="661.6" y="518" font-size="10.5" fill="#52514e" text-anchor="start">1.18</text>
-<g><title>exp-E-evaluator · fit_n40_h1: 0.0035 seconds</title><rect x="170.0" y="522" width="211.0" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="386.0" y="532" font-size="10.5" fill="#52514e" text-anchor="start">0.0035</text>
-<g><title>exp-F-equal-classes · fit_n40_h1: 0.0036 seconds</title><rect x="170.0" y="536" width="212.5" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="387.5" y="546" font-size="10.5" fill="#52514e" text-anchor="start">0.0036</text>
-<g><title>exp-G-newton-steps · fit_n40_h1: 0.0036 seconds</title><rect x="170.0" y="550" width="211.6" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="386.6" y="560" font-size="10.5" fill="#52514e" text-anchor="start">0.0036</text>
+<g><title>SNaQ.jl · fit_n40_h1: 1.18 seconds</title><rect x="170.0" y="508" width="488.2" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="663.2" y="518" font-size="10.5" fill="#52514e" text-anchor="start">1.18</text>
+<g><title>exp-F-equal-classes · fit_n40_h1: 0.0036 seconds</title><rect x="170.0" y="522" width="217.8" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="392.8" y="532" font-size="10.5" fill="#52514e" text-anchor="start">0.0036</text>
+<g><title>exp-G-newton-steps · fit_n40_h1: 0.0036 seconds</title><rect x="170.0" y="536" width="217.0" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="392.0" y="546" font-size="10.5" fill="#52514e" text-anchor="start">0.0036</text>
+<g><title>exp-H-builder · fit_n40_h1: 0.003 seconds</title><rect x="170.0" y="550" width="208.7" height="12" rx="4.0" fill="#eda100"/></g>
+<text x="383.7" y="560" font-size="10.5" fill="#52514e" text-anchor="start">0.003</text>
 <text x="160" y="607.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n50_h2</text>
-<g><title>SNaQ.jl · fit_n50_h2: 8.64 seconds</title><rect x="170.0" y="576" width="580.8" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="755.8" y="586" font-size="10.5" fill="#52514e" text-anchor="start">8.64</text>
-<g><title>exp-E-evaluator · fit_n50_h2: 0.011 seconds</title><rect x="170.0" y="590" width="262.7" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="437.7" y="600" font-size="10.5" fill="#52514e" text-anchor="start">0.011</text>
-<g><title>exp-F-equal-classes · fit_n50_h2: 0.0094 seconds</title><rect x="170.0" y="604" width="257.4" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="432.4" y="614" font-size="10.5" fill="#52514e" text-anchor="start">0.0094</text>
-<g><title>exp-G-newton-steps · fit_n50_h2: 0.010 seconds</title><rect x="170.0" y="618" width="260.6" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="435.6" y="628" font-size="10.5" fill="#52514e" text-anchor="start">0.010</text>
+<g><title>SNaQ.jl · fit_n50_h2: 8.64 seconds</title><rect x="170.0" y="576" width="581.1" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="756.1" y="586" font-size="10.5" fill="#52514e" text-anchor="start">8.64</text>
+<g><title>exp-F-equal-classes · fit_n50_h2: 0.0094 seconds</title><rect x="170.0" y="590" width="262.2" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="437.2" y="600" font-size="10.5" fill="#52514e" text-anchor="start">0.0094</text>
+<g><title>exp-G-newton-steps · fit_n50_h2: 0.010 seconds</title><rect x="170.0" y="604" width="265.3" height="12" rx="4.0" fill="#1baf7a"/></g>
+<text x="440.3" y="614" font-size="10.5" fill="#52514e" text-anchor="start">0.010</text>
+<g><title>exp-H-builder · fit_n50_h2: 0.0078 seconds</title><rect x="170.0" y="618" width="253.4" height="12" rx="4.0" fill="#eda100"/></g>
+<text x="428.4" y="628" font-size="10.5" fill="#52514e" text-anchor="start">0.0078</text>
 </svg>
