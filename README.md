@@ -133,11 +133,21 @@ The files have the same names and layout as those written by `snaq!`:
 
 The best network and its score are also printed to standard output.
 
+When runs use a sample of the quartets (`--propQuartets` < 1 with `--propQuartetsFinal` < 1,
+or `--lazy`), each run draws its own sample. The scores in these files are then the scores
+of all networks on one sample of the quartets shared by all runs (a proportion
+`--propQuartetsFinal` of them).
+
 ## Differences from SNaQ.jl
 
 - **Random numbers.** The random number generator differs, so the same seed gives different
   runs in SNaQ.jl and in `snaq`.
 - **Parallelism.** Independent runs execute in parallel threads.
+- **Output files with `--lazy`.** With a lazy `DataCF`, `snaq!` returns the network that
+  scores best on the quartets shared by all runs, but writes `.out` and `.networks` sorted by
+  the score each network got in its own run, on that run's own sample of quartets. `snaq`
+  writes both files sorted by the scores on the shared quartets, so their first network is
+  the selected one.
 - **Copied quirks.** Some behaviors of SNaQ.jl are copied on purpose. Each is marked in the
   source with a `// QUIRK:` comment.
 - **Quartet classes.** Quartets whose four lineages enter the network through the same four
@@ -175,6 +185,10 @@ The best network and its score are also printed to standard output.
   gain less than the tolerances. For networks, L-BFGS continues from its result in the rare
   fits where it stops for another reason (no step improves the score, or several steps in a
   row gain less than the tolerances).
+  Before a fit stops, branches longer than 5 are checked separately: the derivative of the
+  score with respect to such a length is close to 0 whatever a shorter branch would gain, so
+  they are moved by a Newton step in exp(-length) when that step is predicted to raise the
+  score, and the fit continues from there if it does.
   SNaQ.jl uses L-BFGS limited to `max(30, ntaxa)` evaluations; `--optimizer lbfgs` does the same.
 - **Proposals rejected without a fit** (`--boundPrune`). An upper bound of the score of a
   proposed network is computed first: each class is given the parameter values that suit it

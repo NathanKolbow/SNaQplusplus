@@ -188,6 +188,17 @@ enum class NewtonStop {
 // The fit has converged when a step close to a full Newton step (little
 // damping) is predicted, by the quadratic model, to gain less than the
 // tolerances: the predicted gain of that step estimates what is left to gain.
+//
+// Long branches are checked separately before the fit stops. Expected CFs are
+// polynomials in z = exp(-length), so the derivative of the score with respect
+// to a length is z times its derivative with respect to z: for a long branch
+// (z close to 0) it is close to 0 whatever the score would gain if the branch
+// were shorter, and neither the Newton steps nor the convergence test see that
+// gain. A proposed network inherits such branches from the current one, where
+// their length suited another topology. When the steps have converged, the
+// branches longer than FLAT_LENGTH that the score wants shorter are moved to
+// where a Newton step in z puts them, and the steps resume from there if the
+// score increased.
 double newtonfit(const ClassBatch& batch, const std::vector<int>& pidof, std::vector<double>& params, double alpha,
                  std::vector<double>& x, const OptInfo& info, const FitOptions& fo, int maxeval, int& evals,
                  NewtonStop& stop) {
@@ -217,6 +228,47 @@ double newtonfit(const ClassBatch& batch, const std::vector<int>& pidof, std::ve
     int smallgains = 0;
     std::vector<int> freeidx, active;
     std::vector<double> step(n);
+    // Moves the long branches that the score wants shorter (see above), using
+    // the derivatives g and B at x. Returns whether the score increased; x and
+    // f are then the new point and its score.
+    const double FLAT_LENGTH = 5.0;
+    int flatmoves = 0;
+    std::vector<std::pair<double, size_t>> flat;  // (predicted gain, variable)
+    std::vector<double> flatto(n);
+    auto shortenflatbranches = [&]() {
+        if (flatmoves >= 8 || evals >= maxeval) return false;
+        const double tol = std::max(fo.ftolAbs, fo.ftolRel * std::abs(f));
+        flat.clear();
+        for (size_t j = 0; j < n; ++j) {
+            if (info.idx_obj[j].is_hybrid_node || x[j] < FLAT_LENGTH || g[j] >= 0.0) continue;
+            // derivative and curvature with respect to z = exp(-length)
+            const double z = std::exp(-x[j]), gz = -g[j] / z, Bz = B[j * n + j] / (z * z);
+            const double room = 1.0 - z;  // z = 1: length 0
+            const double gain = Bz > 0.0 ? std::min(0.5 * gz * gz / Bz, gz * room) : gz * room;
+            if (!(gain > tol)) continue;
+            const double znew = Bz > 0.0 ? std::min(1.0, z + gz / Bz) : 1.0;
+            flatto[j] = std::max(info.LB[j], std::min(x[j], -std::log(znew)));
+            flat.emplace_back(gain, j);
+        }
+        if (flat.empty()) return false;
+        std::sort(flat.rbegin(), flat.rend());
+        // all of them together, then the most promising one alone
+        for (size_t count : {flat.size(), size_t{1}}) {
+            xt = x;
+            for (size_t c = 0; c < count; ++c) xt[flat[c].second] = flatto[flat[c].second];
+            const double ft = score(xt);
+            if (std::isfinite(ft) && ft > f) {
+                x.swap(xt);
+                f = ft;
+                ++flatmoves;
+                lambda = 1e-3;
+                smallgains = 0;
+                return true;
+            }
+            if (flat.size() == 1 || evals >= maxeval) break;
+        }
+        return false;
+    };
     stop = NewtonStop::maxeval;
     while (evals < maxeval) {
         derivatives(g, B);  // x is the last point scored
@@ -232,6 +284,7 @@ double newtonfit(const ClassBatch& batch, const std::vector<int>& pidof, std::ve
             pg = std::max(pg, std::abs(g[j]));
         }
         if (freeidx.empty() || pg <= 1e-11 * (1.0 + std::abs(f))) {
+            if (shortenflatbranches()) continue;
             stop = NewtonStop::gradient;
             break;
         }
@@ -321,6 +374,7 @@ double newtonfit(const ClassBatch& batch, const std::vector<int>& pidof, std::ve
             dampmore(8.0);
         }
         if (done) {
+            if (shortenflatbranches()) continue;
             stop = NewtonStop::predicted;
             break;
         }

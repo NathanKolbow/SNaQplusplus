@@ -280,6 +280,50 @@ TEST(NewtonFit, DoesNotStopAtBoundsOrStepLimits) {
     EXPECT_LT(total, 40 * fits);
 }
 
+TEST(NewtonFit, ShortensLongBranchesThatTheDataWantShort) {
+    // A proposed network inherits its branch lengths from the current one,
+    // where some are at the upper bound. Where exp(-length) is close to 0 the
+    // derivative with respect to the length is close to 0 too, whatever the
+    // score would gain from a shorter branch: the fit must not stop there.
+    // Reference: the fit started from the parameters the data were made with.
+    Rng rng(47);
+    std::vector<Network> nets;
+    nets.push_back(nw("(15,(1,((14,(#H1,(((12,13),(11,#H3)),(7,((10)#H3,(8,9)))))),((((2,3))#H2,(6,(5,(#H2,4)))))#H1)));"));
+    nets.push_back(read_trees("gennet_10_2_8.net").at(0));
+    nets.push_back(random_tree(16, rng));
+    int trapped = 0, fits = 0;
+    for (Network& truth : nets) {
+        truth = truth.deepcopynetwork();
+        semidirectnetwork(truth);
+        for (EdgeId e : truth.edge) truth.E(e).length = 0.2 + rng.rand();
+        for (NodeId h : truth.hybrid) {
+            truth.E(truth.getparentedgeminor(h)).gamma = 0.3;
+            truth.E(truth.getparentedge(h)).gamma = 0.7;
+        }
+        CFMatrix q = noisy_cfs(truth, rng, 0.02);
+        ClassOptions co;
+        co.qlogq = obsqlogq(q);
+        FitOptions nt;
+        nt.method = FitMethod::newton;
+        Network ref = truth.deepcopynetwork();
+        QuartetClasses cr = buildclasses(ref, QuartetList::allquartets(ref.numtaxa), q, co);
+        const double sref = fitclasses(ref, cr, 0.0, nt, 1);
+        for (int start = 0; start < 6; ++start) {
+            Network a = truth.deepcopynetwork();
+            for (EdgeId e : a.edge)
+                if (rng.rand() < 0.3) a.E(e).length = 25.0;
+            QuartetClasses ca = buildclasses(a, QuartetList::allquartets(a.numtaxa), q, co);
+            FitInfo ia;
+            const double sn = fitclasses(a, ca, 0.0, nt, 1, &ia);
+            EXPECT_TRUE(ia.converged) << "start " << start;
+            if (!(sn > sref - 1e-5 * std::max(1.0, std::abs(sref)))) ++trapped;
+            EXPECT_GT(sn, sref - 1e-5 * std::max(1.0, std::abs(sref))) << "start " << start;
+            ++fits;
+        }
+    }
+    EXPECT_EQ(trapped, 0) << "of " << fits << " fits";
+}
+
 TEST(HybridGuide, CandidatesPointAtTheMissingReticulation) {
     // Data from a network with one reticulation, fitted on its major tree: the
     // two edges the reticulation connects must be among the best candidate
