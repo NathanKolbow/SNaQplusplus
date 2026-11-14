@@ -13,20 +13,56 @@ bool Restrictions::any() const {
            strongly_tree_child;
 }
 
+namespace {
+
+// A copy of `net` whose edges are directed away from its root, with
+// Edge::containroot (whether the root can be on the edge) computed again, as
+// when the network is written (writenewick) and read. If the current root is
+// not admissible, the first admissible one is taken, as writenewick does.
+// Returns false if the network has no admissible root.
+bool directedcopy(const Network& net, Network& c) {
+    c = net.deepcopynetwork();
+    const int rootsaved = c.rooti;
+    try {
+        directedges(c);
+        return true;
+    } catch (const RootMismatch&) {
+    }
+    for (EdgeId e : c.edge) {
+        c.rooti = c.index_of_node(c.getparent(e));
+        try {
+            directedges(c);
+            return true;
+        } catch (const RootMismatch&) {
+        }
+    }
+    c.rooti = rootsaved;
+    return false;
+}
+
+}  // namespace
+
 bool Restrictions::operator()(Network& net) const {
     if (custom) return custom(net);
-    if (max_level >= 0 && !(getnetworklevel(net) <= max_level)) return false;
+    if (!any()) return true;
+    // The tree-child conditions read the direction of the edges and
+    // Edge::containroot, which the moves of the search do not keep up to date
+    // for every edge (SNaQ.jl checks the network as the move left it). The
+    // network is checked as it will be read from the output files.
+    Network c;
+    if (!directedcopy(net, c)) return false;
+    if (max_level >= 0 && !(getnetworklevel(c) <= max_level)) return false;
     if (galled_tree) {
-        if (!(getnetworklevel(net) <= 1)) return false;
+        if (!(getnetworklevel(c) <= 1)) return false;
     } else if (galled_network) {
-        if (!isgallednetwork(net)) return false;
+        if (!isgallednetwork(c)) return false;
     }
     if (rooted_tree_child) {
-        if (!std::get<0>(istreechild(net))) return false;
+        if (!std::get<0>(istreechild(c))) return false;
     } else if (weakly_tree_child) {
-        if (!std::get<1>(istreechild(net))) return false;
+        if (!std::get<1>(istreechild(c))) return false;
     } else if (strongly_tree_child) {
-        if (!std::get<2>(istreechild(net))) return false;
+        if (!std::get<2>(istreechild(c))) return false;
     }
     return true;
 }
