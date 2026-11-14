@@ -130,6 +130,7 @@ public:
     const T* begin() const { return data(); }
     const T* end() const { return data() + size_; }
     T& back() { return data()[size_ - 1]; }
+    void pop_back() { --size_; }
 
     void push_back(const T& x) {
         if (size_ == cap_) grow();
@@ -220,5 +221,59 @@ inline long long nchoose4(long long n) { return n < 4 ? 0 : n * (n - 1) * (n - 2
 
 // Julia's `binomial(n, k)` for small k.
 long long binomial(long long n, long long k);
+
+// Open-addressing hash table from a 128-bit key (itself a hash) to an index.
+struct Key128 {
+    uint64_t a = 0, b = 0;
+};
+class KeyTable {
+public:
+    static constexpr uint32_t EMPTY = 0xffffffffu;
+    KeyTable() { reset(0); }
+    explicit KeyTable(size_t expected) { reset(expected); }
+    // Empties the table and sizes it for `expected` keys.
+    void reset(size_t expected) {
+        size_t n = 16;
+        while (n < 2 * expected) n *= 2;
+        slots_.assign(n, Slot{0, 0, EMPTY});
+        count_ = 0;
+    }
+    // The value of `k`, or EMPTY.
+    uint32_t find(const Key128& k) const {
+        const size_t mask = slots_.size() - 1;
+        for (size_t i = static_cast<size_t>(k.a) & mask;; i = (i + 1) & mask) {
+            const Slot& s = slots_[i];
+            if (s.value == EMPTY) return EMPTY;
+            if (s.a == k.a && s.b == k.b) return s.value;
+        }
+    }
+    // `k` must not be in the table.
+    void insert(const Key128& k, uint32_t value) {
+        if (2 * (count_ + 1) > slots_.size()) grow();
+        place(k, value);
+        ++count_;
+    }
+    size_t size() const { return count_; }
+
+private:
+    struct Slot {
+        uint64_t a, b;
+        uint32_t value;
+    };
+    void place(const Key128& k, uint32_t value) {
+        const size_t mask = slots_.size() - 1;
+        size_t i = static_cast<size_t>(k.a) & mask;
+        while (slots_[i].value != EMPTY) i = (i + 1) & mask;
+        slots_[i] = Slot{k.a, k.b, value};
+    }
+    void grow() {
+        std::vector<Slot> old(2 * slots_.size(), Slot{0, 0, EMPTY});
+        old.swap(slots_);
+        for (const Slot& s : old)
+            if (s.value != EMPTY) place(Key128{s.a, s.b}, s.value);
+    }
+    std::vector<Slot> slots_;
+    size_t count_ = 0;
+};
 
 }  // namespace csnaq

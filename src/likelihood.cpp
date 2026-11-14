@@ -620,8 +620,10 @@ double evalclasses_reference(const ClassBatch& batch, const double* params, doub
             ThreadScratch& ts = w->scratch[static_cast<size_t>(tid)];
             double* ig = ts.quartet_grad.data();
             double tot = 0.0;
+            std::vector<int> ps;  // the parameters of the class
             for (size_t g = lo; g < hi; ++g) {
-                const auto& ps = batch.gen[g]->params;
+                ps.clear();
+                eqn_params(batch.gen[g]->eqn, ps);
                 for (int p : ps) ig[3 * p] = ig[3 * p + 1] = ig[3 * p + 2] = 0.0;
                 auto r = recur(batch.gen[g]->eqn, params, ig, 1.0, alpha);
                 double e1 = std::max(r[0], 1e-9), e2 = std::max(r[1], 1e-9);

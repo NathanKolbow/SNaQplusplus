@@ -55,7 +55,7 @@ struct QuartetClasses {
     // pids of the class's four ports (cut edges), in order: the class's columns
     // are the splits 01|23, 02|13 and 03|12 of these ports
     std::vector<std::array<int, 4>> portpid;
-    std::unordered_map<ClassKey, uint32_t, ClassKeyHash> bykey;
+    KeyTable bykey;  // key -> class (the first one, if several classes have the same key)
     // per quartet (only when requested): its class, and the observed-CF column
     // of each class column (2 bits each)
     std::vector<uint32_t> qclass;

@@ -60,13 +60,6 @@ inline uint64_t hashrec(uint64_t seed, uint64_t a, uint64_t b, uint64_t c, uint6
     return mix64(h ^ (d + 0x9fb21c651e98df25ULL));
 }
 
-void collectparams(const RecursiveCFEquation& e, std::vector<int>& out) {
-    for (int p : e.coal_edges)
-        if (std::find(out.begin(), out.end(), p) == out.end()) out.push_back(p);
-    if (e.division_H >= 0 && std::find(out.begin(), out.end(), e.division_H) == out.end()) out.push_back(e.division_H);
-    for (const auto& d : e.divisions) collectparams(d, out);
-}
-
 // Observed-CF column (0: 12|34, 1: 13|24, 2: 14|23) that pairs taxa x and y.
 const uint8_t PAIRCOL[4][4] = {{0, 0, 1, 2}, {0, 0, 2, 1}, {1, 2, 0, 0}, {2, 1, 0, 0}};
 
@@ -370,9 +363,9 @@ QuartetClasses buildclasses(Network& net, const QuartetList& ql, const CFMatrix&
         }
         out.key[ci] = k;
         if (opt.reuse) {
-            auto it = opt.reuse->bykey.find(k);
-            if (it != opt.reuse->bykey.end()) {
-                out.eqn[ci] = opt.reuse->eqn[it->second];
+            const uint32_t found = opt.reuse->bykey.find(Key128{k.a, k.b});
+            if (found != KeyTable::EMPTY) {
+                out.eqn[ci] = opt.reuse->eqn[found];
                 continue;
             }
         }
@@ -400,7 +393,6 @@ QuartetClasses buildclasses(Network& net, const QuartetList& ql, const CFMatrix&
                 ch[x] = &chains[static_cast<size_t>(chainidx[static_cast<size_t>(portnodes[ci][x])])];
             auto ce = std::make_shared<ClassEqn>();
             if (porttreelikeequation(net, ch, pend->pm, ce->eqn)) {
-                collectparams(ce->eqn, ce->params);
                 out.eqn[ci] = std::move(ce);
             } else {
                 pend->classes.push_back(ci);
@@ -432,7 +424,6 @@ void finishclasses(const Network& net, QuartetClasses& cls, int nthreads) {
                 ce->eqn = builder ? builder->build(pend.ports[t], pend.top[t])
                                   : portreticulateequation(net, pend.nodepos, pend.edgepos, pend.ports[t], pend.pm,
                                                            pend.top[t]);
-                collectparams(ce->eqn, ce->params);
                 if (ce->eqn.division_H != -1) ce->hash = hashequation(ce->eqn);
                 cls.eqn[pend.classes[t]] = std::move(ce);
             }
@@ -440,9 +431,11 @@ void finishclasses(const Network& net, QuartetClasses& cls, int nthreads) {
         cls.pending.reset();
     }
     const size_t nc = cls.size();
-    cls.bykey.clear();
-    cls.bykey.reserve(nc * 2);
-    for (size_t ci = 0; ci < nc; ++ci) cls.bykey.emplace(cls.key[ci], static_cast<uint32_t>(ci));
+    cls.bykey.reset(nc);
+    for (size_t ci = 0; ci < nc; ++ci) {
+        const Key128 k{cls.key[ci].a, cls.key[ci].b};
+        if (cls.bykey.find(k) == KeyTable::EMPTY) cls.bykey.insert(k, static_cast<uint32_t>(ci));
+    }
 
     // ---- batch for the fit ----
     ClassBatch& b = cls.batch;

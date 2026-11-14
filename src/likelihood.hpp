@@ -71,7 +71,6 @@ private:
 
 struct ClassEqn {
     RecursiveCFEquation eqn;    // parameters are pids
-    std::vector<int> params;    // the distinct pids of the equation tree
     std::vector<EqnHash> hash;  // hashequation(eqn), for reticulate classes
 };
 

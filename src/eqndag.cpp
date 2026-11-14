@@ -31,55 +31,6 @@ struct Hasher {
     }
 };
 
-struct Key {
-    uint64_t a, b;
-};
-
-// Open-addressing hash table from a 128-bit key to an index.
-class KeyTable {
-public:
-    explicit KeyTable(size_t expected) {
-        size_t n = 64;
-        while (n < 2 * expected) n *= 2;
-        slots_.assign(n, Slot{0, 0, EMPTY});
-    }
-    static constexpr uint32_t EMPTY = 0xffffffffu;
-    // The value of `k`, or EMPTY.
-    uint32_t find(const Key& k) const {
-        const size_t mask = slots_.size() - 1;
-        for (size_t i = static_cast<size_t>(k.a) & mask;; i = (i + 1) & mask) {
-            const Slot& s = slots_[i];
-            if (s.value == EMPTY) return EMPTY;
-            if (s.a == k.a && s.b == k.b) return s.value;
-        }
-    }
-    void insert(const Key& k, uint32_t value) {
-        if (2 * (count_ + 1) > slots_.size()) grow();
-        place(k, value);
-        ++count_;
-    }
-
-private:
-    struct Slot {
-        uint64_t a, b;
-        uint32_t value;
-    };
-    void place(const Key& k, uint32_t value) {
-        const size_t mask = slots_.size() - 1;
-        size_t i = static_cast<size_t>(k.a) & mask;
-        while (slots_[i].value != EMPTY) i = (i + 1) & mask;
-        slots_[i] = Slot{k.a, k.b, value};
-    }
-    void grow() {
-        std::vector<Slot> old(2 * slots_.size(), Slot{0, 0, EMPTY});
-        old.swap(slots_);
-        for (const Slot& s : old)
-            if (s.value != EMPTY) place(Key{s.a, s.b}, s.value);
-    }
-    std::vector<Slot> slots_;
-    size_t count_ = 0;
-};
-
 using Sorted = SmallVec<int, 24>;
 inline void sortededges(const ParamList& coal, Sorted& out) {
     out.clear();
@@ -168,7 +119,7 @@ struct Builder {
         sortededges(coal, s);
         Hasher h;
         for (int p : s) h.add(static_cast<uint64_t>(p));
-        const Key k{h.a, h.b};
+        const Key128 k{h.a, h.b};
         const uint32_t found = sets.find(k);
         if (found != KeyTable::EMPTY) return static_cast<int32_t>(found);
         const uint32_t id = static_cast<uint32_t>(dag.setoff.size() - 1);
@@ -186,7 +137,7 @@ struct Builder {
     }
 
     uint32_t add(const RecursiveCFEquation& e, const EqnHash* h) {
-        const Key key{h->a, h->b};
+        const Key128 key{h->a, h->b};
         const uint32_t found = ids.find(key);
         if (found != KeyTable::EMPTY) return found;
         EqnDag::Node n;
@@ -262,6 +213,7 @@ struct Builder {
 
 std::vector<EqnHash> hashequation(const RecursiveCFEquation& eqn) {
     std::vector<EqnHash> out;
+    out.reserve(32);
     hashnode(eqn, out);
     return out;
 }

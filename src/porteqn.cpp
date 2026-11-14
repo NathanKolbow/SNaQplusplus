@@ -224,16 +224,17 @@ RecursiveCFEquation PortEquationBuilder::recur(const State& start, NodeId top, i
             const int x = at[0];
             // The nodes where the lineage can first meet another one: if there
             // is only one, it gets there alone whatever the edges it takes.
-            static thread_local std::vector<uint64_t> others, seen;
-            static thread_local std::vector<NodeId> todo;
-            others.assign(W_, 0);
-            seen.assign(W_, 0);
+            SmallVec<uint64_t, 8> others, seen;
+            SmallVec<NodeId, 32> todo;
+            for (size_t w = 0; w < W_; ++w) {
+                others.push_back(0);
+                seen.push_back(0);
+            }
             for (int k = 0; k < 4; ++k) {
                 if (k == x) continue;
                 const uint64_t* a = ancestors(st[static_cast<size_t>(k)]);
                 for (size_t w = 0; w < W_; ++w) others[w] |= a[w];
             }
-            todo.clear();
             todo.push_back(umin);
             todo.push_back(umaj);
             NodeId contact = NONE;
