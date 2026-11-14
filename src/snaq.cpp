@@ -58,20 +58,18 @@ Network lazysnaq(const std::vector<Network>& startnets, bool single_input, const
                         "observed CF of NaN: [" + nevershown + "].");
 
     CFSource q = CFSource::lazy(&lazyq);
-    std::vector<Network> all_nets = multisearch(startnets, single_input, q, o.hmax, o, 0.0);
-    long long nusedfinal =
-        rescoreonsharedquartets(all_nets, q, o.propQuartetsFinal, o.seed, o.rho, o.threads, o.geneWeights);
-    size_t bestidx = 0;
-    for (size_t k = 1; k < all_nets.size(); ++k)
-        if (scorerank(all_nets[k].fscore) > scorerank(all_nets[bestidx].fscore)) bestidx = k;
-    // QUIRK: `bestidx` is the position among the runs' networks sorted by their
-    // (not comparable) per-run scores, not the run number.
-    logmessage(o.filename, "snaq! (lazy DataCF): selected run " + std::to_string(bestidx + 1) + " of " +
-                               std::to_string(o.runs) +
-                               " as the best network after fair comparison (SNaQscore = " +
-                               julia_float(julia_round(all_nets[bestidx].fscore, 5)) + " on " +
-                               std::to_string(nusedfinal) + " shared quartets).");
-    return finish(std::move(all_nets[bestidx]));
+    // As lazysnaq!: no parameter re-optimization after a run (propQuartetsFinal
+    // = 0 for the runs); the networks of all runs are compared on one shared
+    // sample of the quartets, with the parameters fitted during their search.
+    // (SNaQ.jl sorts the output files by the per-run scores, which are not
+    // comparable, and only returns the network selected on the shared quartets;
+    // here the output files are sorted by the scores on the shared quartets,
+    // so their first network is the one that is returned.)
+    std::vector<Network> all_nets = multisearch(startnets, single_input, q, o.hmax, o, 0.0, o.propQuartetsFinal);
+    logmessage(o.filename, "snaq! (lazy DataCF): selected the best network after fair comparison of the " +
+                               std::to_string(o.runs) + " runs on shared quartets (SNaQscore = " +
+                               julia_float(julia_round(all_nets[0].fscore, 5)) + ").");
+    return finish(std::move(all_nets[0]));
 }
 
 }  // namespace

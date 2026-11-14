@@ -707,7 +707,7 @@ long long rescoreonsharedquartets(std::vector<Network>& nets, const CFSource& q,
 }
 
 std::vector<Network> multisearch(std::vector<Network> N, bool single_input, const CFSource& q, int hmax,
-                                 const SnaqOptions& o, double propQuartetsFinal) {
+                                 const SnaqOptions& o, double propQuartetsFinal, double rescoreProp) {
     const int runs = o.runs;
     if (!(runs > 0)) throw SnaqError("runs must be > 0 (runs = " + std::to_string(runs) + ").");
     if (!single_input && N.size() != 1 && static_cast<int>(N.size()) != runs)
@@ -810,13 +810,15 @@ std::vector<Network> multisearch(std::vector<Network> N, bool single_input, cons
     if (err) std::rethrow_exception(err);
     const std::string elapsed = time_elapsed(wall_time() - starttime);
 
-    if (0 < propQuartetsFinal && propQuartetsFinal < 1) {
+    const double sharedprop =
+        rescoreProp > 0 ? rescoreProp : (0 < propQuartetsFinal && propQuartetsFinal < 1 ? propQuartetsFinal : 0.0);
+    if (sharedprop > 0) {
         long long nused =
-            rescoreonsharedquartets(all_nets, q, propQuartetsFinal, o.seed, o.rho, nthreads_total, o.geneWeights);
+            rescoreonsharedquartets(all_nets, q, sharedprop, o.seed, o.rho, nthreads_total, o.geneWeights);
         if (!filename.empty())
             logmessage(filename, "Re-scored the networks of all " + std::to_string(runs) + " runs on the same " +
                                      std::to_string(nused) + " quartets (propQuartetsFinal = " +
-                                     julia_float(propQuartetsFinal) + ").");
+                                     julia_float(sharedprop) + ").");
     }
 
     std::vector<size_t> sort_idx(all_nets.size());

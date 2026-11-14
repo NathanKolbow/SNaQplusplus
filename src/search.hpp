@@ -133,8 +133,15 @@ Network search(Network N, const CFSource& q, int hmax, const SnaqOptions& o, lon
 
 // SNaQ's `multisearch`: returns the networks of all runs, sorted by score
 // (best first). `startnets` has length 1 or `o.runs`.
+//
+// Runs that use a sample of the quartets (propQuartets < 1) each draw their
+// own, so their scores are not comparable. When 0 < propQuartetsFinal < 1, or
+// when `rescoreProp` > 0 (which is then used in place of propQuartetsFinal),
+// the networks of all runs are scored on one shared sample of the quartets
+// (rescoreonsharedquartets) before they are sorted and written to the output
+// files.
 std::vector<Network> multisearch(std::vector<Network> startnets, bool single_input, const CFSource& q, int hmax,
-                                 const SnaqOptions& o, double propQuartetsFinal);
+                                 const SnaqOptions& o, double propQuartetsFinal, double rescoreProp = 0.0);
 
 // rescoreonsharedquartets!(nets, q, propQuartetsFinal, seed, ρ)
 long long rescoreonsharedquartets(std::vector<Network>& nets, const CFSource& q, double propQuartetsFinal,

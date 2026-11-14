@@ -221,6 +221,56 @@ TEST(PropQuartets, LazyIsTheDefaultBelowOne) {
     std::filesystem::remove_all(dir);
 }
 
+TEST(PropQuartets, LazyOutputFilesAreSortedByTheSharedQuartets) {
+    // With the lazy DataCF every run scores its network on its own sample of
+    // quartets. The output files list the networks by their scores on the
+    // quartets shared by all runs, so the first network of .out is the
+    // network that snaq returns.
+    Network falsetre = nw(kFalse);
+    auto gts = read_trees("propq_gts.tre");
+    const std::string dir = tempdir();
+    SnaqOptions o = quiet_options();
+    o.hmax = 1;
+    o.threads = 1;
+    o.runs = 6;
+    o.Nfail = 10;
+    o.seed = 7;
+    o.propQuartets = 0.6;
+    o.propQuartetsFinal = 0.5;
+    o.lazy = true;
+    o.filename = dir + "/lz";
+    Network best = snaq({falsetre}, true, gts, o);
+    const std::string out = slurp(dir + "/lz.out"), log = slurp(dir + "/lz.log");
+    // first line: the returned network's score
+    std::smatch m;
+    ASSERT_TRUE(std::regex_search(out, m, std::regex("SNaQ score = (\\S+)")));
+    EXPECT_NEAR(std::stod(m[1]), best.fscore, 1e-12);
+    // the list of runs: scores on the shared quartets, best first
+    std::vector<double> scores;
+    std::vector<std::string> newicks;
+    std::istringstream lines(out);
+    std::string line;
+    const std::regex item("^ (\\(.*;), with SNaQ score (\\S+)$");
+    while (std::getline(lines, line))
+        if (std::regex_match(line, m, item)) {
+            newicks.push_back(m[1]);
+            scores.push_back(std::stod(m[2]));
+        }
+    ASSERT_EQ(scores.size(), 6u);
+    for (size_t k = 1; k < scores.size(); ++k) EXPECT_GE(scores[k - 1], scores[k]);
+    EXPECT_NEAR(scores[0], best.fscore, 1e-12);
+    // they are the scores that rescoreonsharedquartets gives these networks
+    ObservedCFs lazyq(gts, sorted_union_taxa(gts), true);
+    CFSource src = CFSource::lazy(&lazyq);
+    std::vector<Network> nets;
+    for (const std::string& s : newicks) nets.push_back(nw(s));
+    rescoreonsharedquartets(nets, src, o.propQuartetsFinal, o.seed, o.rho, 1);
+    for (size_t k = 0; k < nets.size(); ++k) EXPECT_NEAR(nets[k].fscore, scores[k], 1e-7);
+    EXPECT_NE(log.find("Re-scored the networks of all 6 runs"), std::string::npos);
+    EXPECT_NE(log.find("(lazy DataCF)"), std::string::npos);
+    std::filesystem::remove_all(dir);
+}
+
 // --------------------------------------------------------- lazy DataCF
 
 TEST(LazyDataCF, MatchesNonLazy) {
