@@ -41,6 +41,7 @@ Other `make` targets:
 |---|---|
 | `make install` | install `snaq` to `~/.local/bin` (set `PREFIX=...` to change) |
 | `make test` | build and run the unit tests |
+| `make test-julia` | the unit tests, plus the tests that check `snaq`'s output files with SNaQ.jl |
 | `make clean` | remove `build/` and `bin/` |
 
 The same build with CMake directly:
@@ -57,6 +58,7 @@ Optional CMake settings:
 |---|---|---|
 | `-DCSNAQ_NATIVE=ON` | `OFF` | Compile with `-march=native` |
 | `-DCSNAQ_BUILD_TESTS=ON` | `OFF` | Build the unit tests (downloads GoogleTest) |
+| `-DCSNAQ_JULIA_TESTS=ON` | `OFF` | With the unit tests, also run the tests that check `snaq`'s output files with SNaQ.jl (needs `julia` and the environment in `tools/julia`) |
 | `-DCSNAQ_BUILD_TOOLS=ON` | `OFF` | Build the validation and benchmark tools (`csnaq_check`, `csnaq_classcheck`, `csnaq_bench_fit`, `csnaq_eval`) |
 
 ## Usage
@@ -205,6 +207,7 @@ The best network and its score are also printed to standard output.
 | `tools/csnaq_check.cpp`, `tools/julia/check_networks.jl` | compare expected CFs, SNaQ scores and gradients of the per-quartet equations with SNaQ.jl on the networks of a Newick file (e.g. `checks.net`) |
 | `tools/classcheck.cpp`, `tools/bruteforce_cf.hpp` | compare the quartet-class likelihood with the per-quartet one, both with brute-force expected CFs, the two builders of reticulate class equations, and the evaluation on shared sub-equations with one recursion per class: `build/csnaq_classcheck checks.net 3000` |
 | `validation/checks_net_comparison.csv` | result of that comparison on `checks.net` |
+| `tools/julia/check_restrictions.jl` | runs `snaq` with each restriction flag and checks every network it wrote with SNaQ.jl's `restrictionset` (on a copy, after `semidirectnetwork!`); run by `make test-julia` |
 | `tools/bench_fit.cpp`, `tools/julia/bench_fit.jl` | time numerical parameter optimization in both implementations, with peak memory |
 | `tools/julia/make_test_fixtures.jl` | regenerates the test fixtures in `tests/data/` |
 

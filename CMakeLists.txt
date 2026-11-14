@@ -16,6 +16,7 @@ endif()
 option(CSNAQ_BUILD_TESTS "Build the CSNaQ unit tests (fetches GoogleTest)" OFF)
 option(CSNAQ_NATIVE "Optimize for the build machine's CPU (-march=native)" OFF)
 option(CSNAQ_BUILD_TOOLS "Build the validation and benchmark tools" OFF)
+option(CSNAQ_JULIA_TESTS "With CSNAQ_BUILD_TESTS: also run the tests that check snaq's output with SNaQ.jl (needs julia and the environment of tools/julia)" OFF)
 
 include(FetchContent)
 

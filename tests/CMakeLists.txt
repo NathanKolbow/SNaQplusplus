@@ -19,3 +19,14 @@ endif()
 
 include(GoogleTest)
 gtest_discover_tests(csnaq_tests DISCOVERY_TIMEOUT 120 PROPERTIES TIMEOUT 3600)
+
+# The restriction flags of the snaq program, checked on its output files with
+# SNaQ.jl's restriction functions (tools/julia/check_restrictions.jl).
+if(CSNAQ_JULIA_TESTS)
+    find_program(JULIA_EXECUTABLE julia REQUIRED)
+    add_test(NAME RestrictionFlags.OutputMeetsRestrictionsOfSNaQjl
+             COMMAND ${JULIA_EXECUTABLE} --project=${CMAKE_SOURCE_DIR}/tools/julia
+                     ${CMAKE_SOURCE_DIR}/tools/julia/check_restrictions.jl $<TARGET_FILE:snaq>
+                     ${CMAKE_SOURCE_DIR}/benchmarks/datasets/n20_h2)
+    set_tests_properties(RestrictionFlags.OutputMeetsRestrictionsOfSNaQjl PROPERTIES TIMEOUT 3600)
+endif()

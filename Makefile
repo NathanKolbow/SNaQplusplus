@@ -5,7 +5,7 @@ BUILD_DIR ?= build
 PREFIX    ?= $(HOME)/.local
 JOBS      ?= 4
 
-.PHONY: all snaq install test clean tools bench bench-quick bench-fit bench-julia bench-report
+.PHONY: all snaq install test test-julia clean tools bench bench-quick bench-fit bench-julia bench-report
 
 all: snaq
 
@@ -24,6 +24,13 @@ install: snaq
 
 test:
 	cmake -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Release -DCSNAQ_BUILD_TESTS=ON
+	cmake --build $(BUILD_DIR) --config Release --parallel $(JOBS)
+	ctest --test-dir $(BUILD_DIR) --output-on-failure
+
+# The unit tests, plus the tests that check snaq's output files with SNaQ.jl
+# (needs julia and the environment of tools/julia: see tools/julia/setup.jl).
+test-julia:
+	cmake -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Release -DCSNAQ_BUILD_TESTS=ON -DCSNAQ_JULIA_TESTS=ON
 	cmake --build $(BUILD_DIR) --config Release --parallel $(JOBS)
 	ctest --test-dir $(BUILD_DIR) --output-on-failure
 
