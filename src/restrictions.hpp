@@ -16,6 +16,8 @@ struct Restrictions {
     bool rooted_tree_child = false;
     bool weakly_tree_child = false;
     bool strongly_tree_child = false;
+    // SNaQ.jl's tcgidentifiable (identifiability.hpp); ANDed with the others.
+    bool tcg_identifiable = false;
     // A user-supplied restriction function (Julia: `restrictions=f`),
     // described as "user-supplied function `custom_name`".
     std::function<bool(Network&)> custom;

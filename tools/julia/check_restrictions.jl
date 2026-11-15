@@ -1,9 +1,10 @@
 # Test of the restriction flags of the snaq program (--max_level, --galled_tree,
 # --galled_network, --rooted_tree_child, --weakly_tree_child,
-# --strongly_tree_child): runs snaq with each of them, reads the networks it
+# --strongly_tree_child, --tcg_identifiable): runs snaq with each of them, reads the networks it
 # wrote (the best network and the network of every run, from <filename>.out
 # and <filename>.networks) and checks every one of them against the same
-# restriction with SNaQ.jl's own functions (SNaQ.restrictionset).
+# restriction with SNaQ.jl's own functions (SNaQ.restrictionset, or
+# SNaQ.tcgidentifiable for --tcg_identifiable).
 #
 # Each network is checked as SNaQ.jl's search checks its candidates: on a copy
 # made with SNaQ.deepcopynetwork, after SNaQ.semidirectnetwork!.
@@ -26,7 +27,7 @@ const hmax = length(ARGS) > 2 ? parse(Int, ARGS[3]) : 4
 const runs = length(ARGS) > 3 ? parse(Int, ARGS[4]) : 16
 const nfail = length(ARGS) > 4 ? parse(Int, ARGS[5]) : 25
 
-# (name, snaq flags, keyword arguments of SNaQ.restrictionset)
+# (name, snaq flags, keyword arguments of SNaQ.restrictionset, or a SNaQ.jl restriction function)
 const cases = [
     ("max_level 0", ["--max_level", "0"], (max_level = 0,)),
     ("max_level 1", ["--max_level", "1"], (max_level = 1,)),
@@ -48,6 +49,9 @@ const cases = [
     # with the sweep of the local moves, which proposes moves by another route
     ("max_level 1 + sweep", ["--max_level", "1", "--sweep"], (max_level = 1,)),
     ("strongly_tree_child + sweep", ["--strongly_tree_child", "--sweep"], (strongly_tree_child = true,)),
+    # port of SNaQ.jl's tcgidentifiable
+    ("tcg_identifiable", ["--tcg_identifiable"], SNaQ.tcgidentifiable),
+    ("tcg_identifiable + sweep", ["--tcg_identifiable", "--sweep"], SNaQ.tcgidentifiable),
     # hyphenated spellings of the flags
     ("max-level 1 (hyphenated)", ["--max-level", "1"], (max_level = 1,)),
     ("galled-network (hyphenated)", ["--galled-network"], (galled_network = true,)),
@@ -95,7 +99,7 @@ function main()
     end
     @printf("%-36s %9s %9s %10s   %s\n", "restriction", "networks", "violate", "max hybrids", "rejected among the networks found without restriction")
     for (name, flags, kw) in cases
-        restriction = SNaQ.restrictionset(; kw...)
+        restriction = kw isa Function ? kw : SNaQ.restrictionset(; kw...)
         outroot = joinpath(tmp, replace(name, r"[^A-Za-z0-9]+" => "_"))
         if !runsnaq(flags, outroot, 1)
             failures += 1

@@ -3,6 +3,7 @@
 #include <tuple>
 #include <vector>
 
+#include "identifiability.hpp"
 #include "network_manip.hpp"
 #include "snaq_network.hpp"
 
@@ -10,7 +11,7 @@ namespace csnaq {
 
 bool Restrictions::any() const {
     return static_cast<bool>(custom) || max_level >= 0 || galled_tree || galled_network || rooted_tree_child || weakly_tree_child ||
-           strongly_tree_child;
+           strongly_tree_child || tcg_identifiable;
 }
 
 namespace {
@@ -64,6 +65,12 @@ bool Restrictions::operator()(Network& net) const {
     } else if (strongly_tree_child) {
         if (!std::get<2>(istreechild(c))) return false;
     }
+    if (tcg_identifiable) {
+        // tcgidentifiable rejects rooted networks; directedges set c.isrooted,
+        // so the copy keeps the flag of the network being checked.
+        c.isrooted = net.isrooted;
+        if (!tcgidentifiable(c)) return false;
+    }
     return true;
 }
 
@@ -81,6 +88,7 @@ std::string Restrictions::describe() const {
         parts.push_back("weakly tree-child networks");
     else if (strongly_tree_child)
         parts.push_back("strongly tree-child networks");
+    if (tcg_identifiable) parts.push_back("networks passing tcgidentifiable");
     if (parts.empty()) return "none (any network with at most hmax reticulations)";
     std::string out = parts[0];
     for (size_t k = 1; k < parts.size(); ++k) out += " and " + parts[k];

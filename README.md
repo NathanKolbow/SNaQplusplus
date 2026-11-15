@@ -94,6 +94,8 @@ value. The one exception is `ρ`, which is `--rho`. Run `snaq --help` for the fu
   (`--updateBL false` or `--updateBL=false`).
 - **Restrictions:** these flags mirror `restrictionset`: `--max_level`, `--galled_tree`,
   `--galled_network`, `--rooted_tree_child`, `--weakly_tree_child` and `--strongly_tree_child`.
+  `--tcg_identifiable` ports SNaQ.jl's `tcgidentifiable` function (`restrictions=tcgidentifiable`;
+  `src/identifiability.cpp`). It is combined with the other flags by logical AND.
 - **Advanced:** these are search keyword arguments that `snaq!` passes through:
   `--maxeval`, `--liktolAbs`, `--liktolRel`, `--opt_maxeval` and `--logprefix`.
 - **Not in SNaQ.jl:** these flags control what `snaq` does differently from SNaQ.jl (see

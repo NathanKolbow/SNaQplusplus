@@ -60,6 +60,7 @@ add_library(csnaq_core STATIC
     src/compare.cpp
     src/moves.cpp
     src/restrictions.cpp
+    src/identifiability.cpp
     src/search.cpp
     src/snaq.cpp
     src/util.cpp)
@@ -104,6 +105,11 @@ target_link_libraries(csnaq_bench_fit PRIVATE csnaq_core)
 # Accuracy evaluation used by the benchmark framework (benchmarks/bench.py).
 add_executable(csnaq_eval tools/eval.cpp)
 target_link_libraries(csnaq_eval PRIVATE csnaq_core)
+
+# Prints tcgidentifiable(N) for each Newick line (compared against SNaQ.jl by
+# tools/julia/tcgcheck.jl).
+add_executable(csnaq_tcgcheck tools/tcgcheck.cpp)
+target_link_libraries(csnaq_tcgcheck PRIVATE csnaq_core)
 endif()
 
 # --------------------------------------------------------------------------

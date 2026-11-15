@@ -99,6 +99,8 @@ restrictions (as in SNaQ.jl's restrictionset; default: none):
   --rooted_tree_child       rooted tree-child networks
   --weakly_tree_child       weakly tree-child networks
   --strongly_tree_child     strongly tree-child networks
+  --tcg_identifiable        networks passing SNaQ.jl's tcgidentifiable (identifiable
+                            topology and branch parameters; trees always pass)
 
 advanced (keyword arguments snaq! passes to each search):
   --maxeval INT             maximum number of search iterations (default: 100000000)
@@ -204,6 +206,7 @@ CliArgs parse_cli(const std::vector<std::string>& args) {
     boolean("--rooted_tree_child", &o.restrictions.rooted_tree_child);
     boolean("--weakly_tree_child", &o.restrictions.weakly_tree_child);
     boolean("--strongly_tree_child", &o.restrictions.strongly_tree_child);
+    boolean("--tcg_identifiable", &o.restrictions.tcg_identifiable);
     integer("--maxeval", &o.maxeval);
     num("--liktolAbs", &o.liktolAbs);
     num("--liktolRel", &o.liktolRel);
@@ -225,7 +228,7 @@ CliArgs parse_cli(const std::vector<std::string>& args) {
     integer("--threads", &o.threads);
     // hyphenated aliases for the restriction / advanced flags
     for (const char* name : {"max_level", "galled_tree", "galled_network", "rooted_tree_child", "weakly_tree_child",
-                             "strongly_tree_child", "opt_maxeval"}) {
+                             "strongly_tree_child", "tcg_identifiable", "opt_maxeval"}) {
         std::string alias = std::string("--") + name;
         for (auto& c : alias)
             if (c == '_') c = '-';
