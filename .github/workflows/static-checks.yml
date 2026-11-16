@@ -1,8 +1,8 @@
 # Formatting and static analysis.
 #  - clang-format: in pull requests, the changed lines must match .clang-format
 #    (existing code is not reformatted). Blocking.
-#  - cppcheck: reports findings as annotations on the pull request. Not
-#    blocking yet; switch --error-exitcode to 1 once the findings are cleared.
+#  - cppcheck: any finding fails the job. Silence a false positive with a
+#    `// cppcheck-suppress <id>` comment on the line above it.
 name: Static checks
 
 on:
@@ -53,12 +53,13 @@ jobs:
         run: |
           cppcheck --std=c++17 --language=c++ --enable=warning,performance,portability \
             --inline-suppr --suppress=missingIncludeSystem --quiet -j 4 \
-            --error-exitcode=0 -I src -I apps \
+            --error-exitcode=1 -I src -I apps \
             --template='{file}:{line}:{column}: {severity} ({id}): {message}' \
-            src apps tools 2> cppcheck.txt
+            src apps tools 2> cppcheck.txt && status=0 || status=$?
           echo "$(wc -l < cppcheck.txt) finding(s)"
           cat cppcheck.txt
-          sed -E 's/^([^:]+):([0-9]+):([0-9]+): (.*)$/::warning file=\1,line=\2,col=\3::cppcheck \4/' cppcheck.txt
+          sed -E 's/^([^:]+):([0-9]+):([0-9]+): (.*)$/::error file=\1,line=\2,col=\3::cppcheck \4/' cppcheck.txt
+          exit $status
 
   # CodeQL code scanning is free for public repositories (on private ones it
   # needs a paid GitHub Advanced Security license), so it runs only once the

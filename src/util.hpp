@@ -97,11 +97,18 @@ private:
 template <class T, int N>
 class SmallVec {
 public:
+    // inline_ is left uninitialized on purpose: only its first size_ slots are
+    // ever read, and copy_from/move_from copy exactly those (hence the cppcheck
+    // suppressions below).
+    // cppcheck-suppress uninitMemberVar
     SmallVec() = default;
+    // cppcheck-suppress uninitMemberVar
     SmallVec(std::initializer_list<T> il) {
         for (const T& x : il) push_back(x);
     }
+    // cppcheck-suppress uninitMemberVar
     SmallVec(const SmallVec& o) { copy_from(o); }
+    // cppcheck-suppress operatorEqVarError
     SmallVec& operator=(const SmallVec& o) {
         if (this != &o) {
             clear();
@@ -109,7 +116,9 @@ public:
         }
         return *this;
     }
+    // cppcheck-suppress uninitMemberVar
     SmallVec(SmallVec&& o) noexcept { move_from(std::move(o)); }
+    // cppcheck-suppress operatorEqVarError
     SmallVec& operator=(SmallVec&& o) noexcept {
         if (this != &o) {
             free_heap();

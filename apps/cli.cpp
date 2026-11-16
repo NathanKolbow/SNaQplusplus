@@ -267,7 +267,7 @@ CliArgs parse_cli(const std::vector<std::string>& args) {
         auto eq = tok.find('=');
         if (tok.rfind("--", 0) == 0 && eq != std::string::npos) {
             value = tok.substr(eq + 1);
-            tok = tok.substr(0, eq);
+            tok.resize(eq);
             has_value = true;
         }
         auto it = specs.find(tok);

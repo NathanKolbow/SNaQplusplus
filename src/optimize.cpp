@@ -476,6 +476,8 @@ double fitclasses(Network& net, const QuartetClasses& cls, double rho, const Fit
             }
             // L-BFGS started at an optimum can stop on an error (its line search
             // finds nothing better, to rounding): the fit has converged all the same.
+            // (lbfgs, a lambda, sets `converged`; cppcheck misses that.)
+            // cppcheck-suppress incorrectLogicOperator
             if (!converged && newtonconverged && data.evals < maxeval &&
                 maxf - fnewton <= std::max(fo.ftolAbs, fo.ftolRel * std::abs(fnewton)))
                 converged = true;
