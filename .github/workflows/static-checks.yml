@@ -1,0 +1,77 @@
+# Formatting and static analysis.
+#  - clang-format: in pull requests, the changed lines must match .clang-format
+#    (existing code is not reformatted). Blocking.
+#  - cppcheck: reports findings as annotations on the pull request. Not
+#    blocking yet; switch --error-exitcode to 1 once the findings are cleared.
+name: Static checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  clang-format:
+    name: clang-format (changed lines)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Install clang-format
+        run: sudo apt-get update && sudo apt-get install -y clang-format
+      - name: Check formatting of changed lines
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          out=$(git clang-format --diff "$BASE_SHA" -- '*.cpp' '*.hpp' '*.h' || true)
+          if printf '%s' "$out" | grep -q '^diff '; then
+            printf '%s\n' "$out"
+            echo "::error::Changed lines are not formatted. Run: git clang-format $BASE_SHA"
+            exit 1
+          fi
+          echo "Changed lines are formatted."
+
+  cppcheck:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install cppcheck
+        run: sudo apt-get update && sudo apt-get install -y cppcheck
+      - name: Run cppcheck
+        run: >
+          cppcheck --std=c++17 --language=c++ --enable=warning,performance,portability
+          --inline-suppr --suppress=missingIncludeSystem --quiet -j 4
+          --error-exitcode=0 -I src -I apps
+          --template='::warning file={file},line={line},col={column}::cppcheck {severity} ({id}): {message}'
+          src apps tools
+
+  # CodeQL code scanning is free for public repositories (on private ones it
+  # needs a paid GitHub Advanced Security license), so it runs only once the
+  # repository is public.
+  codeql:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          languages: c-cpp
+          build-mode: manual
+      - name: Build
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DSNAQPP_BUILD_TOOLS=ON
+          cmake --build build --parallel 4
+      - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3

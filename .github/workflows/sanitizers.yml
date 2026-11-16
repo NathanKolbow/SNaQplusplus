@@ -1,0 +1,52 @@
+# Runs the unit tests under Clang's sanitizers: AddressSanitizer +
+# UndefinedBehaviorSanitizer (memory errors, leaks, undefined behavior) and
+# ThreadSanitizer (data races). Any report fails the job.
+name: Sanitizers
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sanitize:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ASan + UBSan
+            flags: -fsanitize=address,undefined -fno-sanitize-recover=undefined
+          - name: TSan
+            flags: -fsanitize=thread
+    env:
+      CC: clang
+      CXX: clang++
+      ASAN_OPTIONS: detect_leaks=1:abort_on_error=1:strict_string_checks=1
+      UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+      TSAN_OPTIONS: halt_on_error=1:second_deadlock_stack=1
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # The kernel's default address-space randomization on these runners
+      # breaks the sanitizer runtimes' memory layout (mainly TSan).
+      - name: Reduce ASLR entropy
+        run: sudo sysctl vm.mmap_rnd_bits=28
+      - name: Configure
+        run: >
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DSNAQPP_BUILD_TESTS=ON
+          "-DCMAKE_C_FLAGS=${{ matrix.flags }} -fno-omit-frame-pointer"
+          "-DCMAKE_CXX_FLAGS=${{ matrix.flags }} -fno-omit-frame-pointer"
+          "-DCMAKE_EXE_LINKER_FLAGS=${{ matrix.flags }}"
+      - name: Build
+        run: cmake --build build --parallel 4
+      - name: Test
+        run: ctest --test-dir build --output-on-failure --parallel 4

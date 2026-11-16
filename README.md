@@ -1,5 +1,10 @@
 # SNaQ++
 
+[![CI](https://github.com/NathanKolbow/SNaQplusplus/actions/workflows/ci.yml/badge.svg)](https://github.com/NathanKolbow/SNaQplusplus/actions/workflows/ci.yml)
+[![Sanitizers](https://github.com/NathanKolbow/SNaQplusplus/actions/workflows/sanitizers.yml/badge.svg)](https://github.com/NathanKolbow/SNaQplusplus/actions/workflows/sanitizers.yml)
+[![Static checks](https://github.com/NathanKolbow/SNaQplusplus/actions/workflows/static-checks.yml/badge.svg)](https://github.com/NathanKolbow/SNaQplusplus/actions/workflows/static-checks.yml)
+[![Release](https://img.shields.io/github/v/release/NathanKolbow/SNaQplusplus)](https://github.com/NathanKolbow/SNaQplusplus/releases/latest)
+
 C++ port of the `snaq!` function of [SNaQ.jl](https://github.com/JuliaPhylo/SNaQ.jl)
 (branch `treechild-galled`, pull request #38): inference of phylogenetic networks
 from gene trees by maximum pseudolikelihood using quartet concordance factors.

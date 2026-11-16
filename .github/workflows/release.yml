@@ -1,0 +1,86 @@
+# On a version tag (v1.2.3), builds snaq for Linux, macOS and Windows and
+# publishes a GitHub Release with the three archives attached.
+# The tag must match the VERSION in CMakeLists.txt.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.asset }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          # Built on the oldest available Ubuntu so the binary runs on older
+          # glibc; libstdc++ is linked statically.
+          - os: ubuntu-22.04
+            asset: linux-x86_64
+            cmake_args: >-
+              "-DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++ -static-libgcc"
+          # One universal binary for Apple Silicon and Intel Macs.
+          - os: macos-latest
+            asset: macos-universal
+            cmake_args: >-
+              "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15
+          # Static C runtime, so no Visual C++ redistributable is needed.
+          - os: windows-latest
+            asset: windows-x86_64
+            cmake_args: >-
+              -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check that the tag matches the project version
+        shell: bash
+        run: |
+          version=$(sed -nE 's/^ *VERSION ([0-9.]+).*/\1/p' CMakeLists.txt | head -1)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match VERSION $version in CMakeLists.txt"
+            exit 1
+          fi
+      - name: Build
+        shell: bash
+        run: |
+          eval "cmake -S . -B build -DCMAKE_BUILD_TYPE=Release ${{ matrix.cmake_args }}"
+          cmake --build build --config Release --parallel 4
+      - name: Smoke test
+        shell: bash
+        run: ./bin/snaq --version
+      - name: Package
+        shell: bash
+        run: |
+          name="snaq-$GITHUB_REF_NAME-${{ matrix.asset }}"
+          mkdir "$name"
+          cp bin/snaq* README.md LICENSE "$name/"
+          if [ "$RUNNER_OS" = Windows ]; then
+            7z a "$name.zip" "$name" > /dev/null
+          else
+            tar czf "$name.tar.gz" "$name"
+          fi
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ matrix.asset }}
+          path: snaq-*.*z*
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "$GITHUB_REF_NAME" dist/*
+          --repo "$GITHUB_REPOSITORY" --title "SNaQ++ $GITHUB_REF_NAME" --generate-notes --verify-tag
