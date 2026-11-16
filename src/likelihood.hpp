@@ -8,7 +8,7 @@
 #include "eqndag.hpp"
 #include "equations.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 // Observed CFs: row-major nq x 3.
 struct CFMatrix {
@@ -157,4 +157,4 @@ double computeSNaQscore_net(Network& N, const CFMatrix& q, double rho = 0.0, int
 // computeexpectedCF(qdata, params, ρ) -> (eCF1, eCF2)
 std::array<double, 2> computeexpectedCF(const QuartetDataImpl& qd, const std::vector<double>& params, double rho);
 
-}  // namespace csnaq
+}  // namespace snaqpp

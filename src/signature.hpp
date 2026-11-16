@@ -6,7 +6,7 @@
 
 #include "network.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 // Hash of the topology of `net` as a semidirected network with labeled
 // leaves: tree edges are undirected, hybrid edges point to their hybrid node,
@@ -21,4 +21,4 @@ namespace csnaq {
 // used to conclude that two topologies are equal.
 uint64_t topologysignature(const Network& net, bool* discrete);
 
-}  // namespace csnaq
+}  // namespace snaqpp

@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace csnaq {
+namespace snaqpp {
 
 namespace {
 
@@ -338,4 +338,4 @@ RecursiveCFEquation PortEquationBuilder::recur(const State& start, NodeId top, i
     }
 }
 
-}  // namespace csnaq
+}  // namespace snaqpp

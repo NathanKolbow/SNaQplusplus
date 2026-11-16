@@ -5,7 +5,7 @@
 
 #include "likelihood.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 namespace {
 
@@ -351,4 +351,4 @@ void EqnDag::derivatives(const double* params, double alpha, Work& w) const {
     }
 }
 
-}  // namespace csnaq
+}  // namespace snaqpp

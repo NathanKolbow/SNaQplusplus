@@ -10,7 +10,7 @@
 #include "parallel.hpp"
 #include "quartets.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 // ------------------------------------------------------------------------
 // ParamMap
@@ -975,4 +975,4 @@ void applyrNNI2update(Network& Nprime, const std::vector<QuartetData>& old_q, st
     });
 }
 
-}  // namespace csnaq
+}  // namespace snaqpp

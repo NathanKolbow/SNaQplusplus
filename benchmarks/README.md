@@ -2,11 +2,11 @@
 
 A fixed set of benchmark suites, a running history of their results, and figures that compare
 versions. Use it to measure every experimental change against SNaQ.jl and against earlier
-versions of CSNaQ: runtime, peak memory and accuracy.
+versions of SNaQ++: runtime, peak memory and accuracy.
 
 **Requirements:**
 - Python 3.8 or later, standard library only.
-- The C++ tools, built with `make tools`, which also runs the `-DCSNAQ_BUILD_TOOLS=ON` build.
+- The C++ tools, built with `make tools`, which also runs the `-DSNAQPP_BUILD_TOOLS=ON` build.
 - Julia with the environment in `tools/julia`, only for benchmarking SNaQ.jl. See
   `tools/julia/setup.jl`.
 
@@ -34,11 +34,11 @@ The same commands with the script directly:
 
 ```sh
 python3 benchmarks/bench.py run --suite standard --label my-idea [--binary path/to/snaq] [--extra-args "..."] [--threads N]
-python3 benchmarks/bench.py run --suite fit --label my-idea [--fit-binary build/csnaq_bench_fit]
+python3 benchmarks/bench.py run --suite fit --label my-idea [--fit-binary build/snaqpp_bench_fit]
 python3 benchmarks/bench.py run-julia --suite standard           # SNaQ.jl, recorded with label "SNaQ.jl"
 python3 benchmarks/bench.py report [--baseline SNaQ.jl] [--labels SNaQ.jl,cpp-v1,my-idea]
 python3 benchmarks/bench.py list
-python3 benchmarks/bench.py rescore                              # same csnaq_eval for every recorded run
+python3 benchmarks/bench.py rescore                              # same snaqpp_eval for every recorded run
 python3 benchmarks/bench.py run --suite fit --label my-idea --extra-args newton   # fit suite: optimizer
 python3 benchmarks/bench.py run --suite standard --cases n10_h1,n20_h2   # a subset of cases
 ```
@@ -65,8 +65,8 @@ For every case, the history records:
 | `peak_rss_mb` | Peak resident set size of the process. For SNaQ.jl this includes the Julia runtime; `base_rss_mb` is the size after loading the packages. |
 | `best_score`, `run_scores`, `median_run_score` | As reported in the `.out` file. |
 | `hwcd` | Hardwired-cluster distance between the best network and the true network (0 means the same topology). |
-| `score_all_quartets` | SNaQ score of the best network, recomputed on the observed CFs of all quartets by `csnaq_eval`. This makes runs that used `propQuartets` < 1 comparable. |
-| `rescored` | `hwcd`, `score_all_quartets` and `score_truth_all_quartets` recomputed by `bench.py rescore` from the saved `.out` file. The report uses these when present, so that all versions are evaluated by the same `csnaq_eval`. Run `rescore` after a change to `csnaq_eval` or to the expected CFs. |
+| `score_all_quartets` | SNaQ score of the best network, recomputed on the observed CFs of all quartets by `snaqpp_eval`. This makes runs that used `propQuartets` < 1 comparable. |
+| `rescored` | `hwcd`, `score_all_quartets` and `score_truth_all_quartets` recomputed by `bench.py rescore` from the saved `.out` file. The report uses these when present, so that all versions are evaluated by the same `snaqpp_eval`. Run `rescore` after a change to `snaqpp_eval` or to the expected CFs. |
 | `score_refit_all_quartets` | SNaQ score of the best network's topology after fitting its parameters to all quartets. Compared with `score_truth_all_quartets`, it measures the topology alone. |
 | `score_truth_all_quartets` | SNaQ score of the true network, after fitting its parameters to all quartets. |
 | `fit_s`, `equations_s`, `score` | Fit suite: best of 3 repeats. |

@@ -8,7 +8,7 @@
 
 #include "network_manip.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 // ------------------------------------------------------------------------
 // hardwired clusters (PhyloNetworks compareNetworks.jl)
@@ -179,4 +179,4 @@ int hardwiredclusterdistance(const Network& n1, const Network& n2, bool rooted) 
     return best;
 }
 
-}  // namespace csnaq
+}  // namespace snaqpp

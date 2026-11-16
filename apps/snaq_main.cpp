@@ -1,4 +1,4 @@
-// `snaq`: command-line front end of CSNaQ.
+// `snaq`: command-line front end of SNaQ++.
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -8,12 +8,12 @@
 #include "newick.hpp"
 #include "snaq.hpp"
 
-#ifndef CSNAQ_VERSION
-#define CSNAQ_VERSION "0.1.0"
+#ifndef SNAQPP_VERSION
+#define SNAQPP_VERSION "0.1.0"
 #endif
 
 int main(int argc, char** argv) {
-    using namespace csnaq;
+    using namespace snaqpp;
     std::vector<std::string> args(argv + 1, argv + argc);
     if (args.empty()) {
         std::cout << short_usage();
@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
             return 0;
         }
         if (a.version) {
-            std::cout << "snaq (CSNaQ) " << CSNAQ_VERSION << "\n";
+            std::cout << "snaq (SNaQ++) " << SNAQPP_VERSION << "\n";
             return 0;
         }
         if (!a.optimize.empty()) {

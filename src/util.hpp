@@ -14,7 +14,7 @@
 #include <intrin.h>
 #endif
 
-namespace csnaq {
+namespace snaqpp {
 
 // Generic error (mirrors Julia's `error(...)`).
 struct SnaqError : public std::runtime_error {
@@ -288,4 +288,4 @@ private:
     size_t count_ = 0;
 };
 
-}  // namespace csnaq
+}  // namespace snaqpp

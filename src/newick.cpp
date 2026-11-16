@@ -8,7 +8,7 @@
 
 #include "network_manip.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 namespace {
 
@@ -578,4 +578,4 @@ std::string writenewick(Network& net, bool round, int digits, bool di, bool inte
     return s;
 }
 
-}  // namespace csnaq
+}  // namespace snaqpp

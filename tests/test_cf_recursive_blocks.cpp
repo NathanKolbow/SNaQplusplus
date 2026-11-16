@@ -3,8 +3,8 @@
 
 #include "test_support.hpp"
 
-using namespace csnaq;
-using namespace csnaq::test;
+using namespace snaqpp;
+using namespace snaqpp::test;
 
 namespace {
 RecursiveCFEquation make_eqn(bool can_coal, std::initializer_list<int> coal, int which, int divH) {

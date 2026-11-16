@@ -19,9 +19,9 @@
 #include "compare.hpp"
 #include "snaq_network.hpp"
 
-namespace csnaq::test {
+namespace snaqpp::test {
 
-using csnaq::hardwiredclusterdistance;
+using snaqpp::hardwiredclusterdistance;
 
 // Path of a fixture file in tests/data.
 std::string data(const std::string& file);
@@ -51,4 +51,4 @@ Network random_tree(int n, Rng& rng);
 // Default options for snaq! calls in tests: no output files, few threads.
 SnaqOptions quiet_options();
 
-}  // namespace csnaq::test
+}  // namespace snaqpp::test

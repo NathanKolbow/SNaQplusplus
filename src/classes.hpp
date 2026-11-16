@@ -24,7 +24,7 @@
 #include "network.hpp"
 #include "optimize.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 // The quartets used by a search: all of them, or a sample.
 struct QuartetList {
@@ -140,4 +140,4 @@ double fitclasses(Network& net, const QuartetClasses& cls, double rho, const Fit
 // SNaQ score of `net` at its current parameter values.
 double scoreclasses(const Network& net, const QuartetClasses& cls, double rho, int nthreads = 1);
 
-}  // namespace csnaq
+}  // namespace snaqpp

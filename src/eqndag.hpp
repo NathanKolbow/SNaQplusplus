@@ -22,7 +22,7 @@
 
 #include "equations.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 struct ClassEqn;
 
@@ -78,4 +78,4 @@ public:
     std::vector<uint32_t> root;
 };
 
-}  // namespace csnaq
+}  // namespace snaqpp

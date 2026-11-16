@@ -10,7 +10,7 @@
 
 #include "network.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 // Number -> parameter index map (SNaQ's `param_map::Dict{Int,Int}`), keyed by
 // edge numbers (branch lengths) and hybrid node numbers (γ).
@@ -155,4 +155,4 @@ void applyrNNI1update(Network& Nprime, const std::vector<QuartetData>& old_q, st
 void applyrNNI2update(Network& Nprime, const std::vector<QuartetData>& old_q, std::vector<QuartetData>& new_q,
                       const ParamMap& pm, NodeId s, NodeId t, NodeId u, NodeId v, int nthreads);
 
-}  // namespace csnaq
+}  // namespace snaqpp

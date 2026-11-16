@@ -11,8 +11,8 @@
 #include "search.hpp"
 #include "test_support.hpp"
 
-using namespace csnaq;
-using namespace csnaq::test;
+using namespace snaqpp;
+using namespace snaqpp::test;
 
 namespace {
 

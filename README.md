@@ -1,4 +1,4 @@
-# CSNaQ
+# SNaQ++
 
 C++ port of the `snaq!` function of [SNaQ.jl](https://github.com/JuliaPhylo/SNaQ.jl)
 (branch `treechild-galled`, pull request #38): inference of phylogenetic networks
@@ -21,12 +21,12 @@ The build produces one program, `snaq`.
 Download the code, then build it with one command.
 
 ```sh
-git clone https://github.com/NathanKolbow/CSNaQ.git
-cd CSNaQ
+git clone https://github.com/NathanKolbow/SNaQplusplus.git
+cd SNaQplusplus
 make                      # macOS / Linux
 ```
 
-On Windows, or on any system without `make`, run this instead from the `CSNaQ` folder:
+On Windows, or on any system without `make`, run this instead from the `SNaQplusplus` folder:
 
 ```sh
 cmake -P build.cmake
@@ -56,10 +56,10 @@ Optional CMake settings:
 
 | Option | Default | Effect |
 |---|---|---|
-| `-DCSNAQ_NATIVE=ON` | `OFF` | Compile with `-march=native` |
-| `-DCSNAQ_BUILD_TESTS=ON` | `OFF` | Build the unit tests (downloads GoogleTest) |
-| `-DCSNAQ_JULIA_TESTS=ON` | `OFF` | With the unit tests, also run the tests that check `snaq`'s output files with SNaQ.jl (needs `julia` and the environment in `tools/julia`) |
-| `-DCSNAQ_BUILD_TOOLS=ON` | `OFF` | Build the validation and benchmark tools (`csnaq_check`, `csnaq_classcheck`, `csnaq_bench_fit`, `csnaq_eval`) |
+| `-DSNAQPP_NATIVE=ON` | `OFF` | Compile with `-march=native` |
+| `-DSNAQPP_BUILD_TESTS=ON` | `OFF` | Build the unit tests (downloads GoogleTest) |
+| `-DSNAQPP_JULIA_TESTS=ON` | `OFF` | With the unit tests, also run the tests that check `snaq`'s output files with SNaQ.jl (needs `julia` and the environment in `tools/julia`) |
+| `-DSNAQPP_BUILD_TOOLS=ON` | `OFF` | Build the validation and benchmark tools (`snaqpp_check`, `snaqpp_classcheck`, `snaqpp_bench_fit`, `snaqpp_eval`) |
 
 ## Usage
 
@@ -175,7 +175,7 @@ sample, and such scores are not comparable.
 - **Corrected expected CFs.** SNaQ.jl's equations give wrong expected CFs for some quartets of
   some networks: when a reticulation that cannot affect a quartet is removed and this leaves a
   root of degree 2, the root's two edges are fused and one of their two lengths is dropped from
-  the equation. Class equations do not have this error. `csnaq_classcheck` compares both
+  the equation. Class equations do not have this error. `snaqpp_classcheck` compares both
   against a brute-force calculation: on `checks.net`, 88 of 133,552 tested quartets are wrong
   with SNaQ.jl's equations and none with class equations, and the scores from the two sets of
   equations differ for 64 of the 669 networks (on up to 3000 quartets per network).
@@ -184,14 +184,14 @@ sample, and such scores are not comparable.
   the lowest hybrid node, editing each copy, and recursing. `snaq` leaves the network
   unchanged and moves the four lineages up it (`src/porteqn.hpp`). The equations have the same
   value for all parameter values, and are never larger: on `checks.net`,
-  `csnaq_classcheck` finds no difference in score or gradient between the two builders
+  `snaqpp_classcheck` finds no difference in score or gradient between the two builders
   (largest relative difference 1e-11), and 6% fewer equation nodes in total.
 - **Evaluation of reticulate classes.** SNaQ.jl evaluates the equation of each quartet by
   recursion, with a list of the parameters seen on the way down from which it obtains the
   gradient. `snaq` stores every distinct sub-equation of a network's reticulate classes once
   (`src/eqndag.hpp`) and computes its expected CFs and their derivatives once per evaluation;
   classes with the same equation are evaluated together. The values are the same up to
-  rounding: `csnaq_classcheck` compares the score, gradient and curvature with those of one
+  rounding: `snaqpp_classcheck` compares the score, gradient and curvature with those of one
   recursion per class.
 - **Networks are compared by the distance of their score from 0.** The search accepts a
   proposal, and `snaq` picks the best run, by how close the score is to 0 instead of by how
@@ -246,8 +246,8 @@ sample, and such scores are not comparable.
 | Path | Purpose |
 |---|---|
 | `tools/julia/setup.jl` | sets up a Julia environment with SNaQ.jl, expected at `../SNaQ.jl` relative to the repository root |
-| `tools/csnaq_check.cpp`, `tools/julia/check_networks.jl` | compare expected CFs, SNaQ scores and gradients of the per-quartet equations with SNaQ.jl on the networks of a Newick file (e.g. `checks.net`) |
-| `tools/classcheck.cpp`, `tools/bruteforce_cf.hpp` | compare the quartet-class likelihood with the per-quartet one, both with brute-force expected CFs, the two builders of reticulate class equations, and the evaluation on shared sub-equations with one recursion per class: `build/csnaq_classcheck checks.net 3000` |
+| `tools/snaqpp_check.cpp`, `tools/julia/check_networks.jl` | compare expected CFs, SNaQ scores and gradients of the per-quartet equations with SNaQ.jl on the networks of a Newick file (e.g. `checks.net`) |
+| `tools/classcheck.cpp`, `tools/bruteforce_cf.hpp` | compare the quartet-class likelihood with the per-quartet one, both with brute-force expected CFs, the two builders of reticulate class equations, and the evaluation on shared sub-equations with one recursion per class: `build/snaqpp_classcheck checks.net 3000` |
 | `validation/checks_net_comparison.csv` | result of that comparison on `checks.net` |
 | `tools/julia/check_restrictions.jl` | runs `snaq` with each restriction flag and checks every network it wrote with SNaQ.jl's `restrictionset` (on a copy, after `semidirectnetwork!`); run by `make test-julia` |
 | `tools/bench_fit.cpp`, `tools/julia/bench_fit.jl` | time numerical parameter optimization in both implementations, with peak memory |

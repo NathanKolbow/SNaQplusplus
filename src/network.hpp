@@ -13,7 +13,7 @@
 
 #include "util.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 using NodeId = int;
 using EdgeId = int;
@@ -151,4 +151,4 @@ public:
     Network deepcopynetwork() const;
 };
 
-}  // namespace csnaq
+}  // namespace snaqpp

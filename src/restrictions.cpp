@@ -7,7 +7,7 @@
 #include "network_manip.hpp"
 #include "snaq_network.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 bool Restrictions::any() const {
     return static_cast<bool>(custom) || max_level >= 0 || galled_tree || galled_network || rooted_tree_child || weakly_tree_child ||
@@ -95,4 +95,4 @@ std::string Restrictions::describe() const {
     return out;
 }
 
-}  // namespace csnaq
+}  // namespace snaqpp

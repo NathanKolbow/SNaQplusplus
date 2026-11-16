@@ -4,7 +4,7 @@
 #include <regex>
 #include <set>
 
-namespace csnaq {
+namespace snaqpp {
 
 // ------------------------------------------------------------------------
 // directedges! and helpers (manipulateNet.jl)
@@ -1040,4 +1040,4 @@ std::tuple<bool, bool, bool> istreechild(const Network& net) {
     return {isTCrooted, true, !hasWatroot};
 }
 
-}  // namespace csnaq
+}  // namespace snaqpp

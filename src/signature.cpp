@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace csnaq {
+namespace snaqpp {
 
 namespace {
 inline uint64_t mix(uint64_t x) {
@@ -79,4 +79,4 @@ uint64_t topologysignature(const Network& net, bool* discrete) {
     return h;
 }
 
-}  // namespace csnaq
+}  // namespace snaqpp

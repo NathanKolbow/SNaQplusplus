@@ -6,7 +6,7 @@
 
 #include "network.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 struct DeleteOpts {
     bool nofuse = false;
@@ -82,4 +82,4 @@ std::vector<std::vector<NodeId>> biconnectedcomponent_exitnodes(Network& net,
 // istreechild(net) -> (rooted tree-child, weakly tree-child, strongly tree-child)
 std::tuple<bool, bool, bool> istreechild(const Network& net);
 
-}  // namespace csnaq
+}  // namespace snaqpp

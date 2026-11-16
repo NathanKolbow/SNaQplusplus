@@ -14,7 +14,7 @@
 #include <sys/resource.h>
 #endif
 
-namespace csnaq {
+namespace snaqpp {
 
 void warn(const std::string& msg) { std::cerr << "┌ Warning: " << msg << "\n└ @ snaq\n"; }
 
@@ -278,4 +278,4 @@ long long binomial(long long n, long long k) {
     return r;
 }
 
-}  // namespace csnaq
+}  // namespace snaqpp

@@ -13,10 +13,9 @@ all: snaq
 snaq:
 	cmake -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Release
 	cmake --build $(BUILD_DIR) --config Release --parallel $(JOBS)
-	@mkdir -p bin
-	@cp $(BUILD_DIR)/snaq bin/snaq
+	@cmake -E make_directory bin
+	@echo "Done: the snaq program is in bin/"
 	@echo ""
-	@echo "Done: the snaq program is at bin/snaq"
 	@echo "Try: ./bin/snaq --help"
 
 install: snaq
@@ -24,14 +23,14 @@ install: snaq
 	@echo "Installed snaq to $(PREFIX)/bin"
 
 test:
-	cmake -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Release -DCSNAQ_BUILD_TESTS=ON
+	cmake -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Release -DSNAQPP_BUILD_TESTS=ON
 	cmake --build $(BUILD_DIR) --config Release --parallel $(JOBS)
 	ctest --test-dir $(BUILD_DIR) --output-on-failure
 
 # The unit tests, plus the tests that check snaq's output files with SNaQ.jl
 # (needs julia and the environment of tools/julia: see tools/julia/setup.jl).
 test-julia:
-	cmake -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Release -DCSNAQ_BUILD_TESTS=ON -DCSNAQ_JULIA_TESTS=ON
+	cmake -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Release -DSNAQPP_BUILD_TESTS=ON -DSNAQPP_JULIA_TESTS=ON
 	cmake --build $(BUILD_DIR) --config Release --parallel $(JOBS)
 	ctest --test-dir $(BUILD_DIR) --output-on-failure
 
@@ -48,7 +47,7 @@ SUITE   ?= standard
 BENCH_OPTS = --threads $(THREADS) $(if $(LABEL),--label "$(LABEL)") $(if $(ARGS),--extra-args "$(ARGS)")
 
 tools:
-	cmake -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Release -DCSNAQ_BUILD_TOOLS=ON
+	cmake -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Release -DSNAQPP_BUILD_TOOLS=ON
 	cmake --build $(BUILD_DIR) --config Release --parallel $(JOBS)
 
 bench: tools

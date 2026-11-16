@@ -7,7 +7,7 @@
 
 #include "network.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 // Parse one network from an extended Newick string (PhyloNetworks `readnewick`).
 Network readnewick_string(const std::string& newick);
@@ -25,4 +25,4 @@ std::vector<Network> read_networks_arg(const std::string& arg);
 std::string writenewick(Network& net, bool round = false, int digits = 3, bool di = false,
                         bool internallabel = true);
 
-}  // namespace csnaq
+}  // namespace snaqpp

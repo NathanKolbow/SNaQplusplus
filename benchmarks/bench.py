@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CSNaQ benchmark framework.
+"""SNaQ++ benchmark framework.
 
 Runs fixed benchmark suites on a `snaq` binary (or on SNaQ.jl, the baseline),
 appends the results to a running history (benchmarks/history/results.jsonl),
@@ -37,8 +37,8 @@ JULIA_DIR = os.path.join(BENCH, "julia")
 JULIA_PROJECT = os.path.join(ROOT, "tools", "julia")
 
 DEFAULT_SNAQ = os.path.join(ROOT, "build", "snaq")
-DEFAULT_EVAL = os.path.join(ROOT, "build", "csnaq_eval")
-DEFAULT_FIT = os.path.join(ROOT, "build", "csnaq_bench_fit")
+DEFAULT_EVAL = os.path.join(ROOT, "build", "snaqpp_eval")
+DEFAULT_FIT = os.path.join(ROOT, "build", "snaqpp_bench_fit")
 
 
 # --------------------------------------------------------------------------
@@ -242,7 +242,7 @@ def run_snaq_case(args, implementation, case, files, outdir):
     pqf = case.get("propQuartetsFinal", 1.0)
     lazy = bool(case.get("lazy", False))
     seed = case.get("seed", 42)
-    tmp = tempfile.mkdtemp(prefix="csnaq_bench_")
+    tmp = tempfile.mkdtemp(prefix="snaqpp_bench_")
     outroot = os.path.join(tmp, "snaq")
     try:
         if implementation == "cpp":
@@ -597,7 +597,7 @@ RESCORED_KEYS = ("hwcd", "score_all_quartets", "score_truth_all_quartets", "scor
 
 def metric(rec, key):
     """A metric of a record. Accuracy metrics come from `bench.py rescore` when it was run,
-    so that every version is evaluated by the same csnaq_eval."""
+    so that every version is evaluated by the same snaqpp_eval."""
     if rec is None or rec["metrics"].get("failed"):
         return None
     m = rec["metrics"]
@@ -615,7 +615,7 @@ def rescore(args):
     recs = load_history()
     eval_bin = exe(args.eval_binary)
     if not os.path.isfile(eval_bin):
-        sys.exit(f"csnaq_eval not found: {eval_bin} (build the tools first)")
+        sys.exit(f"snaqpp_eval not found: {eval_bin} (build the tools first)")
     commit, dirty = git_info()
     suites = load_suites()
     n = 0
@@ -670,7 +670,7 @@ def report(args):
     suites = load_suites()
     os.makedirs(REPORTS, exist_ok=True)
     chosen = args.labels.split(",") if args.labels else None
-    md = ["# CSNaQ benchmark report", "",
+    md = ["# SNaQ++ benchmark report", "",
           f"Generated {_dt.datetime.now().astimezone().isoformat(timespec='seconds')} by `benchmarks/bench.py report` "
           f"from `benchmarks/history/results.jsonl`. Baseline: **{args.baseline}**.", "",
           "Time is the wall time of the whole `snaq` process for C++. For SNaQ.jl it is the time to build "
@@ -678,12 +678,12 @@ def report(args):
           "not included. Peak memory is the peak resident set size of the process; for SNaQ.jl it includes "
           "the Julia runtime and loaded packages (see `base_rss_mb` in the history). HWCD is the hardwired "
           "cluster distance between the best network and the true network (0: same topology). The score on "
-          "all quartets is the SNaQ score of the best network recomputed by `csnaq_eval` on the observed CFs "
+          "all quartets is the SNaQ score of the best network recomputed by `snaqpp_eval` on the observed CFs "
           "of all quartets, which makes runs that used `propQuartets` < 1 comparable. \"Refitted to all "
           "quartets\" is the score of the best network's topology after its parameters are fitted to all "
           "quartets, as is done for the true network: it compares topologies, whatever quartets the reported "
           "parameters were estimated from. After `bench.py rescore`, "
-          "HWCD and the scores on all quartets of every version come from the same `csnaq_eval`.", ""]
+          "HWCD and the scores on all quartets of every version come from the same `snaqpp_eval`.", ""]
     figures = []
     for sname in [s for s in suites if any(r["suite"] == s for r in recs)]:
         suite = suites[sname]
@@ -804,13 +804,13 @@ def main():
         sp.add_argument("--label", help="name of this version in the history (default: implementation@commit)")
         sp.add_argument("--threads", type=int, default=1, help="threads (default: 1)")
         sp.add_argument("--notes", help="free-text notes stored with the results")
-        sp.add_argument("--eval-binary", default=DEFAULT_EVAL, help="csnaq_eval, for accuracy metrics")
+        sp.add_argument("--eval-binary", default=DEFAULT_EVAL, help="snaqpp_eval, for accuracy metrics")
         sp.add_argument("--repeats", type=int, default=3, help="repeats of each fit case (minimum time is kept)")
 
     r = sub.add_parser("run", help="benchmark a snaq binary (C++)")
     common(r, "standard")
     r.add_argument("--binary", default=DEFAULT_SNAQ, help="snaq binary to benchmark (default: build/snaq)")
-    r.add_argument("--fit-binary", default=DEFAULT_FIT, help="csnaq_bench_fit (for the fit suite)")
+    r.add_argument("--fit-binary", default=DEFAULT_FIT, help="snaqpp_bench_fit (for the fit suite)")
     r.add_argument("--extra-args", help='extra snaq arguments, e.g. "--my-experimental-flag 3"')
 
     j = sub.add_parser("run-julia", help="benchmark SNaQ.jl (the baseline)")
@@ -823,8 +823,8 @@ def main():
 
     sub.add_parser("list", help="list the recorded benchmark runs")
 
-    rs = sub.add_parser("rescore", help="recompute the accuracy metrics of all recorded snaq runs with one csnaq_eval")
-    rs.add_argument("--eval-binary", default=DEFAULT_EVAL, help="csnaq_eval to use (default: build/csnaq_eval)")
+    rs = sub.add_parser("rescore", help="recompute the accuracy metrics of all recorded snaq runs with one snaqpp_eval")
+    rs.add_argument("--eval-binary", default=DEFAULT_EVAL, help="snaqpp_eval to use (default: build/snaqpp_eval)")
     rs.add_argument("--threads", type=int, default=1, help="threads (default: 1)")
 
     args = p.parse_args()

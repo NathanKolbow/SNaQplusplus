@@ -8,7 +8,7 @@
 #include "network_manip.hpp"
 #include "snaq_network.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 namespace {
 
@@ -180,4 +180,4 @@ bool tcgidentifiable(const Network& input) {
     return true;
 }
 
-}  // namespace csnaq
+}  // namespace snaqpp

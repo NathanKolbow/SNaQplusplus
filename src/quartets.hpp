@@ -8,7 +8,7 @@
 
 #include "network.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 // Quartets are ranked 0..C(n,4)-1 in colexicographic order of their sorted
 // 0-based taxon indices (SNaQ's `unrank4taxa`/`whichQuartet`, shifted to 0).
@@ -62,4 +62,4 @@ private:
 // All taxon names appearing in a set of trees, sorted (Julia `sort`).
 std::vector<std::string> sorted_union_taxa(const std::vector<Network>& trees);
 
-}  // namespace csnaq
+}  // namespace snaqpp

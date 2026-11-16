@@ -10,7 +10,7 @@ needed by `snaq!` was ported (see the README), so tests of other SNaQ.jl functio
   (simulated gene trees, `generate_net`, `generate_tree`). Those inputs are generated once by
   `tools/julia/make_test_fixtures.jl` and stored in `tests/data/`.
 - **Moves and optimizer perturbations.** Random choices made during moves or perturbations
-  use CSNaQ's own RNG, so sequences of random moves differ from Julia's.
+  use SNaQ++'s own RNG, so sequences of random moves differ from Julia's.
 - **Warnings.** Assertions on Julia warnings (`@test_logs`, `@test_nowarn`) are checked as
   "does not throw".
 
@@ -18,7 +18,7 @@ needed by `snaq!` was ported (see the README), so tests of other SNaQ.jl functio
 
 | SNaQ.jl test file | C++ test file | Status |
 |---|---|---|
-| `test_gradient_opt/test_CF_recursive_blocks.jl` | `test_cf_recursive_blocks.cpp` | Ported. Not ported: `coalmask` (an internal helper CSNaQ does not use) and direct calls to the internal recursion `computeexpectedCFandgradientrecur!`. Its values and derivatives are checked through `computeexpectedCF` and finite differences instead. |
+| `test_gradient_opt/test_CF_recursive_blocks.jl` | `test_cf_recursive_blocks.cpp` | Ported. Not ported: `coalmask` (an internal helper SNaQ++ does not use) and direct calls to the internal recursion `computeexpectedCFandgradientrecur!`. Its values and derivatives are checked through `computeexpectedCF` and finite differences instead. |
 | `test_gradient_opt/test_opt_API.jl` | `test_opt_api.cpp` | Ported. |
 | `test_gradient_opt/test_search_API.jl` | `test_search_api.cpp` | Ported. |
 | `test_inplace_updates/test_rNNI_inplace.jl` | `test_inplace_and_data.cpp` | Ported with changes; see below. |
@@ -52,13 +52,13 @@ Ported with three changes:
    `search` does.
 2. **Changed parameter layout.** Moves that change which edges carry parameters are not
    compared. An example is a pendant edge becoming internal while the parameter count stays
-   the same. CSNaQ's search rebuilds the equations for such moves.
+   the same. SNaQ++'s search rebuilds the equations for such moves.
 3. **rNNI(1) with `v` the parent of `u`.** These moves are not compared. For them, SNaQ.jl's
    in-place rNNI(1) update gives equations that differ from a full rebuild, because
-   quartets with taxa below `t` are not re-derived. CSNaQ's search rebuilds them.
+   quartets with taxa below `t` are not re-derived. SNaQ++'s search rebuilds them.
 
 Changes 2 and 3 concern SNaQ.jl's in-place updates, which are ported and tested
-(`applyrNNI1update`, `applyrNNI2update`). CSNaQ's search no longer uses them: it works on
+(`applyrNNI1update`, `applyrNNI2update`). SNaQ++'s search no longer uses them: it works on
 quartet classes, and reuses the equations of the classes a move leaves untouched (see the
 README).
 

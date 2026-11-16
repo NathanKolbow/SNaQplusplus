@@ -11,7 +11,7 @@
 #include "likelihood.hpp"
 #include "network.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 enum class Move {
     none,
@@ -118,4 +118,4 @@ MoveParams samplefliphybridparameters(const Network& net, Rng& rng);
 // of its direction. They are the moves that SnaqOptions::sweep evaluates.
 std::vector<std::pair<Move, MoveParams>> localmoves(const Network& net);
 
-}  // namespace csnaq
+}  // namespace snaqpp

@@ -5,8 +5,8 @@
 #include "optimize.hpp"
 #include "test_support.hpp"
 
-using namespace csnaq;
-using namespace csnaq::test;
+using namespace snaqpp;
+using namespace snaqpp::test;
 
 namespace {
 void inplace_matches_rebuild(int type) {
@@ -24,7 +24,7 @@ void inplace_matches_rebuild(int type) {
         OptInfo i1 = gatheroptimizationinfo(c1, true);
         if (!sameparameterlayout(net, c1)) continue;  // search rebuilds the equations of such moves
         // SNaQ.jl's in-place rNNI(1) update misses quartets when v is the
-        // parent of u (t's subtree moves below u): CSNaQ's search rebuilds
+        // parent of u (t's subtree moves below u): SNaQ++'s search rebuilds
         // those, so only the case u = parent of v is compared here.
         if (type == 1 && !(c1.getparents(v1[3]).size() == 1 && c1.getparent_node(v1[3]) == v1[2])) continue;
         std::vector<QuartetData> inplace;

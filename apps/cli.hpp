@@ -6,7 +6,7 @@
 
 #include "search.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 struct CliArgs {
     std::string input;       // -i: gene trees
@@ -29,4 +29,4 @@ std::string usage();
 // Short USAGE message with the most common flags.
 std::string short_usage();
 
-}  // namespace csnaq
+}  // namespace snaqpp

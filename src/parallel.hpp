@@ -8,7 +8,7 @@
 #include <thread>
 #include <vector>
 
-namespace csnaq {
+namespace snaqpp {
 
 // Whether a loop over n items is worth splitting across nthreads
 // (SNaQ's `useparallelloop`).
@@ -49,4 +49,4 @@ void parallel_for(size_t n, int nthreads, F&& f) {
     if (err) std::rethrow_exception(err);
 }
 
-}  // namespace csnaq
+}  // namespace snaqpp

@@ -4,7 +4,7 @@
 
 #include "network.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 // semidirectnetwork!(N; check_conditions)
 void semidirectnetwork(Network& net, bool check_conditions = true);
@@ -26,4 +26,4 @@ bool isgallednetwork(Network& net);
 void removehybrid(Network& net, NodeId hyb, bool minor = true);
 void removeexcessreticulations(Network& net, int hmax);
 
-}  // namespace csnaq
+}  // namespace snaqpp

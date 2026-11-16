@@ -7,7 +7,7 @@
 #include "network_manip.hpp"
 #include "snaq_network.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 const char* move_name(Move m) {
     switch (m) {
@@ -823,4 +823,4 @@ std::pair<Move, MoveParams> generatemoveproposal(Network& Nprime, const QuartetC
     return mp;
 }
 
-}  // namespace csnaq
+}  // namespace snaqpp

@@ -1,7 +1,7 @@
 // Prints SNaQ.jl's tcgidentifiable(N) for each network of a file (one extended
 // Newick per line), after semidirectnetwork!(N), as tools/julia/tcgcheck.jl does.
 //
-// usage: csnaq_tcgcheck <networks file>
+// usage: snaqpp_tcgcheck <networks file>
 // output: one line per network: "true", "false" or "error: <message>"
 #include <fstream>
 #include <iostream>
@@ -11,11 +11,11 @@
 #include "newick.hpp"
 #include "snaq_network.hpp"
 
-using namespace csnaq;
+using namespace snaqpp;
 
 int main(int argc, char** argv) {
     if (argc != 2) {
-        std::cerr << "usage: csnaq_tcgcheck <networks file>\n";
+        std::cerr << "usage: snaqpp_tcgcheck <networks file>\n";
         return 2;
     }
     std::ifstream in(argv[1]);

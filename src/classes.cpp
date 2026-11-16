@@ -7,7 +7,7 @@
 #include "porteqn.hpp"
 #include "quartets.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 QuartetList QuartetList::allquartets(int ntaxa) {
     QuartetList q;
@@ -548,4 +548,4 @@ double scoreclasses(const Network& net, const QuartetClasses& cls, double rho, i
     return evalclassvalues(cls.batch, params.data(), rhotoalpha(rho), ws, nthreads);
 }
 
-}  // namespace csnaq
+}  // namespace snaqpp

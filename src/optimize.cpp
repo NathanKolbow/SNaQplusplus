@@ -8,7 +8,7 @@
 #include <cmath>
 #include <limits>
 
-namespace csnaq {
+namespace snaqpp {
 
 namespace {
 
@@ -521,4 +521,4 @@ double fitnumericalparameters_all(Network& net, const CFMatrix& obs, double rho,
     return fitclasses(net, cls, rho, opt, nthreads);
 }
 
-}  // namespace csnaq
+}  // namespace snaqpp

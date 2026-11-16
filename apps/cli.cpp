@@ -5,7 +5,7 @@
 #include <set>
 #include <thread>
 
-namespace csnaq {
+namespace snaqpp {
 
 namespace {
 
@@ -309,4 +309,4 @@ CliArgs parse_cli(const std::vector<std::string>& args) {
     return a;
 }
 
-}  // namespace csnaq
+}  // namespace snaqpp

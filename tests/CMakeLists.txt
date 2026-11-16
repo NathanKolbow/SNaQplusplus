@@ -1,4 +1,4 @@
-add_executable(csnaq_tests
+add_executable(snaqpp_tests
     test_support.cpp
     test_cf_recursive_blocks.cpp
     test_opt_api.cpp
@@ -9,20 +9,20 @@ add_executable(csnaq_tests
     test_newick_and_cli.cpp
     test_classes.cpp
     test_search_shortcuts.cpp)
-target_link_libraries(csnaq_tests PRIVATE csnaq_core GTest::gtest_main)
-target_include_directories(csnaq_tests PRIVATE ${CMAKE_SOURCE_DIR}/apps ${CMAKE_SOURCE_DIR}/tools)
-target_sources(csnaq_tests PRIVATE ${CMAKE_SOURCE_DIR}/apps/cli.cpp)
-target_compile_definitions(csnaq_tests PRIVATE CSNAQ_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
+target_link_libraries(snaqpp_tests PRIVATE snaqpp_core GTest::gtest_main)
+target_include_directories(snaqpp_tests PRIVATE ${CMAKE_SOURCE_DIR}/apps ${CMAKE_SOURCE_DIR}/tools)
+target_sources(snaqpp_tests PRIVATE ${CMAKE_SOURCE_DIR}/apps/cli.cpp)
+target_compile_definitions(snaqpp_tests PRIVATE SNAQPP_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 if(MSVC)
-    target_compile_options(csnaq_tests PRIVATE /utf-8 /bigobj)
+    target_compile_options(snaqpp_tests PRIVATE /utf-8 /bigobj)
 endif()
 
 include(GoogleTest)
-gtest_discover_tests(csnaq_tests DISCOVERY_TIMEOUT 120 PROPERTIES TIMEOUT 3600)
+gtest_discover_tests(snaqpp_tests DISCOVERY_TIMEOUT 120 PROPERTIES TIMEOUT 3600)
 
 # The restriction flags of the snaq program, checked on its output files with
 # SNaQ.jl's restriction functions (tools/julia/check_restrictions.jl).
-if(CSNAQ_JULIA_TESTS)
+if(SNAQPP_JULIA_TESTS)
     find_program(JULIA_EXECUTABLE julia REQUIRED)
     add_test(NAME RestrictionFlags.OutputMeetsRestrictionsOfSNaQjl
              COMMAND ${JULIA_EXECUTABLE} --project=${CMAKE_SOURCE_DIR}/tools/julia

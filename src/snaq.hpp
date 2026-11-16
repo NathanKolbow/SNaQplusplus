@@ -6,7 +6,7 @@
 #include "network.hpp"
 #include "search.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 // Runs SNaQ from starting topologies and gene trees. `startnets` holds one
 // network (single_input = true, as when `snaq!` is given a HybridNetwork) or
@@ -28,4 +28,4 @@ Network snaq_cfs(const std::vector<Network>& startnets, bool single_input, CFMat
 // geneWeights, outgroup, threads). Returns the network with its score in fscore.
 Network optimize_network(Network net, const std::vector<Network>& genetrees, SnaqOptions o);
 
-}  // namespace csnaq
+}  // namespace snaqpp

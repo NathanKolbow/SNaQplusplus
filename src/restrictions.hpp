@@ -7,7 +7,7 @@
 
 #include "network.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 struct Restrictions {
     int max_level = -1;  // -1: no restriction
@@ -32,4 +32,4 @@ struct Restrictions {
     bool any() const;
 };
 
-}  // namespace csnaq
+}  // namespace snaqpp

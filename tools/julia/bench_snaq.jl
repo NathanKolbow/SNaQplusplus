@@ -1,4 +1,4 @@
-# End-to-end benchmark of snaq! (SNaQ.jl) versus the snaq program (CSNaQ):
+# End-to-end benchmark of snaq! (SNaQ.jl) versus the snaq program (SNaQ++):
 # wall time, SNaQ score and peak memory, each case in a fresh process.
 #
 # usage (from the repository root, after building):

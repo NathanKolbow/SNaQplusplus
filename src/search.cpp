@@ -22,7 +22,7 @@
 #include "signature.hpp"
 #include "snaq_network.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 namespace fs = std::filesystem;
 
@@ -892,4 +892,4 @@ std::vector<Network> multisearch(std::vector<Network> N, bool single_input, cons
     return sorted;
 }
 
-}  // namespace csnaq
+}  // namespace snaqpp

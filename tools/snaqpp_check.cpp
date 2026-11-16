@@ -3,7 +3,7 @@
 // synthetic observed CFs, and write them in a binary format compared against
 // SNaQ.jl by tools/julia/check_networks.jl.
 //
-// usage: csnaq_check <networks file> <line (1-based)> <output file> [max quartets]
+// usage: snaqpp_check <networks file> <line (1-based)> <output file> [max quartets]
 //
 // Binary layout (little endian):
 //   int64 nq, int64 nparam,
@@ -23,7 +23,7 @@
 #include "quartets.hpp"
 #include "snaq_network.hpp"
 
-using namespace csnaq;
+using namespace snaqpp;
 
 // Synthetic observed CFs: must match tools/julia/check_networks.jl
 static void synthetic_obs(long long r, double* row) {
@@ -51,7 +51,7 @@ std::vector<long long> quartet_subset(long long nq, long long cap) {
 
 int main(int argc, char** argv) {
     if (argc < 4) {
-        std::cerr << "usage: csnaq_check <networks file> <line> <output file> [max quartets] [threads]\n";
+        std::cerr << "usage: snaqpp_check <networks file> <line> <output file> [max quartets] [threads]\n";
         return 2;
     }
     try {

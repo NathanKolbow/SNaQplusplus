@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <unordered_map>
 
-namespace csnaq {
+namespace snaqpp {
 
 void Edge::remove_node(NodeId n) {
     if (nnode > 0 && nd[0] == n) {
@@ -344,4 +344,4 @@ void Network::compact_pids() {
     next_pid = k;
 }
 
-}  // namespace csnaq
+}  // namespace snaqpp

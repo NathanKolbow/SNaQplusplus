@@ -7,20 +7,20 @@
 #include <set>
 #include <sstream>
 
-#ifndef CSNAQ_TEST_DATA_DIR
-#error "CSNAQ_TEST_DATA_DIR must be defined"
+#ifndef SNAQPP_TEST_DATA_DIR
+#error "SNAQPP_TEST_DATA_DIR must be defined"
 #endif
 
-namespace csnaq::test {
+namespace snaqpp::test {
 
 namespace fs = std::filesystem;
 
-std::string data(const std::string& file) { return std::string(CSNAQ_TEST_DATA_DIR) + "/" + file; }
+std::string data(const std::string& file) { return std::string(SNAQPP_TEST_DATA_DIR) + "/" + file; }
 
 std::string tempdir() {
     static std::atomic<int> counter{0};
     fs::path p = fs::temp_directory_path() /
-                 ("csnaq_test_" + std::to_string(static_cast<long long>(wall_time() * 1e6)) + "_" +
+                 ("snaqpp_test_" + std::to_string(static_cast<long long>(wall_time() * 1e6)) + "_" +
                   std::to_string(counter++));
     fs::create_directories(p);
     return p.string();
@@ -258,4 +258,4 @@ SnaqOptions quiet_options() {
     return o;
 }
 
-}  // namespace csnaq::test
+}  // namespace snaqpp::test

@@ -9,7 +9,7 @@
 
 #include "network.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 // ------------------------------------------------------------------------
 // Before the first coalescence the four lineages are distinct, and each picks
@@ -113,4 +113,4 @@ struct BruteForceCF {
     }
 };
 
-}  // namespace csnaq
+}  // namespace snaqpp

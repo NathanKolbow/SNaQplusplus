@@ -1,9 +1,9 @@
 # Benchmark numerical parameter optimization: SNaQ.jl's fitnumericalparameters!
-# versus CSNaQ (tools/bench_fit.cpp), on the same networks, observed CFs and
+# versus SNaQ++ (tools/bench_fit.cpp), on the same networks, observed CFs and
 # starting values.
 #
 # usage (from the repository root, after building):
-#   julia -t <threads> --project=tools/julia tools/julia/bench_fit.jl build/csnaq_bench_fit cases.txt out.csv [maxeval]
+#   julia -t <threads> --project=tools/julia tools/julia/bench_fit.jl build/snaqpp_bench_fit cases.txt out.csv [maxeval]
 # where each line of cases.txt is "<network newick file> <gene trees file>".
 
 using SNaQ, PhyloNetworks, Printf

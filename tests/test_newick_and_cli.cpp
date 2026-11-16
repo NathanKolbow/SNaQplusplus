@@ -4,8 +4,8 @@
 #include "quartets.hpp"
 #include "test_support.hpp"
 
-using namespace csnaq;
-using namespace csnaq::test;
+using namespace snaqpp;
+using namespace snaqpp::test;
 
 TEST(Newick, RoundTrip) {
     for (const char* s : {"((a:1.0,b:2.5):0.5,(c:1.0,d:1.0):0.25,e:3.0);",

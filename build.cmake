@@ -1,6 +1,6 @@
 # One-command build on any platform (Windows, macOS, Linux):
 #     cmake -P build.cmake
-# Configures and builds CSNaQ in ./build and copies the program to ./bin.
+# Configures and builds SNaQ++ in ./build and copies the program to ./bin.
 cmake_minimum_required(VERSION 3.16)
 set(src "${CMAKE_CURRENT_LIST_DIR}")
 set(bld "${src}/build")

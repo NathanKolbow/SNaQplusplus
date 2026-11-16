@@ -6,7 +6,7 @@
 #include <thread>
 #include <unordered_map>
 
-namespace csnaq {
+namespace snaqpp {
 
 std::array<int, 4> unrank4taxa(int ntaxa, long long rank) {
     if (rank < 0 || rank >= nchoose4(ntaxa))
@@ -234,4 +234,4 @@ void ObservedCFs::compute_rows(const std::vector<long long>& ranks, double* out,
     for (auto& t : th) t.join();
 }
 
-}  // namespace csnaq
+}  // namespace snaqpp

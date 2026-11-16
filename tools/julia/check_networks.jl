@@ -1,15 +1,15 @@
-# Compare CSNaQ against SNaQ.jl on every network of a Newick file:
+# Compare SNaQ++ against SNaQ.jl on every network of a Newick file:
 # expected quartet CFs (ρ = 0 and ρ = 0.5), SNaQ scores and gradients
 # (ρ = 0 with and without the tree-quartet batch, and ρ = 0.5).
 #
 # usage (from the repository root, after building):
-#   julia -t 8 --project=tools/julia tools/julia/check_networks.jl checks.net build/csnaq_check out.csv [cap] [first] [last]
+#   julia -t 8 --project=tools/julia tools/julia/check_networks.jl checks.net build/snaqpp_check out.csv [cap] [first] [last]
 #
 # For networks with more than `cap` quartets (default 20000), a fixed,
 # evenly spaced subset of `cap` quartets is compared (the same subset on
 # both sides): SNaQ.jl takes hours per network on all C(100,4) quartets.
 # Synthetic observed CFs are a deterministic function of the quartet rank,
-# defined identically in tools/csnaq_check.cpp.
+# defined identically in tools/snaqpp_check.cpp.
 
 using SNaQ, PhyloNetworks, Printf
 

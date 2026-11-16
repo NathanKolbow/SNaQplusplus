@@ -8,7 +8,7 @@
 #include "equations.hpp"
 #include "likelihood.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 enum class FitMethod {
     lbfgs,   // NLopt's LD_LBFGS, as SNaQ.jl
@@ -35,4 +35,4 @@ double fitnumericalparameters(Network& net, const std::vector<QuartetData>& eqns
 double fitnumericalparameters_all(Network& net, const CFMatrix& obs, double rho, const FitOptions& opt,
                                   int nthreads = 1);
 
-}  // namespace csnaq
+}  // namespace snaqpp

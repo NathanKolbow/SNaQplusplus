@@ -6,7 +6,7 @@
 
 #include "network_manip.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 void semidirectnetwork(Network& net, bool check_conditions) {
     if (net.N(net.getroot()).edge.size() == 2) fuseedgesat(net, net.rooti, false);
@@ -112,4 +112,4 @@ void removeexcessreticulations(Network& net, int hmax) {
     }
 }
 
-}  // namespace csnaq
+}  // namespace snaqpp

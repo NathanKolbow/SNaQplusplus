@@ -37,7 +37,7 @@
 #include "equations.hpp"
 #include "network.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 class PortEquationBuilder {
 public:
@@ -88,4 +88,4 @@ private:
 // Number of nodes of an equation tree.
 size_t equationsize(const RecursiveCFEquation& eqn);
 
-}  // namespace csnaq
+}  // namespace snaqpp

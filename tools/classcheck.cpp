@@ -6,7 +6,7 @@
 // It also checks expected CFs at ρ = 0 of some quartets of each network
 // against an independent brute-force calculation.
 //
-// usage: csnaq_classcheck <networks file> [max quartets per network] [first line] [last line]
+// usage: snaqpp_classcheck <networks file> [max quartets per network] [first line] [last line]
 //                         [brute-force quartets per network]
 // prints one line per network and a summary; exits with 1 if a class's expected CFs differ from
 // the brute-force values, if the equations of the two builders (porteqn.hpp) differ in value, or
@@ -30,7 +30,7 @@
 #include "quartets.hpp"
 #include "snaq_network.hpp"
 
-using namespace csnaq;
+using namespace snaqpp;
 
 static void synthetic_obs(long long r, double* row) {
     double a = 1 + ((r * 7) % 11), b = 1 + ((r * 13 + 5) % 7), c = 1 + ((r * 3 + 1) % 5);
@@ -44,7 +44,7 @@ static void synthetic_obs(long long r, double* row) {
 
 int main(int argc, char** argv) {
     if (argc < 2) {
-        std::cerr << "usage: csnaq_classcheck <networks file> [max quartets] [first line] [last line]\n";
+        std::cerr << "usage: snaqpp_classcheck <networks file> [max quartets] [first line] [last line]\n";
         return 2;
     }
     const long long cap = argc > 2 ? std::stoll(argv[2]) : 20000;

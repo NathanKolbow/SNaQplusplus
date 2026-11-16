@@ -4,7 +4,7 @@
 // (equations_seconds is the time to build the network's quartet classes). Compared
 // against SNaQ.jl by tools/julia/bench_fit.jl.
 //
-// usage: csnaq_bench_fit <network newick file> <gene trees file> <maxeval> <threads> [repeats] [lbfgs|newton]
+// usage: snaqpp_bench_fit <network newick file> <gene trees file> <maxeval> <threads> [repeats] [lbfgs|newton]
 // prints: ntaxa nhybrids nquartets nparams score fit_seconds equations_seconds peak_rss_MB
 #include <algorithm>
 #include <fstream>
@@ -19,11 +19,11 @@
 #include "quartets.hpp"
 #include "snaq_network.hpp"
 
-using namespace csnaq;
+using namespace snaqpp;
 
 int main(int argc, char** argv) {
     if (argc < 5) {
-        std::cerr << "usage: csnaq_bench_fit <network> <gene trees> <maxeval> <threads> [repeats]\n";
+        std::cerr << "usage: snaqpp_bench_fit <network> <gene trees> <maxeval> <threads> [repeats]\n";
         return 2;
     }
     try {

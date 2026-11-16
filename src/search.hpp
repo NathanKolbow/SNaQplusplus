@@ -13,7 +13,7 @@
 #include "quartets.hpp"
 #include "restrictions.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 // Observed CFs of all C(n,4) quartets, either materialized (non-lazy DataCF)
 // or computed on demand from gene trees (lazy DataCF).
@@ -71,7 +71,7 @@ struct SnaqOptions {
     double liktolRel = 1e-4;
     int opt_maxeval = -1;  // -1: max(30, number of taxa) with lbfgs, 200 with newton
     std::string logprefix;
-    // CSNaQ options (not in SNaQ.jl)
+    // SNaQ++ options (not in SNaQ.jl)
     // Reject a proposed network without fitting it when an upper bound of its
     // score shows that it cannot be accepted. The proposal is still counted
     // as a failed proposal, so this does not change what a search does.
@@ -156,4 +156,4 @@ long long rescoreonsharedquartets(std::vector<Network>& nets, const CFSource& q,
 // Append `msg` and a newline to "<filename>.log" (SNaQ's logmessage).
 void logmessage(const std::string& filename, const std::string& msg);
 
-}  // namespace csnaq
+}  // namespace snaqpp

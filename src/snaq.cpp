@@ -14,7 +14,7 @@
 #include "quartets.hpp"
 #include "snaq_network.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 namespace {
 
@@ -264,4 +264,4 @@ Network optimize_network(Network net, const std::vector<Network>& genetrees, Sna
     return net;
 }
 
-}  // namespace csnaq
+}  // namespace snaqpp

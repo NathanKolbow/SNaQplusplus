@@ -9,7 +9,7 @@
 
 #include "network.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 // tcgidentifiable(N): true iff N's semi-directed topology and branch parameters
 // are known to be identifiable (trees: true; rooted networks: false).
@@ -24,4 +24,4 @@ std::vector<NodeId> getleavesbelow(const Network& net, const std::vector<NodeId>
 // getdiamondns(cycle): the n0, n1, n2, n3 taxa counts of a 4-cycle.
 std::vector<int> getdiamondns(const Network& net, const std::vector<NodeId>& cycle);
 
-}  // namespace csnaq
+}  // namespace snaqpp

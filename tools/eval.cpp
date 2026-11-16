@@ -1,6 +1,6 @@
 // Accuracy evaluation for the benchmark framework (benchmarks/bench.py).
 //
-// usage: csnaq_eval <estimated network> <true network> <gene trees file> [threads]
+// usage: snaqpp_eval <estimated network> <true network> <gene trees file> [threads]
 //   <estimated network> and <true network>: a Newick string or a file whose
 //   first line is a Newick network; for a SNaQ ".out" file, the first line is
 //   used up to its first ';'.
@@ -27,7 +27,7 @@
 #include "quartets.hpp"
 #include "snaq_network.hpp"
 
-using namespace csnaq;
+using namespace snaqpp;
 
 static Network read_first(const std::string& arg) {
     std::string s = arg;
@@ -44,7 +44,7 @@ static Network read_first(const std::string& arg) {
 
 int main(int argc, char** argv) {
     if (argc < 4) {
-        std::cerr << "usage: csnaq_eval <estimated network> <true network> <gene trees file> [threads]\n";
+        std::cerr << "usage: snaqpp_eval <estimated network> <true network> <gene trees file> [threads]\n";
         return 2;
     }
     try {

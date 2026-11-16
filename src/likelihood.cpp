@@ -10,7 +10,7 @@
 #include "parallel.hpp"
 #include "snaq_network.hpp"
 
-namespace csnaq {
+namespace snaqpp {
 
 double rhotoalpha(double rho) { return rho == 0.0 ? std::numeric_limits<double>::infinity() : (1.0 - rho) / rho; }
 double alphatorho(double alpha) { return std::isinf(alpha) ? 0.0 : 1.0 / (1.0 + alpha); }
@@ -721,9 +721,9 @@ std::array<double, 2> computeexpectedCF(const QuartetDataImpl& qd, const std::ve
     return {r[0], r[1]};
 }
 
-}  // namespace csnaq
+}  // namespace snaqpp
 
-namespace csnaq {
+namespace snaqpp {
 
 CFMatrix computeexpectedCFmatrix(Network& net, double rho, int nthreads) {
     fixnegativeedges(net);
@@ -763,4 +763,4 @@ double computeSNaQscore_net(Network& N, const CFMatrix& q, double rho, int nthre
     return s;
 }
 
-}  // namespace csnaq
+}  // namespace snaqpp
