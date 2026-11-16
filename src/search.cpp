@@ -715,7 +715,13 @@ static std::vector<Network> verifystartingtopologies(const std::vector<Network>&
 }
 
 static std::string abspath(const std::string& p) {
-    return fs::absolute(fs::path(p)).lexically_normal().string();
+    // fs::absolute throws on an empty path with libstdc++ and MSVC (libc++
+    // returns the current directory), and the filename is empty when no log
+    // files are written.
+    if (p.empty()) return p;
+    std::error_code ec;
+    fs::path a = fs::absolute(fs::path(p), ec);
+    return ec ? p : a.lexically_normal().string();
 }
 
 long long rescoreonsharedquartets(std::vector<Network>& nets, const CFSource& q, double propQuartetsFinal,
