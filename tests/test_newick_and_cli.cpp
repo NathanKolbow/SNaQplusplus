@@ -134,3 +134,18 @@ TEST(CLI, UsageErrors) {
     EXPECT_THROW(parse_cli({"-i", "g.tre", "--start-tree", "t", "--bogus"}), UsageError);
     EXPECT_THROW(parse_cli({"-i", "g.tre", "--start-tree", "t", "--hmax", "x"}), UsageError);
 }
+
+TEST(CLI, OptimizeMode) {
+    CliArgs a = parse_cli({"--optimize", "net.tre", "-i", "g.tre", "-o", "out.tre", "--propQuartets", "0.4",
+                           "--optimizer", "lbfgs", "--rho", "0.2", "--seed", "7"});
+    EXPECT_EQ(a.optimize, "net.tre");
+    EXPECT_EQ(a.input, "g.tre");
+    EXPECT_EQ(a.output, "out.tre");
+    EXPECT_DOUBLE_EQ(a.opts.propQuartets, 0.4);
+    EXPECT_EQ(a.opts.optimizer, "lbfgs");
+    EXPECT_DOUBLE_EQ(a.opts.rho, 0.2);
+    EXPECT_EQ(parse_cli({"--optimize", "net.tre", "-i", "g.tre"}).output, "");
+    EXPECT_THROW(parse_cli({"--optimize", "net.tre"}), UsageError);
+    EXPECT_THROW(parse_cli({"--optimize", "net.tre", "-i", "g.tre", "--hmax", "2"}), UsageError);
+    EXPECT_THROW(parse_cli({"--optimize", "net.tre", "-i", "g.tre", "--start-tree", "t.tre"}), UsageError);
+}

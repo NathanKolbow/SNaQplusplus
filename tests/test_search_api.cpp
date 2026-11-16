@@ -2,7 +2,9 @@
 #include <cmath>
 #include <sstream>
 
+#include "compare.hpp"
 #include "search.hpp"
+#include "snaq.hpp"
 #include "test_support.hpp"
 
 using namespace csnaq;
@@ -316,4 +318,30 @@ TEST(SearchAPI, RhoOneDataRhoOne) {
     o.rho = 1.0;
     o.probST = 0.0;
     start_vs_search(o, 1.0, 1.0);
+}
+
+// snaq --optimize: only the parameters of the given topology change.
+TEST(OptimizeNetwork, FitsParametersOfFixedTopology) {
+    std::vector<Network> gts = read_trees("lazy_gts.tre");
+    Network start = read_trees("lazy_tre.tre").at(0);
+    SnaqOptions o;
+    o.seed = 3;
+    o.seed_given = true;
+    Network fitted = optimize_network(start.clone(), gts, o);
+    EXPECT_TRUE(std::isfinite(fitted.fscore));
+    EXPECT_LE(fitted.fscore, 1e-6);
+    EXPECT_EQ(hardwiredclusterdistance(fitted, start, false), 0);
+
+    // a sample of the quartets
+    o.propQuartets = 0.3;
+    Network sub = optimize_network(start.clone(), gts, o);
+    EXPECT_TRUE(std::isfinite(sub.fscore));
+    EXPECT_EQ(hardwiredclusterdistance(sub, start, false), 0);
+    EXPECT_THROW(
+        {
+            SnaqOptions bad = o;
+            bad.propQuartets = 0.0;
+            optimize_network(start.clone(), gts, bad);
+        },
+        SnaqError);
 }

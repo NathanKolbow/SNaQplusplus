@@ -123,6 +123,20 @@ value. The one exception is `ρ`, which is `--rho`. Run `snaq --help` for the fu
   - `--threads N` sets the number of threads; the default is all cores. Independent runs
     execute in parallel.
 
+### Optimizing the parameters of a fixed network
+
+```
+snaq --optimize net.tre -i genetrees.tre -o net_optimized.tre [--propQuartets 0.5 --seed 1]
+```
+
+`--optimize` skips the search: it fits only the branch lengths and inheritance probabilities γ
+of the given topology (a Newick string, or a file with one Newick line). The optimized network
+is printed with its SNaQ score, and written to the file given by `-o` (here a file name, not a
+root name; without `-o` no file is written). `--propQuartets` uses a sample of the quartets,
+drawn with `--seed`. The other flags allowed with `--optimize` are those of the parameter
+optimization: `--optimizer`, `--opt_maxeval`, `--ftolRel`, `--ftolAbs`, `--xtolRel`, `--xtolAbs`,
+`--rho`, `--geneWeights`, `--outgroup` and `--threads`; any other flag is an error.
+
 ## Output
 
 The files have the same names and layout as those written by `snaq!`:

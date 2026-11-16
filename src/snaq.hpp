@@ -20,4 +20,12 @@ Network snaq(const std::vector<Network>& startnets, bool single_input, const std
 Network snaq_cfs(const std::vector<Network>& startnets, bool single_input, CFMatrix cfs,
                  std::vector<std::string> taxa, SnaqOptions o);
 
+// `snaq --optimize`: fits the branch lengths and inheritance probabilities γ
+// of the fixed topology `net` to the gene trees, without changing the
+// topology. Uses the quartets sampled with o.propQuartets (all quartets when
+// 1, sampled with o.seed otherwise), and the parameter-optimization options of
+// `o` (optimizer, opt_maxeval, ftolRel, ftolAbs, xtolRel, xtolAbs, rho,
+// geneWeights, outgroup, threads). Returns the network with its score in fscore.
+Network optimize_network(Network net, const std::vector<Network>& genetrees, SnaqOptions o);
+
 }  // namespace csnaq

@@ -1,4 +1,5 @@
 // `snaq`: command-line front end of CSNaQ.
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -26,6 +27,23 @@ int main(int argc, char** argv) {
         }
         if (a.version) {
             std::cout << "snaq (CSNaQ) " << CSNAQ_VERSION << "\n";
+            return 0;
+        }
+        if (!a.optimize.empty()) {
+            std::vector<Network> nets = read_networks_arg(a.optimize);
+            if (nets.size() != 1)
+                throw UsageError("--optimize needs exactly one network, found " + std::to_string(nets.size()));
+            std::vector<Network> genetrees = readmultinewick_file(a.input);
+            if (genetrees.empty()) throw UsageError("no gene trees found in " + a.input);
+            Network net = optimize_network(std::move(nets[0]), genetrees, a.opts);
+            const double score = net.fscore;
+            const std::string nw = writenewick(net);
+            if (!a.output.empty()) {
+                std::ofstream f(a.output, std::ios::trunc);
+                if (!f) throw std::runtime_error("cannot write " + a.output);
+                f << nw << "\n";
+            }
+            std::cout << nw << "\nSNaQ score = " << julia_float(score) << "\n";
             return 0;
         }
         std::vector<Network> start = read_networks_arg(a.start_tree);

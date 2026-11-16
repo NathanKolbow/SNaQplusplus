@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <map>
+#include <set>
 #include <thread>
 
 namespace csnaq {
@@ -53,6 +54,9 @@ Common options:
 Example:
   snaq -i genetrees.tre --start-tree astral.tre -o net1 --hmax 1 --runs 10
 
+Optimize only the branch lengths and γ of a fixed network:
+  snaq --optimize net.tre -i genetrees.tre -o net_optimized.tre [--propQuartets FLOAT]
+
 Run `snaq --help` for all options.
 )";
 }
@@ -62,6 +66,7 @@ std::string usage() {
 
 usage:
   snaq -i <gene trees> -o <output root name> --start-tree <newick or file> [options]
+  snaq --optimize <network> -i <gene trees> [-o <output file>] [optimization options]
 
 required:
   -i, --input FILE          gene trees, one Newick tree per line
@@ -137,6 +142,16 @@ search shortcuts (not in SNaQ.jl; each can be turned off with "false"):
   --dedupCounts [BOOL]      count such repeated topologies as failed proposals, towards --Nfail
                             (default: false: another proposal is drawn instead)
 
+parameter optimization of a fixed network (not in SNaQ.jl):
+  --optimize NET            do not search: optimize only the branch lengths and inheritance
+                            probabilities γ of the topology NET (a Newick string or a file with
+                            one Newick line). -o is then the file the optimized network is
+                            written to (default: none, the network is only printed).
+                            Other options allowed with --optimize: --propQuartets (proportion
+                            of quartets used, sampled with --seed), --optimizer, --opt_maxeval,
+                            --ftolRel, --ftolAbs, --xtolRel, --xtolAbs, --rho, --geneWeights,
+                            --outgroup, --threads
+
 other:
   --lazy [BOOL]             compute observed CFs on demand (like DataCF(trees; lazy=true));
                             requires --propQuartets < 1. Default: on when --propQuartets and
@@ -177,6 +192,7 @@ CliArgs parse_cli(const std::vector<std::string>& args) {
     str("-i", &a.input);
     str("--input", &a.input);
     str("--start-tree", &a.start_tree);
+    str("--optimize", &a.optimize);
     str("-o", &o.filename);
     str("--filename", &o.filename);
     integer("--hmax", &o.hmax);
@@ -235,6 +251,7 @@ CliArgs parse_cli(const std::vector<std::string>& args) {
         specs[alias] = specs[std::string("--") + name];
     }
 
+    std::set<std::string> seen;
     for (size_t k = 0; k < args.size(); ++k) {
         std::string tok = args[k];
         if (tok == "-h" || tok == "--help") {
@@ -271,8 +288,21 @@ CliArgs parse_cli(const std::vector<std::string>& args) {
             value = args[++k];
         }
         sp.set(tok, value);
+        seen.insert(tok);
     }
     if (a.help || a.version) return a;
+    if (!a.optimize.empty()) {
+        static const std::set<std::string> allowed = {
+            "-i", "--input", "-o", "--filename", "--optimize", "--propQuartets", "--seed", "--optimizer",
+            "--opt_maxeval", "--opt-maxeval", "--ftolRel", "--ftolAbs", "--xtolRel", "--xtolAbs", "--rho",
+            "--geneWeights", "--outgroup", "--threads"};
+        for (const auto& f : seen)
+            if (!allowed.count(f)) throw UsageError("option " + f + " does not apply to --optimize");
+        if (a.input.empty()) throw UsageError("missing required option -i/--input (gene trees)");
+        if (o.threads < 1) throw UsageError("--threads must be ≥ 1");
+        a.output = (seen.count("-o") || seen.count("--filename")) ? o.filename : "";
+        return a;
+    }
     if (a.input.empty()) throw UsageError("missing required option -i/--input (gene trees)");
     if (a.start_tree.empty()) throw UsageError("missing required option --start-tree");
     if (o.threads < 1) throw UsageError("--threads must be ≥ 1");
