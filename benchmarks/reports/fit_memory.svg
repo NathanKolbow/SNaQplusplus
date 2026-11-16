@@ -1,103 +1,67 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="860" height="694" viewBox="0 0 860 694" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
-<rect width="860" height="694" fill="#fcfcfb"/>
-<text x="20" y="30" font-size="17" font-weight="600" fill="#0b0b0b">Peak memory â€” suite fit</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="470" viewBox="0 0 860 470" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect width="860" height="470" fill="#fcfcfb"/>
+<text x="20" y="30" font-size="17" font-weight="600" fill="#0b0b0b">Peak memory — suite fit</text>
 <text x="20" y="52" font-size="12.5" fill="#52514e">Apple M1, 1 thread(s)</text>
 <rect x="170" y="61" width="12" height="12" rx="3" fill="#2a78d6"/>
 <text x="188" y="71" font-size="12" fill="#52514e">SNaQ.jl</text>
 <rect x="255" y="61" width="12" height="12" rx="3" fill="#eb6834"/>
-<text x="273" y="71" font-size="12" fill="#52514e">exp-G-newton-steps</text>
-<rect x="417" y="61" width="12" height="12" rx="3" fill="#1baf7a"/>
-<text x="435" y="71" font-size="12" fill="#52514e">exp-H-builder</text>
-<rect x="544" y="61" width="12" height="12" rx="3" fill="#eda100"/>
-<text x="562" y="71" font-size="12" fill="#52514e">exp-I-search</text>
-<line x1="194.2" y1="94" x2="194.2" y2="654" stroke="#e1e0d9" stroke-width="1"/>
-<text x="194.2" y="670" font-size="11" fill="#898781" text-anchor="middle">5.00</text>
-<line x1="262.2" y1="94" x2="262.2" y2="654" stroke="#e1e0d9" stroke-width="1"/>
-<text x="262.2" y="670" font-size="11" fill="#898781" text-anchor="middle">10.0</text>
-<line x1="330.1" y1="94" x2="330.1" y2="654" stroke="#e1e0d9" stroke-width="1"/>
-<text x="330.1" y="670" font-size="11" fill="#898781" text-anchor="middle">20.0</text>
-<line x1="419.9" y1="94" x2="419.9" y2="654" stroke="#e1e0d9" stroke-width="1"/>
-<text x="419.9" y="670" font-size="11" fill="#898781" text-anchor="middle">50.0</text>
-<line x1="487.9" y1="94" x2="487.9" y2="654" stroke="#e1e0d9" stroke-width="1"/>
-<text x="487.9" y="670" font-size="11" fill="#898781" text-anchor="middle">100</text>
-<line x1="555.8" y1="94" x2="555.8" y2="654" stroke="#e1e0d9" stroke-width="1"/>
-<text x="555.8" y="670" font-size="11" fill="#898781" text-anchor="middle">200</text>
-<line x1="645.7" y1="94" x2="645.7" y2="654" stroke="#e1e0d9" stroke-width="1"/>
-<text x="645.7" y="670" font-size="11" fill="#898781" text-anchor="middle">500</text>
-<line x1="713.6" y1="94" x2="713.6" y2="654" stroke="#e1e0d9" stroke-width="1"/>
-<text x="713.6" y="670" font-size="11" fill="#898781" text-anchor="middle">1,000</text>
-<text x="470.0" y="688" font-size="11.5" fill="#52514e" text-anchor="middle">MB (peak resident set size) (log scale)</text>
-<line x1="170.0" y1="94" x2="170.0" y2="654" stroke="#c3c2b7" stroke-width="1"/>
-<text x="160" y="131.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n10_h1</text>
-<g><title>SNaQ.jl Â· fit_n10_h1: 693 MB (peak resident set size)</title><rect x="170.0" y="100" width="507.7" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="682.7" y="110" font-size="10.5" fill="#52514e" text-anchor="start">693</text>
-<g><title>exp-G-newton-steps Â· fit_n10_h1: 5.86 MB (peak resident set size)</title><rect x="170.0" y="114" width="39.8" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="214.8" y="124" font-size="10.5" fill="#52514e" text-anchor="start">5.86</text>
-<g><title>exp-H-builder Â· fit_n10_h1: 5.89 MB (peak resident set size)</title><rect x="170.0" y="128" width="40.3" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="215.3" y="138" font-size="10.5" fill="#52514e" text-anchor="start">5.89</text>
-<g><title>exp-I-search Â· fit_n10_h1: 5.88 MB (peak resident set size)</title><rect x="170.0" y="142" width="40.0" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="215.0" y="152" font-size="10.5" fill="#52514e" text-anchor="start">5.88</text>
-<text x="160" y="199.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n15_h1</text>
-<g><title>SNaQ.jl Â· fit_n15_h1: 716 MB (peak resident set size)</title><rect x="170.0" y="168" width="510.9" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="685.9" y="178" font-size="10.5" fill="#52514e" text-anchor="start">716</text>
-<g><title>exp-G-newton-steps Â· fit_n15_h1: 6.38 MB (peak resident set size)</title><rect x="170.0" y="182" width="48.0" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="223.0" y="192" font-size="10.5" fill="#52514e" text-anchor="start">6.38</text>
-<g><title>exp-H-builder Â· fit_n15_h1: 6.44 MB (peak resident set size)</title><rect x="170.0" y="196" width="49.0" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="224.0" y="206" font-size="10.5" fill="#52514e" text-anchor="start">6.44</text>
-<g><title>exp-I-search Â· fit_n15_h1: 6.42 MB (peak resident set size)</title><rect x="170.0" y="210" width="48.7" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="223.7" y="220" font-size="10.5" fill="#52514e" text-anchor="start">6.42</text>
-<text x="160" y="267.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n20_h2</text>
-<g><title>SNaQ.jl Â· fit_n20_h2: 750 MB (peak resident set size)</title><rect x="170.0" y="236" width="515.4" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="690.4" y="246" font-size="10.5" fill="#52514e" text-anchor="start">750</text>
-<g><title>exp-G-newton-steps Â· fit_n20_h2: 10.1 MB (peak resident set size)</title><rect x="170.0" y="250" width="93.4" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="268.4" y="260" font-size="10.5" fill="#52514e" text-anchor="start">10.1</text>
-<g><title>exp-H-builder Â· fit_n20_h2: 10.1 MB (peak resident set size)</title><rect x="170.0" y="264" width="92.8" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="267.8" y="274" font-size="10.5" fill="#52514e" text-anchor="start">10.1</text>
-<g><title>exp-I-search Â· fit_n20_h2: 10.2 MB (peak resident set size)</title><rect x="170.0" y="278" width="94.0" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="269.0" y="288" font-size="10.5" fill="#52514e" text-anchor="start">10.2</text>
-<text x="160" y="335.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n25_h1</text>
-<g><title>SNaQ.jl Â· fit_n25_h1: 712 MB (peak resident set size)</title><rect x="170.0" y="304" width="510.3" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="685.3" y="314" font-size="10.5" fill="#52514e" text-anchor="start">712</text>
-<g><title>exp-G-newton-steps Â· fit_n25_h1: 10.8 MB (peak resident set size)</title><rect x="170.0" y="318" width="100.1" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="275.1" y="328" font-size="10.5" fill="#52514e" text-anchor="start">10.8</text>
-<g><title>exp-H-builder Â· fit_n25_h1: 10.9 MB (peak resident set size)</title><rect x="170.0" y="332" width="100.8" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="275.8" y="342" font-size="10.5" fill="#52514e" text-anchor="start">10.9</text>
-<g><title>exp-I-search Â· fit_n25_h1: 10.9 MB (peak resident set size)</title><rect x="170.0" y="346" width="100.9" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="275.9" y="356" font-size="10.5" fill="#52514e" text-anchor="start">10.9</text>
-<text x="160" y="403.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n25_h3</text>
-<g><title>SNaQ.jl Â· fit_n25_h3: 860 MB (peak resident set size)</title><rect x="170.0" y="372" width="528.8" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="703.8" y="382" font-size="10.5" fill="#52514e" text-anchor="start">860</text>
-<g><title>exp-G-newton-steps Â· fit_n25_h3: 11.5 MB (peak resident set size)</title><rect x="170.0" y="386" width="106.1" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="281.1" y="396" font-size="10.5" fill="#52514e" text-anchor="start">11.5</text>
-<g><title>exp-H-builder Â· fit_n25_h3: 11.8 MB (peak resident set size)</title><rect x="170.0" y="400" width="108.1" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="283.1" y="410" font-size="10.5" fill="#52514e" text-anchor="start">11.8</text>
-<g><title>exp-I-search Â· fit_n25_h3: 11.8 MB (peak resident set size)</title><rect x="170.0" y="414" width="108.4" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="283.4" y="424" font-size="10.5" fill="#52514e" text-anchor="start">11.8</text>
-<text x="160" y="471.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n30_h2</text>
-<g><title>SNaQ.jl Â· fit_n30_h2: 925 MB (peak resident set size)</title><rect x="170.0" y="440" width="535.9" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="710.9" y="450" font-size="10.5" fill="#52514e" text-anchor="start">925</text>
-<g><title>exp-G-newton-steps Â· fit_n30_h2: 11.2 MB (peak resident set size)</title><rect x="170.0" y="454" width="103.7" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="278.7" y="464" font-size="10.5" fill="#52514e" text-anchor="start">11.2</text>
-<g><title>exp-H-builder Â· fit_n30_h2: 11.5 MB (peak resident set size)</title><rect x="170.0" y="468" width="105.7" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="280.7" y="478" font-size="10.5" fill="#52514e" text-anchor="start">11.5</text>
-<g><title>exp-I-search Â· fit_n30_h2: 11.4 MB (peak resident set size)</title><rect x="170.0" y="482" width="105.3" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="280.3" y="492" font-size="10.5" fill="#52514e" text-anchor="start">11.4</text>
-<text x="160" y="539.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n40_h1</text>
-<g><title>SNaQ.jl Â· fit_n40_h1: 1,057 MB (peak resident set size)</title><rect x="170.0" y="508" width="549.0" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="724.0" y="518" font-size="10.5" fill="#52514e" text-anchor="start">1,057</text>
-<g><title>exp-G-newton-steps Â· fit_n40_h1: 35.3 MB (peak resident set size)</title><rect x="170.0" y="522" width="215.9" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="390.9" y="532" font-size="10.5" fill="#52514e" text-anchor="start">35.3</text>
-<g><title>exp-H-builder Â· fit_n40_h1: 35.6 MB (peak resident set size)</title><rect x="170.0" y="536" width="216.5" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="391.5" y="546" font-size="10.5" fill="#52514e" text-anchor="start">35.6</text>
-<g><title>exp-I-search Â· fit_n40_h1: 35.5 MB (peak resident set size)</title><rect x="170.0" y="550" width="216.3" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="391.3" y="560" font-size="10.5" fill="#52514e" text-anchor="start">35.5</text>
-<text x="160" y="607.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n50_h2</text>
-<g><title>SNaQ.jl Â· fit_n50_h2: 1,185 MB (peak resident set size)</title><rect x="170.0" y="576" width="560.2" height="12" rx="4.0" fill="#2a78d6"/></g>
-<text x="735.2" y="586" font-size="10.5" fill="#52514e" text-anchor="start">1,185</text>
-<g><title>exp-G-newton-steps Â· fit_n50_h2: 44.7 MB (peak resident set size)</title><rect x="170.0" y="590" width="239.0" height="12" rx="4.0" fill="#eb6834"/></g>
-<text x="414.0" y="600" font-size="10.5" fill="#52514e" text-anchor="start">44.7</text>
-<g><title>exp-H-builder Â· fit_n50_h2: 45.6 MB (peak resident set size)</title><rect x="170.0" y="604" width="240.9" height="12" rx="4.0" fill="#1baf7a"/></g>
-<text x="415.9" y="614" font-size="10.5" fill="#52514e" text-anchor="start">45.6</text>
-<g><title>exp-I-search Â· fit_n50_h2: 45.8 MB (peak resident set size)</title><rect x="170.0" y="618" width="241.4" height="12" rx="4.0" fill="#eda100"/></g>
-<text x="416.4" y="628" font-size="10.5" fill="#52514e" text-anchor="start">45.8</text>
+<text x="273" y="71" font-size="12" fill="#52514e">v0.1.0</text>
+<line x1="194.0" y1="94" x2="194.0" y2="430" stroke="#e1e0d9" stroke-width="1"/>
+<text x="194.0" y="446" font-size="11" fill="#898781" text-anchor="middle">5.00</text>
+<line x1="261.9" y1="94" x2="261.9" y2="430" stroke="#e1e0d9" stroke-width="1"/>
+<text x="261.9" y="446" font-size="11" fill="#898781" text-anchor="middle">10.0</text>
+<line x1="329.9" y1="94" x2="329.9" y2="430" stroke="#e1e0d9" stroke-width="1"/>
+<text x="329.9" y="446" font-size="11" fill="#898781" text-anchor="middle">20.0</text>
+<line x1="419.8" y1="94" x2="419.8" y2="430" stroke="#e1e0d9" stroke-width="1"/>
+<text x="419.8" y="446" font-size="11" fill="#898781" text-anchor="middle">50.0</text>
+<line x1="487.8" y1="94" x2="487.8" y2="430" stroke="#e1e0d9" stroke-width="1"/>
+<text x="487.8" y="446" font-size="11" fill="#898781" text-anchor="middle">100</text>
+<line x1="555.8" y1="94" x2="555.8" y2="430" stroke="#e1e0d9" stroke-width="1"/>
+<text x="555.8" y="446" font-size="11" fill="#898781" text-anchor="middle">200</text>
+<line x1="645.6" y1="94" x2="645.6" y2="430" stroke="#e1e0d9" stroke-width="1"/>
+<text x="645.6" y="446" font-size="11" fill="#898781" text-anchor="middle">500</text>
+<line x1="713.6" y1="94" x2="713.6" y2="430" stroke="#e1e0d9" stroke-width="1"/>
+<text x="713.6" y="446" font-size="11" fill="#898781" text-anchor="middle">1,000</text>
+<text x="470.0" y="464" font-size="11.5" fill="#52514e" text-anchor="middle">MB (peak resident set size) (log scale)</text>
+<line x1="170.0" y1="94" x2="170.0" y2="430" stroke="#c3c2b7" stroke-width="1"/>
+<text x="160" y="117.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n10_h1</text>
+<g><title>SNaQ.jl · fit_n10_h1: 693 MB (peak resident set size)</title><rect x="170.0" y="100" width="507.6" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="682.6" y="110" font-size="10.5" fill="#52514e" text-anchor="start">693</text>
+<g><title>v0.1.0 · fit_n10_h1: 5.88 MB (peak resident set size)</title><rect x="170.0" y="114" width="39.8" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="214.8" y="124" font-size="10.5" fill="#52514e" text-anchor="start">5.88</text>
+<text x="160" y="157.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n15_h1</text>
+<g><title>SNaQ.jl · fit_n15_h1: 716 MB (peak resident set size)</title><rect x="170.0" y="140" width="510.8" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="685.8" y="150" font-size="10.5" fill="#52514e" text-anchor="start">716</text>
+<g><title>v0.1.0 · fit_n15_h1: 6.42 MB (peak resident set size)</title><rect x="170.0" y="154" width="48.5" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="223.5" y="164" font-size="10.5" fill="#52514e" text-anchor="start">6.42</text>
+<text x="160" y="197.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n20_h2</text>
+<g><title>SNaQ.jl · fit_n20_h2: 750 MB (peak resident set size)</title><rect x="170.0" y="180" width="515.4" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="690.4" y="190" font-size="10.5" fill="#52514e" text-anchor="start">750</text>
+<g><title>v0.1.0 · fit_n20_h2: 10.2 MB (peak resident set size)</title><rect x="170.0" y="194" width="93.8" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="268.8" y="204" font-size="10.5" fill="#52514e" text-anchor="start">10.2</text>
+<text x="160" y="237.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n25_h1</text>
+<g><title>SNaQ.jl · fit_n25_h1: 712 MB (peak resident set size)</title><rect x="170.0" y="220" width="510.3" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="685.3" y="230" font-size="10.5" fill="#52514e" text-anchor="start">712</text>
+<g><title>v0.1.0 · fit_n25_h1: 10.9 MB (peak resident set size)</title><rect x="170.0" y="234" width="100.7" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="275.7" y="244" font-size="10.5" fill="#52514e" text-anchor="start">10.9</text>
+<text x="160" y="277.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n25_h3</text>
+<g><title>SNaQ.jl · fit_n25_h3: 860 MB (peak resident set size)</title><rect x="170.0" y="260" width="528.8" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="703.8" y="270" font-size="10.5" fill="#52514e" text-anchor="start">860</text>
+<g><title>v0.1.0 · fit_n25_h3: 11.8 MB (peak resident set size)</title><rect x="170.0" y="274" width="108.1" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="283.1" y="284" font-size="10.5" fill="#52514e" text-anchor="start">11.8</text>
+<text x="160" y="317.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n30_h2</text>
+<g><title>SNaQ.jl · fit_n30_h2: 925 MB (peak resident set size)</title><rect x="170.0" y="300" width="535.9" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="710.9" y="310" font-size="10.5" fill="#52514e" text-anchor="start">925</text>
+<g><title>v0.1.0 · fit_n30_h2: 11.4 MB (peak resident set size)</title><rect x="170.0" y="314" width="105.1" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="280.1" y="324" font-size="10.5" fill="#52514e" text-anchor="start">11.4</text>
+<text x="160" y="357.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n40_h1</text>
+<g><title>SNaQ.jl · fit_n40_h1: 1,057 MB (peak resident set size)</title><rect x="170.0" y="340" width="549.0" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="724.0" y="350" font-size="10.5" fill="#52514e" text-anchor="start">1,057</text>
+<g><title>v0.1.0 · fit_n40_h1: 35.5 MB (peak resident set size)</title><rect x="170.0" y="354" width="216.2" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="391.2" y="364" font-size="10.5" fill="#52514e" text-anchor="start">35.5</text>
+<text x="160" y="397.0" font-size="12" fill="#0b0b0b" text-anchor="end">fit_n50_h2</text>
+<g><title>SNaQ.jl · fit_n50_h2: 1,185 MB (peak resident set size)</title><rect x="170.0" y="380" width="560.2" height="12" rx="4.0" fill="#2a78d6"/></g>
+<text x="735.2" y="390" font-size="10.5" fill="#52514e" text-anchor="start">1,185</text>
+<g><title>v0.1.0 · fit_n50_h2: 45.8 MB (peak resident set size)</title><rect x="170.0" y="394" width="241.3" height="12" rx="4.0" fill="#eb6834"/></g>
+<text x="416.3" y="404" font-size="10.5" fill="#52514e" text-anchor="start">45.8</text>
 </svg>

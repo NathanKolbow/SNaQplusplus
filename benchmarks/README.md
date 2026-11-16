@@ -16,7 +16,7 @@ versions of CSNaQ: runtime, peak memory and accuracy.
 make bench-quick LABEL="my-idea"              # a few minutes: does the change help?
 make bench LABEL="my-idea"                    # the standard suite
 make bench-fit LABEL="my-idea"                # parameter optimization only
-make bench-report                             # figures + benchmarks/reports/REPORT.md
+make bench-report                             # figures + REPORT.md: SNaQ.jl vs v0.1.0 (REPORT_LABELS=...)
 ```
 
 To benchmark experimental `snaq` flags, pass them with `ARGS`. Use a different `LABEL` for

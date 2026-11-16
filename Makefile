@@ -4,6 +4,7 @@
 BUILD_DIR ?= build
 PREFIX    ?= $(HOME)/.local
 JOBS      ?= 4
+REPORT_LABELS ?= SNaQ.jl,v0.1.0
 
 .PHONY: all snaq install test test-julia clean tools bench bench-quick bench-fit bench-julia bench-report
 
@@ -63,4 +64,4 @@ bench-julia: tools
 	python3 benchmarks/bench.py run-julia --suite $(SUITE) --threads $(THREADS)
 
 bench-report:
-	python3 benchmarks/bench.py report
+	python3 benchmarks/bench.py report --labels $(REPORT_LABELS)
