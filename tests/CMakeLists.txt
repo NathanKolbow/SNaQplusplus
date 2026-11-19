@@ -8,7 +8,8 @@ add_executable(snaqpp_tests
     test_propquartets_lazy_bugs.cpp
     test_newick_and_cli.cpp
     test_classes.cpp
-    test_search_shortcuts.cpp)
+    test_search_shortcuts.cpp
+    test_readcsv.cpp)
 target_link_libraries(snaqpp_tests PRIVATE snaqpp_core GTest::gtest_main)
 target_include_directories(snaqpp_tests PRIVATE ${CMAKE_SOURCE_DIR}/apps ${CMAKE_SOURCE_DIR}/tools)
 target_sources(snaqpp_tests PRIVATE ${CMAKE_SOURCE_DIR}/apps/cli.cpp)

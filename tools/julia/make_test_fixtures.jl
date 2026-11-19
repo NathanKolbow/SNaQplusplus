@@ -10,9 +10,12 @@
 #   *.cf          : first line "nrow", then one row "q1 q2 q3" per quartet
 #   *.txt         : documented where written
 
-using SNaQ, PhyloNetworks, PhyloCoalSimulations, Random, StatsBase, Printf
+using SNaQ, PhyloNetworks, PhyloCoalSimulations, Random, StatsBase, Printf, CSV, DataFrames
 
-const SNAQTEST = joinpath(@__DIR__, "..", "..", "SNaQ.jl", "test")
+const SNAQ_DIR = isdir(joinpath(@__DIR__, "..", "..", "SNaQ.jl")) ?
+                 joinpath(@__DIR__, "..", "..", "SNaQ.jl") :
+                 joinpath(@__DIR__, "..", "..", "..", "SNaQ.jl")
+const SNAQTEST = joinpath(SNAQ_DIR, "test")
 const OUT = joinpath(@__DIR__, "..", "..", "tests", "data")
 mkpath(OUT)
 include(joinpath(SNAQTEST, "test_inplace_updates", "misc.jl"))  # generate_tree, generate_net
@@ -136,9 +139,47 @@ end
 
 # --- test_bugs.jl: BUCKy CF table, as the CF matrix SNaQ uses internally ---
 let
-    bucky = readtableCF(joinpath(SNAQTEST, "..", "examples", "buckyCF.csv"))
+    bucky_path = joinpath(SNAQTEST, "..", "examples", "buckyCF.csv")
+    cp(bucky_path, joinpath(OUT, "buckyCF.csv"); force=true)
+    bucky = readtableCF(bucky_path)
     writelines("bucky_taxa.txt", [join(sort(tiplabels(bucky)), " ")])
     writecf("bucky.cf", SNaQ.gatherCFmatrix(bucky))
+end
+
+# --- CF tables generated with PhyloNetworks and SNaQ machinery ---
+let
+    Random.seed!(1234)
+    net = readnewick("(((A:1.0,B:1.0):0.5,(C:1.0,D:1.0):0.5):0.5,(E:1.0,F:1.0):0.5);")
+    gts = simulatecoalescent(net, 200, 1)
+    q, t = countquartetsintrees(gts; showprogressbar=false)
+    df = DataFrame(tablequartetCF(q, t))
+    CSV.write(joinpath(OUT, "phylonetworks_tableCF.csv"), df)
+
+    dat = readtableCF(df)
+    writecf("phylonetworks_table.cf", SNaQ.gatherCFmatrix(dat))
+    writelines("phylonetworks_taxa.txt", [join(sort(tiplabels(dat)), " ")])
+end
+
+let
+    Random.seed!(5678)
+    net = readnewick("((((A:0.8,B:0.8):0.4,C:1.2):0.3,D:1.5):0.2,(E:1.0,F:1.0):0.7);")
+    gts = simulatecoalescent(net, 150, 1)
+    sub_gts = [deepcopy(gt) for gt in gts]
+    for (i, gt) in enumerate(sub_gts)
+        if i % 3 == 0
+            PhyloNetworks.deleteleaf!(gt, "F")
+        end
+        if i % 5 == 0
+            PhyloNetworks.deleteleaf!(gt, "A")
+        end
+    end
+    q, t = countquartetsintrees(sub_gts; showprogressbar=false)
+    df = DataFrame(tablequartetCF(q, t))
+    CSV.write(joinpath(OUT, "phylonetworks_subsampled_ngenes.csv"), df)
+
+    dat = readtableCF(df)
+    writecf("phylonetworks_subsampled.cf", SNaQ.gatherCFmatrix(dat))
+    writelines("phylonetworks_subsampled_taxa.txt", [join(sort(tiplabels(dat)), " ")])
 end
 
 println("fixtures written to $(abspath(OUT))")

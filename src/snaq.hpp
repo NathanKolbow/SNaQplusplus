@@ -17,8 +17,9 @@ Network snaq(const std::vector<Network>& startnets, bool single_input, const std
 
 // snaq! with observed CFs given directly (a non-lazy DataCF): `cfs` holds the
 // CFs of all quartets of the sorted `taxa`, in SNaQ's quartet order.
+// `weights` (optional): one weight per quartet, or empty (all quartets weigh 1).
 Network snaq_cfs(const std::vector<Network>& startnets, bool single_input, CFMatrix cfs,
-                 std::vector<std::string> taxa, SnaqOptions o);
+                 std::vector<std::string> taxa, SnaqOptions o, std::vector<double> weights = {});
 
 // `snaq --optimize`: fits the branch lengths and inheritance probabilities γ
 // of the fixed topology `net` to the gene trees, without changing the

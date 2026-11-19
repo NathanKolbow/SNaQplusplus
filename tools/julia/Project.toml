@@ -7,3 +7,6 @@ PhyloCoalSimulations = "53f7b83a-06b5-4910-9a21-1896bf762ade"
 PhyloNetworks = "33ad39ac-ed31-50eb-9b15-43d0656eaa72"
 SNaQ = "c2bf7a07-44d2-4d11-b5e2-76dc5aa199d6"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+
+[sources]
+SNaQ = {path = "C:\\Users\\Nathan\\repos\\CSNaQ\\tools\\julia\\..\\..\\..\\SNaQ.jl"}

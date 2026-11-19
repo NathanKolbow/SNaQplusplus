@@ -3,6 +3,9 @@
 # being ported) at ../../SNaQ.jl relative to this file.
 using Pkg
 Pkg.activate(@__DIR__)
-Pkg.develop(path=joinpath(@__DIR__, "..", "..", "SNaQ.jl"))
+snaq_path = isdir(joinpath(@__DIR__, "..", "..", "SNaQ.jl")) ?
+            joinpath(@__DIR__, "..", "..", "SNaQ.jl") :
+            joinpath(@__DIR__, "..", "..", "..", "SNaQ.jl")
+Pkg.develop(path=snaq_path)
 Pkg.instantiate()
 Pkg.precompile()

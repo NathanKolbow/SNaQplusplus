@@ -36,12 +36,17 @@ bool is_bool_word(const std::string& v) { return v == "true" || v == "false"; }
 }  // namespace
 
 std::string short_usage() {
-    return R"(USAGE: snaq -i <gene trees file> --start-tree <newick string or file> [-o <output root name>] [options]
+    return R"(USAGE: snaq -i <gene trees or CF table> --start-tree <newick string or file> [-o <output root name>] [options]
 
-Infers a phylogenetic network from gene trees (C++ port of SNaQ.jl's snaq!).
+Infers a phylogenetic network from gene trees or quartet concordance factors
+(C++ port of SNaQ.jl's snaq!).
 
 Common options:
-  -i, --input FILE          gene trees, one Newick tree per line (required)
+  -i, --input FILE          gene trees (one Newick tree per line) or a CF table
+                            (CSV with columns taxon1..taxon4, CF12_34, CF13_24,
+                            CF14_23, optionally ngenes). CSV files are detected
+                            automatically; use --csv to force CSV parsing.
+  --csv                     treat -i as a CF table in CSV format
   --start-tree TREE         starting tree: Newick string or file (required)
   -o, --filename PATH       root name of the output files (default: snaq)
   --hmax INT                maximum number of hybridizations (default: 1)
@@ -51,8 +56,9 @@ Common options:
   --seed INT                random seed
   --threads INT             number of threads (default: all cores)
 
-Example:
+Examples:
   snaq -i genetrees.tre --start-tree astral.tre -o net1 --hmax 1 --runs 10
+  snaq -i cftable.csv --start-tree start.tre -o net1 --hmax 1 --runs 10
 
 Optimize only the branch lengths and γ of a fixed network:
   snaq --optimize net.tre -i genetrees.tre -o net_optimized.tre [--propQuartets FLOAT]
@@ -65,11 +71,15 @@ std::string usage() {
     return R"(snaq: phylogenetic network inference by maximum pseudolikelihood (C++ port of SNaQ.jl's snaq!)
 
 usage:
-  snaq -i <gene trees> -o <output root name> --start-tree <newick or file> [options]
-  snaq --optimize <network> -i <gene trees> [-o <output file>] [optimization options]
+  snaq -i <gene trees or CF table> -o <output root name> --start-tree <newick or file> [options]
+  snaq --optimize <network> -i <gene trees or CF table> [-o <output file>] [optimization options]
 
 required:
-  -i, --input FILE          gene trees, one Newick tree per line
+  -i, --input FILE          gene trees (one Newick tree per line) or a CF table
+                            (CSV with columns taxon1..taxon4, CF12_34, CF13_24,
+                            CF14_23, optionally ngenes). CSV files are detected
+                            automatically; use --csv to force CSV parsing.
+  --csv                     treat -i as a CF table in CSV format
   --start-tree TREE         starting topology: a Newick string (e.g. "((a,b),c,d);") or a file
                             with one or more Newick lines (one per run, or one for all runs)
 
@@ -241,6 +251,7 @@ CliArgs parse_cli(const std::vector<std::string>& args) {
                            o.lazy = (v == "true");
                            o.autoLazy = false;
                        }};
+    boolean("--csv", &a.csv);
     integer("--threads", &o.threads);
     // hyphenated aliases for the restriction / advanced flags
     for (const char* name : {"max_level", "galled_tree", "galled_network", "rooted_tree_child", "weakly_tree_child",
@@ -295,15 +306,15 @@ CliArgs parse_cli(const std::vector<std::string>& args) {
         static const std::set<std::string> allowed = {
             "-i", "--input", "-o", "--filename", "--optimize", "--propQuartets", "--seed", "--optimizer",
             "--opt_maxeval", "--opt-maxeval", "--ftolRel", "--ftolAbs", "--xtolRel", "--xtolAbs", "--rho",
-            "--geneWeights", "--outgroup", "--threads"};
+            "--geneWeights", "--outgroup", "--threads", "--csv"};
         for (const auto& f : seen)
             if (!allowed.count(f)) throw UsageError("option " + f + " does not apply to --optimize");
-        if (a.input.empty()) throw UsageError("missing required option -i/--input (gene trees)");
+        if (a.input.empty()) throw UsageError("missing required option -i/--input (gene trees or CF table)");
         if (o.threads < 1) throw UsageError("--threads must be ≥ 1");
         a.output = (seen.count("-o") || seen.count("--filename")) ? o.filename : "";
         return a;
     }
-    if (a.input.empty()) throw UsageError("missing required option -i/--input (gene trees)");
+    if (a.input.empty()) throw UsageError("missing required option -i/--input (gene trees or CF table)");
     if (a.start_tree.empty()) throw UsageError("missing required option --start-tree");
     if (o.threads < 1) throw UsageError("--threads must be ≥ 1");
     return a;

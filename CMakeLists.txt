@@ -63,6 +63,7 @@ add_library(snaqpp_core STATIC
     src/identifiability.cpp
     src/search.cpp
     src/snaq.cpp
+    src/readcsv.cpp
     src/util.cpp)
 target_include_directories(snaqpp_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(snaqpp_core PUBLIC nlopt Threads::Threads)

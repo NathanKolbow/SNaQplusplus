@@ -72,7 +72,11 @@ Optional CMake settings:
 snaq -i genetrees.tre -o results/net1 --start-tree start.tre --hmax 1 --runs 10 --Nfail 40
 ```
 
-- `-i` / `--input`: gene trees, one Newick tree per line.
+- `-i` / `--input`: gene trees (one Newick tree per line) or a quartet concordance
+  factor table (CSV format with columns `taxon1..taxon4`, `CF12_34`, `CF13_24`,
+  `CF14_23`, and optional `ngenes`). CSV files are detected automatically, or `--csv`
+  can be specified.
+- `--csv`: force reading the input file `-i` as a CF table in CSV format.
 - `--start-tree`: starting topology. Either a Newick string (`"((a,b),c,(d,e));"`) or a file
   with one or more Newick lines. One topology is used by every run. Several topologies are
   used one per run, so give exactly one or `--runs` of them.
@@ -241,8 +245,9 @@ sample, and such scores are not comparable.
 - **Gene weights** (`--geneWeights`, off by default). Each quartet is weighted by the
   proportion of gene trees that its observed CFs come from. SNaQ.jl weighs all quartets
   equally. The two are the same when every gene tree has every taxon.
-- **Input.** Gene trees must be in Newick format. CF tables, NEXUS files and multiple
-  alleles are not supported.
+- **Input.** Gene trees (Newick format) or quartet concordance factor tables (CSV format,
+  with columns `taxon1..taxon4`, `CF12_34`, `CF13_24`, `CF14_23`, and optionally `ngenes`).
+  NEXUS files and multiple alleles are not supported.
 - **Tests.** The tests that were ported, and those that were not, are listed in
   `TESTS_SKIPPED.md`.
 
